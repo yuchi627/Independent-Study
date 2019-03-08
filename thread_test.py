@@ -40,7 +40,8 @@ try:
         camera.capture('image.jpg',use_video_port = True)
         end = time.time()
         tmp1 = cv2.imread('image.jpg')
-        detect(tmp1,prev)
+        thread1 = threading.Thread(target = detect, args=(tmp1,prev,))
+        thread1.start()
         prev = tmp1
         cv2.imshow('picamera',tmp1)
         cv2.waitKey(10)
