@@ -3,6 +3,10 @@ import picamera
 import cv2
 import threading
 import numpy as np
+import socket
+
+HOST = '192.168.68.193'
+PORT = 6666
 
 def detect(img,prevImg):
     img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -36,17 +40,21 @@ def jumpWindow():
         pass
     print("close the window")
     cv2.destroyWindow('Warning')
-        
+
+count = 0
+window_count = 0
+window = False
+prev = np.zeros((480,640,3))
+prev = prev.astype(np.uint8)
+cv2.namedWindow('picamera',cv2.WINDOW_AUTOSIZE)
+cv2.moveWindow('picamera',30,30)
+s = socket.socket(socket.AF)INET, socket.SOCK_STREAM)
+s.connect((HOST,PORT))
+
 try:
-    count = 0
-    window = False
-    prev = np.zeros((480,640,3))
-    prev = prev.astype(np.uint8)
     camera = picamera.PiCamera()
     camera.resolution = (640,480)
     camera.framerate = 80
-    cv2.namedWindow('picamera',cv2.WINDOW_AUTOSIZE)
-    cv2.moveWindow('picamera',30,30)
     for num in range (0,30):
         start = time.time()
         camera.capture('image.jpg',use_video_port = True)
@@ -57,12 +65,19 @@ try:
         prev = tmp1.copy()
         if(window):
             cv2.putText(tmp1,"Move!",(20,250),cv2.FONT_HERSHEY_COMPLEX,6,(255,255,255),25)
+            window_count += 1
+            if(window_count > 10)
+                s.send('SOS')
+                s.recv(1024)
+        else
+            window_count = 0
         print(window)
         cv2.imshow('picamera',tmp1)
         cv2.waitKey(10)
         print (end-start)
 finally:
         camera.close()
+        s.close()
 
 
 

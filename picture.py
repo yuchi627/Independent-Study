@@ -21,7 +21,7 @@ else:
     
 command = "raspistill -o  " + ir_file_name + " -n -t " + delay_time
 camera = time.time()
-#take_flir_photo = subprocess.call("./pylepton_capture " + flir_file_name, shell = True)
+take_flir_photo = subprocess.call("./pylepton_capture " + flir_file_name, shell = True)
 end = time.time()
 print(end-camera)
 cv2.namedWindow("Img",cv2.WINDOW_NORMAL)
