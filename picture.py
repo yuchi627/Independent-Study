@@ -21,11 +21,11 @@ else:
     
 command = "raspistill -o  " + ir_file_name + " -n -t " + delay_time
 camera = time.time()
-take_flir_photo = subprocess.call("./pylepton_capture " + flir_file_name, shell = True)
+#take_flir_photo = subprocess.call("./pylepton_capture " + flir_file_name, shell = True)
 end = time.time()
 print(end-camera)
 cv2.namedWindow("Img",cv2.WINDOW_NORMAL)
-for num in range(0,5):
+for num in range(0,1):
     take_ir_photo = subprocess.call(command,shell = True)
     mid = time.time()
     print(mid-end)
@@ -54,9 +54,26 @@ for num in range(0,5):
     image_ir = cv2.resize(image_ir,(260,195))
     gray_img = cv2.cvtColor(image_ir,cv2.COLOR_BGR2GRAY)
     #cv2.imwrite("gray.jpg",gray_img)
-    blur_img = cv2.GaussianBlur(gray_img,(3,3),0)
-    #blur_img = cv2.adaptiveThreshold(blur_img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,151,6)
+    blur_img = cv2.GaussianBlur(gray_img,(9,9),0)
+    canny1 = cv2.Canny(blur_img,lowThreshold,highThreshold,3)
+    cv2.imwrite("noAdaptive_canny.jpg",canny1)
+    blur_img = cv2.adaptiveThreshold(blur_img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY_INV,71,6)
+    cv2.imwrite("adaptive.jpg",blur_img)
     canny = cv2.Canny(blur_img,lowThreshold,highThreshold,3)
+    cv2.imwrite("canny.jpg",canny)
+    (cnts,_)=cv2.findContours(canny1.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    '''
+    for num in range(len(cnts)):
+        cnt = cnts[num]
+        x,y,w,h = cv2.boundingRect(cnt)
+        #cv2.rectangle(image_ir,(x,y),(x+w,y+h),(0,255,0),2)
+        rect = cv2.minAreaRect(cnt)
+        box = cv2.cv.BoxPoints(rect)
+        box = np.int0(box)
+        cv2.drawContours(image_ir,[box],0,(0,0,255),2)
+    '''
+    cv2.drawContours(image_ir,cnts,-1,(0,0,255),2)
+    cv2.imwrite('contour.jpg',image_ir)
     #cv2.imshow('canny',canny)
     #cv2.waitKey(0)
     ret, canny2 = cv2.threshold(canny,128,255,cv2.THRESH_BINARY_INV)
