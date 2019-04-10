@@ -4,6 +4,7 @@ import cv2
 import threading
 import numpy as np
 import socket
+from scikit import compare_ssim
 
 HOST = '192.168.68.193'
 PORT = 6666
@@ -11,30 +12,44 @@ PORT = 6666
 def detect(img,prevImg):
     # 0.02 sec/per
     t1 = time.time()
+    img = cv2.resize(img,(260,195))
+    prevImg = cv2.resize(prevImg,(260,195))
     img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     prevImg = cv2.cvtColor(prevImg,cv2.COLOR_BGR2GRAY)
+    '''
     img = img.astype(np.int16)
     prevImg = prevImg.astype(np.int16)
     result = np.subtract(img,prevImg)
     result = abs(result)
     print('sum = ')
     result_sum = np.sum(result)
+    '''
+    t3 = time.time()
+    result_sum = compare_ssim(img,prevImg)
+    t4 = time.time()
     print(result_sum)
-    global count,window
-    if(result_sum < 2500000):
+    global count,window,interrupt
+    #warning_threshold = 2500000
+    warning_threshold = 0.6
+    if(result_sum > warning_threshold):
         count += 1
+        interrupt = 0
         if(count > 50):
             window = True
             print('warning')
     else:
-        if(count!=0):
+        interrupt += 1
+        if(count!=0 and interrupt > 2):
             count = 0
+            interrupt = 0
             if(window):
                 window = False
     t2 = time.time()
-    print('time = ' ,t2-t1)
+    #print("compare= ",t4-t3)
+    #print('time = ' ,t2-t1)
 
 count = 0
+interrupt = 0
 window_count = 0
 window = False
 prev = np.zeros((480,640,3))
@@ -60,7 +75,8 @@ try:
             cv2.putText(tmp1,"Move!",(20,250),cv2.FONT_HERSHEY_COMPLEX,6,(255,255,255),25)
             window_count += 1
             if(window_count > 25):
-                s.send('SOS')
+                msg = 'SOS'
+                s.sendto(msg.encode(),(HOST,PORT))
                 s.recv(1024)
                 window_count = 0
         else:

@@ -1,16 +1,13 @@
 import time
-t0 = time.time()
-from skimage.measure import compare_ssim
-t1 = time.time()
 import cv2
 import sys
 import numpy as np
+t0 = time.time()
 from scipy.ndimage import uniform_filter, gaussian_filter
-
-from ..util.dtype import dtype_range
-from ..util.arraycrop import crop
-from .._shared.utils import warn
-
+from skimage.util.dtype import dtype_range
+from skimage.util.arraycrop import crop
+from skimage._shared.utils import warn
+t1 = time.time()
 __all__ = ['compare_ssim']
 
 
@@ -161,7 +158,7 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
             return mssim, S
         else:
             return mssim
-
+'''
 file1 = sys.argv[1]
 file2 = sys.argv[2]
 original = cv2.imread(file1)
@@ -177,3 +174,4 @@ t3 = time.time()
 print(t1-t0)
 print(t3-t2)
 print(s)
+'''
