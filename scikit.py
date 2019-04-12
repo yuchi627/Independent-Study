@@ -158,7 +158,7 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
             return mssim, S
         else:
             return mssim
-'''
+"""
 file1 = sys.argv[1]
 file2 = sys.argv[2]
 original = cv2.imread(file1)
@@ -168,10 +168,10 @@ original = cv2.resize(original,(260,195))
 new = cv2.resize(new,(260,195))
 original = cv2.cvtColor(original,cv2.COLOR_BGR2GRAY)
 new = cv2.cvtColor(new,cv2.COLOR_BGR2GRAY)
-t2 = time.time()
+#t2 = time.time()
 s = compare_ssim(original,new)
-t3 = time.time()
-print(t1-t0)
-print(t3-t2)
+#t3 = time.time()
+#print(t1-t0)
+#print(t3-t2)
 print(s)
-'''
+"""
