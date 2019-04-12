@@ -127,6 +127,24 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
     R = data_range
     C1 = (K1 * R) ** 2
     C2 = (K2 * R) ** 2
+    C3 = C2/2
+
+
+    Ls,Lm,Cs,Cm,Ss,Sm = ((2 * ux * ux + C1,
+                            ux ** 2 + ut ** 2 + C1,
+                            2 * vx * vy + C2,
+                            v2 **2 + vy ** 2 + C2,
+                            vxy + C3,
+                            vx * vy + C3))
+    Lxy = Ls / Lm
+    Cxy = Cs / Cm
+    Sxy = Ss / Sm
+    alpha = 1
+    beta = 1
+    gamma = 1
+
+    myS = (Lxy ** alpha) * (Cxy ** beta) * (Sxy ** gamma)
+    myssim = crop(myS, pad).mean()
 
     A1, A2, B1, B2 = ((2 * ux * uy + C1,
                        2 * vxy + C2,
@@ -148,6 +166,7 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
         grad += filter_func((ux * (A2 - A1) - uy * (B2 - B1) * S) / D,
                             **filter_args)
         grad *= (2 / X.size)
+        print("in other")
 
         if full:
             return mssim, grad, S
@@ -157,8 +176,8 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
         if full:
             return mssim, S
         else:
-            return mssim
-"""
+            return mssim, myssim
+
 file1 = sys.argv[1]
 file2 = sys.argv[2]
 original = cv2.imread(file1)
@@ -169,9 +188,10 @@ new = cv2.resize(new,(260,195))
 original = cv2.cvtColor(original,cv2.COLOR_BGR2GRAY)
 new = cv2.cvtColor(new,cv2.COLOR_BGR2GRAY)
 #t2 = time.time()
-s = compare_ssim(original,new)
+s,s2 = compare_ssim(original,new)
 #t3 = time.time()
 #print(t1-t0)
 #print(t3-t2)
-print(s)
-"""
+print("ori: ",s)
+print("change: ",s2)
+
