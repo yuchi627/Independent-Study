@@ -10,6 +10,8 @@ name_space_height = 50
 white_img = np.zeros((height+name_space_height,weight,3), np.uint8)
 white_img[:,:] = (255,255,255)
 
+namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
+namespace_whiteimg[:,:] = (255,255,255)
 
 class client:
     remain_package_size = -1
@@ -17,10 +19,19 @@ class client:
     subplot_number = 0
     img = white_img
     visible = False
+    first = False
 
-    def __init__(self,mywhiteimg,tORf):
-        self.visible = tORf
-        self.namespace_whiteimg = mywhiteimg
+    def __init__(self):
+        self.visible = True
+        self.namespace_img = namespace_whiteimg
+        self.first = True
+
+    def namespace_imgset(self,my_namespace_img):
+        self.namespace_img = my_namespace_img
+        self.first = False
+
+    def first_time_recv(self):
+        return self.first
 
     def set_visible(self,tORf):
         self.visible = tORf
@@ -50,5 +61,5 @@ class client:
         data = cv2.imdecode(data,1)
         self.binary_img = b''
         self.img = np.reshape(data,(height,weight,3))
-        self.img = np.concatenate((self.namespace_whiteimg,self.img),axis=0)
+        self.img = np.concatenate((self.namespace_img,self.img),axis=0)
 
