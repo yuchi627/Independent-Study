@@ -11,10 +11,10 @@ try:
     cv2.namedWindow('picamera',cv2.WINDOW_NORMAL)
     count=sys.argv[1]
     #while(1):
-    for num in range (0,1):
+    for num in range (0,100):
         start = time.time()
         #count+=1
-        pic = "img"+count+".jpg"
+        pic = "img"+str(num)+".jpg"
         camera.capture(pic,use_video_port = True)
         end = time.time()
         tmp = cv2.imread(pic)

@@ -131,9 +131,9 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
 
 
     Ls,Lm,Cs,Cm,Ss,Sm = ((2 * ux * ux + C1,
-                            ux ** 2 + ut ** 2 + C1,
+                            ux ** 2 + uy ** 2 + C1,
                             2 * vx * vy + C2,
-                            v2 **2 + vy ** 2 + C2,
+                            vx **2 + vy ** 2 + C2,
                             vxy + C3,
                             vx * vy + C3))
     Lxy = Ls / Lm
@@ -144,7 +144,6 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
     gamma = 1
 
     myS = (Lxy ** alpha) * (Cxy ** beta) * (Sxy ** gamma)
-    myssim = crop(myS, pad).mean()
 
     A1, A2, B1, B2 = ((2 * ux * uy + C1,
                        2 * vxy + C2,
@@ -155,9 +154,10 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
 
     # to avoid edge effects will ignore filter radius strip around edges
     pad = (win_size - 1) // 2
-
+    myssim = crop(myS, pad).mean()
     # compute (weighted) mean of ssim
     mssim = crop(S, pad).mean()
+    #print("myssim= ",myssim)
 
     if gradient:
         # The following is Eqs. 7-8 of Avanaki 2009.
@@ -169,15 +169,15 @@ def compare_ssim(X, Y, win_size=None, gradient=False,
         print("in other")
 
         if full:
-            return mssim, grad, S
+            return mssim, grad, S, myssim
         else:
-            return mssim, grad
+            return mssim, grad, myssim
     else:
         if full:
-            return mssim, S
+            return mssim, S, myssim
         else:
             return mssim, myssim
-
+'''
 file1 = sys.argv[1]
 file2 = sys.argv[2]
 original = cv2.imread(file1)
@@ -194,4 +194,4 @@ s,s2 = compare_ssim(original,new)
 #print(t3-t2)
 print("ori: ",s)
 print("change: ",s2)
-
+'''

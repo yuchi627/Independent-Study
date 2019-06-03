@@ -1,4 +1,3 @@
-import io
 import time 
 import picamera
 import cv2
@@ -8,14 +7,12 @@ import socket
 import math
 from scikit import compare_ssim
 
-HOST = '192.168.68.106'
-PORT = 6666
+HOST = '192.168.68.195'
+PORT = 6667
 
 def detect_nothing(img):
     meanVal = img.mean()
     dif = np.subtract(img,meanVal)
-    #print("dif = " ,dif)
-    #print("---------------------std = ",np.std(img))
 
 def detect_move(img,prevImg):
     # 0.02 sec/per
@@ -62,40 +59,47 @@ cv2.namedWindow('picamera',cv2.WINDOW_AUTOSIZE)
 cv2.moveWindow('picamera',30,30)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
+packet_size = 10000
+sendframe_count = 0
 
 try:
-    stream = io.BytesIO()
     camera = picamera.PiCamera()
     camera.resolution = (640,480)
     camera.framerate = 80
-    #camera.exposure_mode = 'night'
-    print(camera.EXPOSURE_MODES)
-    #for num in range (0,30):
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),20]
+    s.send(("Nadine").ljust(16).encode())
+
     while True:
-        #t1 = time.time()
         camera.capture("image.jpg",use_video_port = True)
         tmp1 = cv2.imread('image.jpg')
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
-        result, imgencode = cv2.imencode('.jpg',tmp1,encode_param)
-        data = np.array(imgencode)
-        stringData = data.tostring()
+        #encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+        sendframe_count = sendframe_count + 1 
+        if(sendframe_count >= 20):
+            result, imgencode = cv2.imencode('.jpg',tmp1,encode_param)
+            data = np.array(imgencode)
+            stringData = data.tostring()
+            s.send(str(len(stringData)).ljust(16).encode())
+            s.send(stringData)
+            sendframe_count = 0
+        """
         head = 0
-        tail = 1024
-        packets = math.ceil( len(stringData) / 1024 )
-        print("before :",str(len(stringData)).ljust(16))
+        tail = packet_size
+        packets = math.ceil( len(stringData) / packet_size )
         s.send(str(len(stringData)).ljust(16).encode())
+        #for i in range(1000):
+        #    continue
 
         for i in range(packets):
             sendbuf = stringData[head:tail]
-            print("twice: ",s.send(sendbuf))
-            head += 1024
-            tail += 1024
+            s.send(sendbuf)
+            head += packet_size
+            tail += packet_size
             #print(stringData)
 
         data = np.fromstring(stringData,dtype='uint8')
         decimg = cv2.imdecode(data,1)
-        cv2.imwrite("client.jpg",decimg)
-
+        #cv2.imwrite("client.jpg",decimg)
+        """
         compare_count = compare_count + 1
         #print("time: ",te-ts)
         if(compare_count > 8):#8 time approximately 1 sec
@@ -110,16 +114,17 @@ try:
             window_count += 1
             if(window_count > 25):
                 msg = 'SOS'
-                s.sendto(msg.encode(),(HOST,PORT))
+                s.sendto(msg.ljust(16).encode(),(HOST,PORT))
                 #s.recv(1024)
                 window_count = 0
+
             cv2.imshow('picamera',tmp2)
-            cv2.waitKey(10)
+            cv2.waitKey(1)
         else:
             window_count = 0
             #print(window)
             cv2.imshow('picamera',tmp1)
-            cv2.waitKey(10)
+            cv2.waitKey(1)
         #t2 = time.time()
         #print ('time = ' ,t2-t1)
 finally:
