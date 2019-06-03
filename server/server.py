@@ -13,7 +13,7 @@ host = '192.168.68.195'
 port = 6667
 window_name = 'Firefighter'
 ##### ten element array
-client_list = [client("1",False),client("2",False),client("3",False),client("4",False),client("5",False),client("6",False),client("7",False),client("8",False),client("9",False),client("10",False)]
+client_list = [client(),client(),client(),client(),client(),client(),client(),client(),client(),client()]
 resize_height = 480+200
 resize_weight = 640+600
 name_space_height = 50
@@ -33,10 +33,7 @@ def accept_wrapper(sock):
     ##### create an client object an put into dictionary with it's address
     min_num = min(subplot_count)
     ##### create an white img with client name
-    namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
-    namespace_whiteimg[:,:] = (255,255,255)
-    cv2.putText(namespace_whiteimg, name, (200, 42), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 1, cv2.LINE_AA)
-    client_list[min_num]=client(namespace_whiteimg,True)
+    client_list[min_num]=client()
     client_dict[str(addr[1])] = min_num
     ##### subplot number remove
     subplot_count.remove(min_num)
@@ -47,35 +44,46 @@ def service_connection(key, mask):
     data = key.data
     if mask & selectors.EVENT_READ:
         client_host = client_dict[str(data.addr[1])]
-        if(client_list[client_host].package_size() < 0):
-            try:
-                ##### recv the img size
-                recv_data = sock.recv(16)
-                package_num = recv_data.decode()
-                ##### recv the SOS message
-                if("SOS" in package_num):
-                    print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                else:
-                    client_list[client_host].package_set(int(package_num))
-            except Exception as e:
-                print(package_num)
-                print (e.args)
+        t1= time.time()
+        if(client_list[client_host].first_time_recv()):
+            recv_data = sock.recv(16)
+            name = recv_data.decode()
+            namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
+            namespace_whiteimg[:,:] = (255,255,255)
+            cv2.putText(namespace_whiteimg, name, (200, 42), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 1, cv2.LINE_AA)
+            client_list[client_host].namespace_imgset(namespace_whiteimg)
+            t2 = time.time()
+            print("time=",t2-t1)
         else:
-            ##### recv the img
-            t0=time.time()
-            recv_data = sock.recv(client_list[client_host].package_size())
-            ##### concatenate recv msg to img
-            client_list[client_host].img_combine(recv_data)
-            client_list[client_host].package_decrease(len(recv_data))
-            t= time.time()
-            print("recv time = ",t-t0)
-            #t1 = time.time()
-            if(client_list[client_host].package_size() <= 0):
-                ##### img recv complete
-                client_list[client_host].img_decode()
-                client_list[client_host].package_set(-1)
-            #t2 = time.time()
-            #print("showtimw= ",t2-t1)
+            if(client_list[client_host].package_size() < 0):
+                try:
+                    ##### recv the img size
+                    recv_data = sock.recv(16)
+                    package_num = recv_data.decode()
+                    ##### recv the SOS message
+                    if("SOS" in package_num):
+                        print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    else:
+                        client_list[client_host].package_set(int(package_num))
+                except Exception as e:
+                    print(package_num)
+                    print (e.args)
+            else:
+                ##### recv the img
+                t0=time.time()
+                recv_data = sock.recv(client_list[client_host].package_size())
+                ##### concatenate recv msg to img
+                client_list[client_host].img_combine(recv_data)
+                client_list[client_host].package_decrease(len(recv_data))
+                t= time.time()
+                print("recv time = ",t-t0)
+                #t1 = time.time()
+                if(client_list[client_host].package_size() <= 0):
+                    ##### img recv complete
+                    client_list[client_host].img_decode()
+                    client_list[client_host].package_set(-1)
+                #t2 = time.time()
+                #print("showtimw= ",t2-t1)
 
         if not recv_data:
             print('closing connection to', data.addr)
