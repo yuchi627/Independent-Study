@@ -1,8 +1,5 @@
 import numpy as np
 import cv2
-max_package_size = 10000
-#height = 240
-#weight = 320
 height = 480
 weight = 640
 name_space_height = 50
