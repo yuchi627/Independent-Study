@@ -60,7 +60,6 @@ cv2.moveWindow('picamera',30,30)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
 packet_size = 10000
-sendframe_count = 0
 
 try:
     camera = picamera.PiCamera()
@@ -72,15 +71,13 @@ try:
     while True:
         camera.capture("image.jpg",use_video_port = True)
         tmp1 = cv2.imread('image.jpg')
-        #encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
-        sendframe_count = sendframe_count + 1 
-        if(sendframe_count >= 20):
-            result, imgencode = cv2.imencode('.jpg',tmp1,encode_param)
-            data = np.array(imgencode)
-            stringData = data.tostring()
-            s.send(str(len(stringData)).ljust(16).encode())
-            s.send(stringData)
-            sendframe_count = 0
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+        result, imgencode = cv2.imencode('.jpg',tmp1,encode_param)
+        data = np.array(imgencode)
+        stringData = data.tostring()
+        s.send(str(len(stringData)).ljust(16).encode())
+        s.send(stringData)
+        sendframe_count = 0
         """
         head = 0
         tail = packet_size
