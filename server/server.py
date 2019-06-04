@@ -19,9 +19,7 @@ resize_weight = 640+600
 name_space_height = 50
 height = 480
 weight = 640
-
-#height = 240
-#weight = 320
+refresh = False
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
@@ -44,7 +42,6 @@ def service_connection(key, mask):
     data = key.data
     if mask & selectors.EVENT_READ:
         client_host = client_dict[str(data.addr[1])]
-        t1= time.time()
         if(client_list[client_host].first_time_recv()):
             recv_data = sock.recv(16)
             name = recv_data.decode()
@@ -52,8 +49,7 @@ def service_connection(key, mask):
             namespace_whiteimg[:,:] = (255,255,255)
             cv2.putText(namespace_whiteimg, name, (200, 42), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 1, cv2.LINE_AA)
             client_list[client_host].namespace_imgset(namespace_whiteimg)
-            t2 = time.time()
-            print("time=",t2-t1)
+            
         else:
             if(client_list[client_host].package_size() < 0):
                 try:
@@ -66,24 +62,20 @@ def service_connection(key, mask):
                     else:
                         client_list[client_host].package_set(int(package_num))
                 except Exception as e:
-                    print(package_num)
                     print (e.args)
             else:
                 ##### recv the img
-                t0=time.time()
                 recv_data = sock.recv(client_list[client_host].package_size())
                 ##### concatenate recv msg to img
                 client_list[client_host].img_combine(recv_data)
                 client_list[client_host].package_decrease(len(recv_data))
-                t= time.time()
-                print("recv time = ",t-t0)
-                #t1 = time.time()
                 if(client_list[client_host].package_size() <= 0):
                     ##### img recv complete
                     client_list[client_host].img_decode()
                     client_list[client_host].package_set(-1)
-                #t2 = time.time()
-                #print("showtimw= ",t2-t1)
+                    global refresh
+                    refresh = True
+                    
 
         if not recv_data:
             print('closing connection to', data.addr)
@@ -101,7 +93,6 @@ if __name__ == "__main__":
         length = 6
         cv2.namedWindow(window_name,cv2.WINDOW_NORMAL)
         cv2.moveWindow(window_name, 20,20)  # Move it to (40,30)
-        #cv2.resizeWindow(window_name, 640, 480)
         ##### create a dictionary
         client_dict = {"client":1}
         sel = selectors.DefaultSelector()
@@ -118,16 +109,16 @@ if __name__ == "__main__":
                     accept_wrapper(key.fileobj)
                 else:
                     service_connection(key, mask)
-                    ##### concate and plot image
-                    #t3 = time.time()
-                    img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read(),client_list[2].img_read(),client_list[3].img_read(),client_list[4].img_read()),axis=1)
-                    img_concate_Verti=np.concatenate((client_list[5].img_read(),client_list[6].img_read(),client_list[7].img_read(),client_list[8].img_read(),client_list[9].img_read()),axis=1)
-                    img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
-                    img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
-                    cv2.imshow(window_name,img_toshow)
-                    cv2.waitKey(1)
-                    #t4 = time.time()
-                    #print("showtimw= ",t4-t3)
+                    if(refresh):
+                        refresh = False
+                        ##### concate and plot image
+                        img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read(),client_list[2].img_read(),client_list[3].img_read(),client_list[4].img_read()),axis=1)
+                        img_concate_Verti=np.concatenate((client_list[5].img_read(),client_list[6].img_read(),client_list[7].img_read(),client_list[8].img_read(),client_list[9].img_read()),axis=1)
+                        img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
+                        img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
+                        cv2.imshow(window_name,img_toshow)
+                        cv2.waitKey(1)
+                    
     finally:
         lsock.close()
         plt.close()
