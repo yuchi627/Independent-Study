@@ -21,7 +21,7 @@ else:
     
 command = "raspistill -o  " + ir_file_name + " -n -t " + delay_time
 camera = time.time()
-#take_flir_photo = subprocess.call("./pylepton_capture " + flir_file_name, shell = True)
+take_flir_photo = subprocess.call("./pylepton_capture " + flir_file_name, shell = True)
 end = time.time()
 print(end-camera)
 cv2.namedWindow("Img",cv2.WINDOW_NORMAL)
@@ -69,7 +69,7 @@ for num in range(0,1):
     cv2.imwrite("ttttttttttt.jpg",otsu)
     cv2.namedWindow("test")
     cv2.imshow("test",otsu)
-    (cnts,_)=cv2.findContours(otsu.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+    #(cnts,_)=cv2.findContours(otsu.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
     
     for num in range(len(cnts)):
         cnt = cnts[num]

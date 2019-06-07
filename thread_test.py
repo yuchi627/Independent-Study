@@ -5,9 +5,10 @@ import threading
 import numpy as np
 import socket
 import math
+import subprocess
 from scikit import compare_ssim
 
-HOST = '192.168.68.195'
+HOST = '192.168.68.196'
 PORT = 6667
 
 def detect_nothing(img):
@@ -69,8 +70,13 @@ try:
     s.send(("Nadine").ljust(16).encode())
 
     while True:
-        camera.capture("image.jpg",use_video_port = True)
-        tmp1 = cv2.imread('image.jpg')
+        subprocess.call("./pylepton_capture",shell = True)
+        camera.capture("ir.jpg",use_video_port = True)
+        tmp1 = cv2.imread('ir.jpg')
+        flir_img2 = cv2.imread('flir.jpg',0)
+        flir_img2 = cv2.applyColorMap(flir_img2, cv2.COLORMAP_JET)
+        #print(flir_img.shape[0],flir_img.shape[1])
+        flir_img = cv2.resize(flir_img2,(640,480))
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
         result, imgencode = cv2.imencode('.jpg',tmp1,encode_param)
         data = np.array(imgencode)
@@ -78,25 +84,6 @@ try:
         s.send(str(len(stringData)).ljust(16).encode())
         s.send(stringData)
         sendframe_count = 0
-        """
-        head = 0
-        tail = packet_size
-        packets = math.ceil( len(stringData) / packet_size )
-        s.send(str(len(stringData)).ljust(16).encode())
-        #for i in range(1000):
-        #    continue
-
-        for i in range(packets):
-            sendbuf = stringData[head:tail]
-            s.send(sendbuf)
-            head += packet_size
-            tail += packet_size
-            #print(stringData)
-
-        data = np.fromstring(stringData,dtype='uint8')
-        decimg = cv2.imdecode(data,1)
-        #cv2.imwrite("client.jpg",decimg)
-        """
         compare_count = compare_count + 1
         #print("time: ",te-ts)
         if(compare_count > 8):#8 time approximately 1 sec
@@ -114,12 +101,13 @@ try:
                 s.sendto(msg.ljust(16).encode(),(HOST,PORT))
                 #s.recv(1024)
                 window_count = 0
-
+            cv2.imshow('flir',flir_img)
             cv2.imshow('picamera',tmp2)
             cv2.waitKey(1)
         else:
             window_count = 0
             #print(window)
+            cv2.imshow('flir',flir_img)
             cv2.imshow('picamera',tmp1)
             cv2.waitKey(1)
         #t2 = time.time()
