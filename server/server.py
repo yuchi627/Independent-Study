@@ -9,17 +9,46 @@ from client_struct import client
 import threading
 import time
 ##### use "ifconfig" to find your ip
-host = '192.168.68.195'
+host = '192.168.68.196'
 port = 6667
 window_name = 'Firefighter'
 ##### ten element array
-client_list = [client(),client(),client(),client(),client(),client(),client(),client(),client(),client()]
+client_list = [client(1),client(2),client(3),client(4)]
 resize_height = 480+200
 resize_weight = 640+600
 name_space_height = 50
 height = 480
 weight = 640
 refresh = False
+sos_signal = False
+click_to_cancel = False
+click_client = 0
+x_bound = 620
+y_bound = 340
+
+def emergency_cancel(event, x, y, flags, param):
+    if event == cv2.EVENT_LBUTTONUP:  
+        global click_to_cancel,click_to_cancel
+        ##### Left Button Double Click
+        print("click:x= ",x,"  y= ",y)
+        click_to_cancel = True
+        if((x<=x_bound) and (y<= y_bound)):
+            ##### client[0]
+            click_client = 0
+        elif((x>=x_bound) and (y<= y_bound)):
+            ##### client[1]
+            click_client = 1
+        elif((x<=x_bound) and (y>= y_bound)):
+            ##### client[2]
+            click_client = 2
+        elif((x>=x_bound) and (y>= y_bound)):
+            ##### client[3]
+            click_client = 3
+        else:
+            clicl_to_cancel = False
+
+
+            
 
 def accept_wrapper(sock):
     conn, addr = sock.accept()  # Should be ready to read
@@ -31,24 +60,33 @@ def accept_wrapper(sock):
     ##### create an client object an put into dictionary with it's address
     min_num = min(subplot_count)
     ##### create an white img with client name
-    client_list[min_num]=client()
+    client_list[min_num]=client(min_num)
     client_dict[str(addr[1])] = min_num
     ##### subplot number remove
     subplot_count.remove(min_num)
     
 
+def set_namespace_color(client_index,underground_color,font_color):
+    namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
+    namespace_whiteimg[:,:] = underground_color
+    name = client_list[client_index].get_name()
+    cv2.putText(namespace_whiteimg, name, (200, 42), cv2.FONT_HERSHEY_SIMPLEX, 2, font_color, 3, cv2.LINE_AA)
+    client_list[client_index].namespace_imgset(namespace_whiteimg)
+
 def service_connection(key, mask):
     sock = key.fileobj
     data = key.data
     if mask & selectors.EVENT_READ:
+        global refresh,sos_signal
         client_host = client_dict[str(data.addr[1])]
         if(client_list[client_host].first_time_recv()):
             recv_data = sock.recv(16)
             name = recv_data.decode()
-            namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
-            namespace_whiteimg[:,:] = (255,255,255)
-            cv2.putText(namespace_whiteimg, name, (200, 42), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 1, cv2.LINE_AA)
-            client_list[client_host].namespace_imgset(namespace_whiteimg)
+            #name = (str)(client_list[client_host].get_num()) + "." + name
+            client_list[client_host].set_name(name)
+            ##### Default : white underground black font
+            set_namespace_color(client_host,(255,255,255),(0, 0, 0))   
+            
             
         else:
             if(client_list[client_host].package_size() < 0):
@@ -59,6 +97,9 @@ def service_connection(key, mask):
                     ##### recv the SOS message
                     if("SOS" in package_num):
                         print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        sos_signal = True
+                        ##### Red underground white font
+                        set_namespace_color(client_host,(0,0,255),(255, 255, 255))
                     else:
                         client_list[client_host].package_set(int(package_num))
                 except Exception as e:
@@ -73,13 +114,13 @@ def service_connection(key, mask):
                     ##### img recv complete
                     client_list[client_host].img_decode()
                     client_list[client_host].package_set(-1)
-                    global refresh
                     refresh = True
                     
 
         if not recv_data:
             print('closing connection to', data.addr)
             client_list[client_dict[str(data.addr[1])]].set_visible(False)
+            refresh = True
             subplot_count.append(client_dict[str(data.addr[1])])
             del client_dict[str(data.addr[1])]
             sel.unregister(sock)
@@ -88,10 +129,11 @@ def service_connection(key, mask):
 if __name__ == "__main__":
     try:
         ##### create a figure with subplot 2*5
-        subplot_count = [0,1,2,3,4,5,6,7,8,9]
+        subplot_count = [0,1,2,3]
         width = 14
         length = 6
         cv2.namedWindow(window_name,cv2.WINDOW_NORMAL)
+        cv2.setMouseCallback(window_name, emergency_cancel)
         cv2.moveWindow(window_name, 20,20)  # Move it to (40,30)
         ##### create a dictionary
         client_dict = {"client":1}
@@ -112,12 +154,18 @@ if __name__ == "__main__":
                     if(refresh):
                         refresh = False
                         ##### concate and plot image
-                        img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read(),client_list[2].img_read(),client_list[3].img_read(),client_list[4].img_read()),axis=1)
-                        img_concate_Verti=np.concatenate((client_list[5].img_read(),client_list[6].img_read(),client_list[7].img_read(),client_list[8].img_read(),client_list[9].img_read()),axis=1)
+                        img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read()),axis=1)
+                        img_concate_Verti=np.concatenate((client_list[2].img_read(),client_list[3].img_read()),axis=1)
                         img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
                         img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
                         cv2.imshow(window_name,img_toshow)
                         cv2.waitKey(1)
+                    if(sos_signal):
+                        if(click_to_cancel):
+                            set_namespace_color(click_client,(255,255,255),(0, 0, 0))
+                            sos_signal = False
+                            click_to_cancel = False
+
                     
     finally:
         lsock.close()
