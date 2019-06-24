@@ -12,38 +12,41 @@ import time
 host = '192.168.68.196'
 port = 6667
 window_name = 'Firefighter'
-##### ten element array
+##### Default four element array
 client_list = [client(),client(),client(),client()]
 resize_height = 480+200
 resize_weight = 640+600
 name_space_height = 50
 height = 480
 weight = 640
-refresh = False
-sos_signal = False
-click_to_cancel = False
-click_client = 0
-x_bound = 620
-y_bound = 340
+refresh = False ##### refresh window
+click_to_cancel = False ##### cancel the sos signal
+click_client = 0    ##### the client you click in window
+x_bound = 620   ##### window x axis bound
+y_bound = 340   ##### window y axis bound
 
 
 def emergency_cancel(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONUP:  
-        global click_to_cancel,click_to_cancel
-        ##### Left Button Double Click
+        global click_to_cancel
+        ##### Left Button Click
         print("click:x= ",x,"  y= ",y)
         click_to_cancel = True
         if((x<=x_bound) and (y<= y_bound)):
             ##### client[0]
+            print("client 0")
             click_client = 0
         elif((x>=x_bound) and (y<= y_bound)):
             ##### client[1]
+            print("client 1")
             click_client = 1
         elif((x<=x_bound) and (y>= y_bound)):
             ##### client[2]
+            print("client 2")
             click_client = 2
         elif((x>=x_bound) and (y>= y_bound)):
             ##### client[3]
+            print("client 3")
             click_client = 3
         else:
             clicl_to_cancel = False
@@ -63,7 +66,7 @@ def accept_wrapper(sock):
     ##### create an white img with client name
     client_list[min_num]=client()
     client_dict[str(addr[1])] = min_num
-    ##### subplot number remove
+    ##### number remove from list subplot_count
     subplot_count.remove(min_num)
     
 
@@ -78,7 +81,7 @@ def service_connection(key, mask):
     sock = key.fileobj
     data = key.data
     if mask & selectors.EVENT_READ:
-        global refresh,sos_signal
+        global refresh
         client_host = client_dict[str(data.addr[1])]
         if(client_list[client_host].first_time_recv()):
             recv_data = sock.recv(16)
@@ -98,8 +101,9 @@ def service_connection(key, mask):
                     ##### recv the SOS message
                     if("SOS" in package_num):
                         print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                        sos_signal = True
                         client_list[client_host].set_sos_flag(True)
+                        ##### send message back to client
+                        sock.send("I will save you".encode())
                     else:
                         client_list[client_host].package_set(int(package_num))
                 except Exception as e:
@@ -115,6 +119,7 @@ def service_connection(key, mask):
                     client_list[client_host].img_decode()
                     client_list[client_host].package_set(-1)
                     refresh = True
+                    ##### decide which background color to brush
                     brush_background_ornot = client_list[client_host].brush_background()
                     if(brush_background_ornot == 1):
                         ##### Red background white font
@@ -167,12 +172,10 @@ if __name__ == "__main__":
                         img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
                         cv2.imshow(window_name,img_toshow)
                         cv2.waitKey(1)
-                    if(sos_signal):
-                        if(click_to_cancel):
-                            set_namespace_color(click_client,(255,255,255),(0, 0, 0))
-                            sos_signal = False
-                            client_list[click_client].set_sos_flag(False)
-                            click_to_cancel = False
+                    if(click_to_cancel):
+                        set_namespace_color(click_client,(255,255,255),(0, 0, 0))
+                        client_list[click_client].set_sos_flag(False)
+                        click_to_cancel = False
 
                     
     finally:
