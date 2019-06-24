@@ -13,7 +13,7 @@ host = '192.168.68.196'
 port = 6667
 window_name = 'Firefighter'
 ##### ten element array
-client_list = [client(1),client(2),client(3),client(4)]
+client_list = [client(),client(),client(),client()]
 resize_height = 480+200
 resize_weight = 640+600
 name_space_height = 50
@@ -25,6 +25,7 @@ click_to_cancel = False
 click_client = 0
 x_bound = 620
 y_bound = 340
+
 
 def emergency_cancel(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONUP:  
@@ -60,15 +61,15 @@ def accept_wrapper(sock):
     ##### create an client object an put into dictionary with it's address
     min_num = min(subplot_count)
     ##### create an white img with client name
-    client_list[min_num]=client(min_num)
+    client_list[min_num]=client()
     client_dict[str(addr[1])] = min_num
     ##### subplot number remove
     subplot_count.remove(min_num)
     
 
-def set_namespace_color(client_index,underground_color,font_color):
+def set_namespace_color(client_index,background_color,font_color):
     namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
-    namespace_whiteimg[:,:] = underground_color
+    namespace_whiteimg[:,:] = background_color
     name = client_list[client_index].get_name()
     cv2.putText(namespace_whiteimg, name, (200, 42), cv2.FONT_HERSHEY_SIMPLEX, 2, font_color, 3, cv2.LINE_AA)
     client_list[client_index].namespace_imgset(namespace_whiteimg)
@@ -84,7 +85,7 @@ def service_connection(key, mask):
             name = recv_data.decode()
             #name = (str)(client_list[client_host].get_num()) + "." + name
             client_list[client_host].set_name(name)
-            ##### Default : white underground black font
+            ##### Default : white background black font
             set_namespace_color(client_host,(255,255,255),(0, 0, 0))   
             
             
@@ -98,8 +99,7 @@ def service_connection(key, mask):
                     if("SOS" in package_num):
                         print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                         sos_signal = True
-                        ##### Red underground white font
-                        set_namespace_color(client_host,(0,0,255),(255, 255, 255))
+                        client_list[client_host].set_sos_flag(True)
                     else:
                         client_list[client_host].package_set(int(package_num))
                 except Exception as e:
@@ -115,6 +115,13 @@ def service_connection(key, mask):
                     client_list[client_host].img_decode()
                     client_list[client_host].package_set(-1)
                     refresh = True
+                    brush_background_ornot = client_list[client_host].brush_background()
+                    if(brush_background_ornot == 1):
+                        ##### Red background white font
+                        set_namespace_color(client_host,(0,0,255),(255, 255, 255))
+                    elif (brush_background_ornot == 2):
+                        ##### White background black font
+                        set_namespace_color(click_client,(255,255,255),(0, 0, 0))
                     
 
         if not recv_data:
@@ -164,6 +171,7 @@ if __name__ == "__main__":
                         if(click_to_cancel):
                             set_namespace_color(click_client,(255,255,255),(0, 0, 0))
                             sos_signal = False
+                            client_list[click_client].set_sos_flag(False)
                             click_to_cancel = False
 
                     
