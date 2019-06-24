@@ -27,29 +27,25 @@ y_bound = 340   ##### window y axis bound
 
 
 def emergency_cancel(event, x, y, flags, param):
+    global click_to_cancel,click_client
     if event == cv2.EVENT_LBUTTONUP:  
-        global click_to_cancel
         ##### Left Button Click
-        print("click:x= ",x,"  y= ",y)
+        #print("click:x= ",x,"  y= ",y)
         click_to_cancel = True
         if((x<=x_bound) and (y<= y_bound)):
             ##### client[0]
-            print("client 0")
             click_client = 0
         elif((x>=x_bound) and (y<= y_bound)):
             ##### client[1]
-            print("client 1")
             click_client = 1
         elif((x<=x_bound) and (y>= y_bound)):
             ##### client[2]
-            print("client 2")
             click_client = 2
         elif((x>=x_bound) and (y>= y_bound)):
             ##### client[3]
-            print("client 3")
             click_client = 3
         else:
-            clicl_to_cancel = False
+            click_to_cancel = False
 
 
             
@@ -100,7 +96,7 @@ def service_connection(key, mask):
                     package_num = recv_data.decode()
                     ##### recv the SOS message
                     if("SOS" in package_num):
-                        print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        #print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                         client_list[client_host].set_sos_flag(True)
                         ##### send message back to client
                         sock.send("I will save you".encode())
@@ -126,7 +122,7 @@ def service_connection(key, mask):
                         set_namespace_color(client_host,(0,0,255),(255, 255, 255))
                     elif (brush_background_ornot == 2):
                         ##### White background black font
-                        set_namespace_color(click_client,(255,255,255),(0, 0, 0))
+                        set_namespace_color(client_host,(255,255,255),(0, 0, 0))
                     
 
         if not recv_data:
