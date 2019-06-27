@@ -7,7 +7,7 @@ import socket
 import math
 from scikit import compare_ssim
 
-HOST = '192.168.68.195'
+HOST = '192.168.68.196'
 PORT = 6667
 height = 240
 weight = 320
@@ -28,7 +28,7 @@ encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),20]
 try:
     s.send(("Sending").ljust(16).encode())
     while True:
-        tmp1 = cv2.imread('img'+str(count)+'.jpg')
+        tmp1 = cv2.imread('ir'+str(count)+'.jpg')
         result, imgencode = cv2.imencode('.jpg',tmp1,encode_param)
         data = np.array(imgencode)
         stringData = data.tostring()
@@ -36,7 +36,7 @@ try:
         s.send(stringData)
         count += 1
         if(count>99):
-            count = 0
+            count = 1
 
 finally:
         s.close()

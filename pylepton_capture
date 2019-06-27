@@ -12,9 +12,15 @@ def capture(flip_v = False, device = "/dev/spidev0.0"):
     a,_ = l.capture()
   if flip_v:
     cv2.flip(a,0,a)
+  #print(a)
+  #print("----------------------")
   cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
+  #print(a)
+  #print("----------------------")
+  #a = a / 100 - 273.15
+  #print(a)
   np.right_shift(a, 8, a)
-  return np.uint8(a)
+  return np.uint8(a), a
 
 if __name__ == '__main__':
   '''

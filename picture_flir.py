@@ -16,7 +16,7 @@ with Lepton(device) as l:
     while(True):
         a,_ = l.capture()
         #print a.dtype
-        print np.max(a)
+        print("max= ",np.max(a),"  min= ",np.min(a))
         cv2.normalize(a,a,0,65535,cv2.NORM_MINMAX)
         a = np.right_shift(a,8,a)
         #print np.max(a)
