@@ -17,15 +17,31 @@ class client:
     img = white_img
     visible = False
     first = False
-
+    sos_flag = False
+    twinkling = False
+    name = "name"
     def __init__(self):
         self.visible = True
         self.namespace_img = namespace_whiteimg
         self.first = True
+        #self.num = mynum
 
     def namespace_imgset(self,my_namespace_img):
         self.namespace_img = my_namespace_img
         self.first = False
+
+    def set_sos_flag(self,flag):
+        self.sos_flag = flag
+
+    def brush_background(self):
+        if(self.sos_flag):
+            if(self.twinkling):
+                self.twinkling = False
+                return 1    ##### red background
+            else:   
+                self.twinkling = True
+                return 2    ##### white background
+            return 0    ##### do not need to brush background
 
     def first_time_recv(self):
         return self.first
@@ -33,6 +49,15 @@ class client:
     def set_visible(self,tORf):
         self.visible = tORf
 
+    def set_name(self,myname):
+        self.name = myname
+
+    def get_name(self):
+        return self.name
+    '''
+    def get_num(self):
+        return self.num
+    '''
     def package_size(self):
         return self.remain_package_size
 
