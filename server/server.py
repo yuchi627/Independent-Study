@@ -1,8 +1,6 @@
 import selectors
 import socket
 import types
-import matplotlib.pyplot as plt
-#import matplotlib.image as mpimg
 import numpy as np
 import cv2
 from client_struct import client
@@ -176,6 +174,5 @@ if __name__ == "__main__":
                     
     finally:
         lsock.close()
-        plt.close()
         cv2.destroyAllWindows()
         print("close socket")
