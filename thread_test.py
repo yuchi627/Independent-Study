@@ -16,11 +16,35 @@ PORT = 6667
 def capture(flip_v = False, device = "/dev/spidev0.0"):
   with Lepton(device) as l:
     a,_ = l.capture()
+    b = np.copy(a)
   if flip_v:
     cv2.flip(a,0,a)
   cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
   np.right_shift(a, 8, a)
-  return np.uint8(a)
+  return np.uint8(a), np.uint16(b)
+
+def fill_color(img, color):
+    img = img.astype(np.float32)
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    img = img * color
+    return img
+
+def classfy(flir_val):
+    th_70 = 7680        #8900
+    th_100 = 7700       #9650
+    flir_val = cv2.resize(flir_val,(640,480))
+    print(np.max(flir_val))
+    print(np.min(flir_val))
+    first = np.where(flir_val < th_70, 1, 0)
+    second_1 = np.where(flir_val >= th_70, 1, 0)
+    second_2 = np.where(flir_val >= th_100, 0, 1)
+    second = np.bitwise_and(second_1,second_2)
+    third = np.where(flir_val >= th_100, 1, 0)
+    first = fill_color(first,(255,0,0))
+    second = fill_color(second,(0,255,0))
+    third = fill_color(third,(0,0,255))
+    fusion = first + second + third
+    return fusion
 
 def detect_nothing(img):
     meanVal = img.mean()
@@ -86,14 +110,14 @@ try:
     #while(pic_count<100):
         #pic_count+=1
         
-        flir_img2 = capture()
+        flir_img2, flir_val = capture()
         t1 = time.time()
-        camera.capture("ir2.jpg",use_video_port = True)
+        camera.capture("ir1.jpg",use_video_port = True)
         t2 = time.time()
         print("time = ",t2-t1)
-        tmp1 = cv2.imread('ir2.jpg')
+        tmp1 = cv2.imread('ir1.jpg')
         flir_img2 = cv2.applyColorMap(flir_img2, cv2.COLORMAP_JET)
-        cv2.imwrite('flir2.jpg',flir_img2)
+        cv2.imwrite('flir1.jpg',flir_img2)
         #print(flir_img.shape[0],flir_img.shape[1])
         flir_img = cv2.resize(flir_img2,(640,480))
         #flir_img = flir_img2
@@ -111,6 +135,21 @@ try:
             compare_count = 0
             prev = tmp1.copy()
         tmp1 = cv2.resize(tmp1,(640,480))
+        tmp1 = cv2.cvtColor(tmp1,cv2.COLOR_BGR2GRAY)
+        tmp1 = np.dstack([tmp1]*3)
+        ir_height = tmp1.shape[0]
+        ir_weight = tmp1.shape[1]
+        white = tmp1.copy()
+        classfy_color = classfy(flir_val)
+        flir_tmp = cv2.resize(classfy_color,(ir_weight-120,ir_height-100),interpolation = cv2.INTER_CUBIC)
+        #flir_tmp = cv2.resize(flir_img,(ir_weight-120,ir_height-100),interpolation = cv2.INTER_CUBIC)
+        flir_height = flir_tmp.shape[0]
+        flir_weight = flir_tmp.shape[1]
+        move_y = 24
+        move_x = 50
+        white[move_y:move_y+flir_height,move_x:move_x+flir_weight] = flir_tmp
+        img_combine = cv2.addWeighted(tmp1,0.8,white,0.2,0)
+        cv2.imshow("combine",img_combine)
         tmp2 = tmp1.copy()
 
         if(window):
