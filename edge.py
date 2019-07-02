@@ -6,7 +6,6 @@ import numpy as np
 import socket
 import math
 import subprocess
-from scikit import compare_ssim
 from pylepton import Lepton
 import select
 import picamera.array
