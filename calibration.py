@@ -23,13 +23,13 @@ def get_position(event, x, y, flags, param):
         count += 1 
         if(param==1):
             src_points.append((x,y))
-            np.savetxt('src2.txt',src_points,fmt = "%d,%d",delimiter = '\n')
+            np.savetxt('src3.txt',src_points,fmt = "%d,%d",delimiter = '\n')
             print('flir',len(src_points))
         elif(param==2):
             dst_points.append((x,y))
             obj_points.append([x,y,0])
-            np.savetxt('dst2.txt',dst_points,fmt = "%d,%d",delimiter = '\n')
-            np.savetxt('obj2.txt',obj_points,fmt = "%d,%d,%d",delimiter = '\n')
+            np.savetxt('dst3.txt',dst_points,fmt = "%d,%d",delimiter = '\n')
+            np.savetxt('obj3.txt',obj_points,fmt = "%d,%d,%d",delimiter = '\n')
             print('ir',len(dst_points))
         if(len(src_points)>=4 and len(dst_points)>=4 and len(src_points)==len(dst_points)):
             get_matrix()
@@ -40,6 +40,7 @@ def get_matrix():
     Ma = cv2.getAffineTransform(np.float32(src_points[0:3]), np.float32(dst_points[0:3]))
     Mp = cv2.getPerspectiveTransform(np.float32(src_points[0:4]), np.float32(dst_points[0:4]))
     Mh, mask = cv2.findHomography(np.float32(src_points), np.float32(dst_points))
+    np.savetxt('matrix3.txt',Mh,fmt = "%f,%f,%f",delimiter = '\n')
     print("Ma = ",Ma)
     print("Mp = ",Mp)
     print("Mh = ",Mh)
