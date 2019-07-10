@@ -23,13 +23,13 @@ def get_position(event, x, y, flags, param):
         count += 1 
         if(param==1):
             src_points.append((x,y))
-            np.savetxt('src.txt',src_points,fmt = "%d,%d",delimiter = '\n')
+            np.savetxt('src2.txt',src_points,fmt = "%d,%d",delimiter = '\n')
             print('flir',len(src_points))
         elif(param==2):
             dst_points.append((x,y))
             obj_points.append([x,y,0])
-            np.savetxt('dst.txt',dst_points,fmt = "%d,%d",delimiter = '\n')
-            np.savetxt('obj.txt',obj_points,fmt = "%d,%d,%d",delimiter = '\n')
+            np.savetxt('dst2.txt',dst_points,fmt = "%d,%d",delimiter = '\n')
+            np.savetxt('obj2.txt',obj_points,fmt = "%d,%d,%d",delimiter = '\n')
             print('ir',len(dst_points))
         if(len(src_points)>=4 and len(dst_points)>=4 and len(src_points)==len(dst_points)):
             get_matrix()
@@ -123,6 +123,10 @@ cali = []
 count = 0
 
 try:
+    src_points = np.loadtxt('src.txt',delimiter = ',').tolist()
+    dst_points = np.loadtxt('dst.txt',delimiter = ',').tolist()
+    obj_points = np.loadtxt('obj.txt',delimiter = ',').tolist()
+
     camera = picamera.PiCamera()
     camera.resolution = (640,480)
     camera.framerate = 40
