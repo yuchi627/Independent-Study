@@ -10,7 +10,7 @@ from pylepton import Lepton
 import select
 import picamera.array
 
-HOST = '192.168.68.196'
+HOST = '192.168.208.118'
 PORT = 6667
 
 def capture(flip_v = False, device = "/dev/spidev0.0"):
@@ -25,15 +25,15 @@ def capture(flip_v = False, device = "/dev/spidev0.0"):
     #return np.uint16(a)
 
 def img_capture():
-    global tmp1,flir_val,s,flir_img
+    global ir_img,flir_val,s,flir_img
     t0 = time.time()
     flir_img,flir_val = capture()
     #flir_val = capture()
     #print(flir_val)
     
     t1 = time.time()
-    tmp1 = np.empty((480,640,3),dtype = np.uint8)
-    camera.capture(tmp1,'bgr',use_video_port = True)
+    ir_img = np.empty((480,640,3),dtype = np.uint8)
+    camera.capture(ir_img,'bgr',use_video_port = True)
     '''
     camera.capture("ir2.jpg",use_video_port = True)
     tmp1 = cv2.imread('ir2.jpg')
@@ -62,11 +62,20 @@ def img_capture():
 
 #def img_processing(ir_img,flir_val):
 def img_processing():
-    global img_combine,tmp1,flir_img,dst
+    global img_combine,ir_img,flir_img,dst, flir_val, img_combine2
     flir_img = cv2.applyColorMap(flir_img,cv2.COLORMAP_JET)
     flir_img = cv2.resize(flir_img,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
-    dst = cv2.warpPerspective(flir_img,matrix,(ir_weight,ir_height))
-    img_combine = cv2.addWeighted(tmp1,0.5,dst,0.5,0)
+    #tmp = ir_img.copy()
+    #flir_val =  cv2.resize(flir_val,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
+    #flir_val = np.dstack([flir_val]*3)
+    #dst = cv2.warpPerspective(flir_val,matrix,(ir_weight,ir_height))
+    dst2 = cv2.warpPerspective(flir_img,matrix,(ir_weight,ir_height)) 
+    #np.place(tmp,(dst>th_100),(0,0,255))    #red
+    #np.place(tmp,((dst>th_70) & (dst<=th_100)), (163,255,197))  #green
+    #img_combine = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
+    img_combine2 = cv2.addWeighted(ir_img,0.5,dst2,0.5,0)
+    #refresh = True
+
 
 count = 0
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -79,14 +88,17 @@ flir_height = 380   #flir_tmp.shape[0]
 flir_weight = 520   #flir_tmp.shape[1]
 move_y = 24
 move_x = 50
-th_70 = 7680        #8900
-th_100 = 7700       #9650
+th_70 = 7800        #8900
+th_100 = 7860       #9650
 refresh = False
 img_combine = np.zeros((ir_height,ir_weight,3),np.uint8)
-tmp1 = np.empty((ir_height,ir_weight,3),np.uint8)
+img_combine2 = np.zeros((ir_height,ir_weight,3),np.uint8)
+ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
-matrix = np.loadtxt('matrix.txt',delimiter = ',')
+matrix = np.loadtxt('matrix3.txt',delimiter = ',')
 try:
+    cv2.namedWindow("combine2",cv2.WINDOW_NORMAL)
+    #cv2.namedWindow("combine",cv2.WINDOW_NORMAL)
     camera = picamera.PiCamera()
     camera.resolution = (640,480)
     camera.framerate = 40
@@ -124,18 +136,23 @@ try:
         img_capture()
         img_processing()
         #img_processing(tmp1,flir_val)
-        cv2.imshow("combine",img_combine)
+        #show = np.concatenate((img_combine,img_combine2),axis = 1)
+        #cv2.imshow("show",show)
+        #cv2.imshow("combine",img_combine)
+        cv2.imshow("combine2", img_combine2)
         cv2.waitKey(1)
         '''
         print("before thread")
         thread_img = threading.Thread(target = img_processing,args=(tmp1,flir_val,))
         thread_img.start()
         print("after thread")
+        
         if(refresh):
             refresh = False
-            cv2.imshow("combine",img_combine)
+            cv2.imshow("combine2",img_combine2)
             cv2.waitKey(1)
         '''
+        
         #cv2.imshow('flir',flir_img)
         #cv2.imshow('picamera',tmp)
         #cv2.waitKey(1)
