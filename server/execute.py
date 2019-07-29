@@ -11,7 +11,7 @@ import os
 inti_flag = -1
 connection_arr = list()
 connection_num = np.zeros(4)
-host = '192.168.68.100'
+host = '192.168.208.140'
 port = 8888
 
 image = []
@@ -229,13 +229,13 @@ def main():
         connection_arr.append(StructureConnection(0,"0"))
         i = i + 1
     
-    img_fireman = cv2.imread("../IMAGE/fireman.png")
+    img_fireman = cv2.imread("IMAGE/fireman.png")
     img_fireman = cv2.resize(img_fireman,(50,50))
 
-    image = cv2.imread("../IMAGE/1f.png")
-    image1 = cv2.imread("../IMAGE/1f.png")
-    image2 = cv2.imread("../IMAGE/1f.png")
-    image3 = cv2.imread("../IMAGE/1f.png")
+    image = cv2.imread("IMAGE/1f.png")
+    image1 = cv2.imread("IMAGE/1f.png")
+    image2 = cv2.imread("IMAGE/1f.png")
+    image3 = cv2.imread("IMAGE/1f.png")
     image = np.hstack((image,image1))
     image1 = np.hstack((image2,image3))
     image = np.vstack((image,image1))

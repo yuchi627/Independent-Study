@@ -10,7 +10,7 @@ from pylepton import Lepton
 import select
 import picamera.array
 
-HOST = '192.168.208.118'
+HOST = '192.168.68.196'
 PORT = 6667
 
 def capture(flip_v = False, device = "/dev/spidev0.0"):
@@ -94,7 +94,7 @@ img_combine = np.zeros((ir_height,ir_weight,3),np.uint8)
 img_combine2 = np.zeros((ir_height,ir_weight,3),np.uint8)
 ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
-matrix = np.loadtxt('matrix3.txt',delimiter = ',')
+matrix = np.loadtxt('matrix2.txt',delimiter = ',')
 try:
     #cv2.namedWindow("combine2",cv2.WINDOW_NORMAL)
     cv2.namedWindow("combine",cv2.WINDOW_NORMAL)

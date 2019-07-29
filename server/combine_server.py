@@ -12,8 +12,8 @@ import os
 
 ##### use "ifconfig" to find your ip
 #host = '192.168.208.126'
-host = '192.168.68.196'
-port = 6668
+host = '192.168.208.140'
+port = 8888
 
 window_name = 'Firefighter'
 ##### Default four element array
@@ -322,16 +322,20 @@ if __name__ == "__main__":
         connection_arr.append(StructureConnection(0,"0"))
         i = i + 1
     
-    img_fireman = cv2.imread("../IMAGE/fireman.png")
+    img_fireman = cv2.imread("IMAGE/fireman.png")
     img_fireman = cv2.resize(img_fireman,(50,50))
 
-    image = cv2.imread("../IMAGE/1f.png")
-    image1 = cv2.imread("../IMAGE/1f.png")
-    image2 = cv2.imread("../IMAGE/1f.png")
-    image3 = cv2.imread("../IMAGE/1f.png")
+    image = cv2.imread("IMAGE/1f.png")
+    '''
+    image1 = cv2.imread("IMAGE/1f.png")
+    image2 = cv2.imread("IMAGE/1f.png")
+    image3 = cv2.imread("IMAGE/1f.png")
     image = np.hstack((image,image1))
     image1 = np.hstack((image2,image3))
     image = np.vstack((image,image1))
+    '''
+    image = np.hstack((image,image))
+    image = np.vstack((image,image))
     
     cv2.namedWindow("Image",0)
     cv2.setWindowProperty("Image",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN )
