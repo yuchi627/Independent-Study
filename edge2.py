@@ -10,7 +10,7 @@ from pylepton import Lepton
 import select
 import picamera.array
 
-HOST = '192.168.208.118'
+HOST = '192.168.208.110'
 PORT = 6667
 
 def capture(flip_v = False, device = "/dev/spidev0.0"):

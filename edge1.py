@@ -10,7 +10,7 @@ from pylepton import Lepton
 import select
 import picamera.array
 
-HOST = '192.168.208.118'
+HOST = '192.168.208.117'
 PORT = 6667
 
 def capture(flip_v = False, device = "/dev/spidev0.0"):
@@ -28,6 +28,8 @@ def img_capture():
     global ir_img,flir_val,s,flir_img
     t0 = time.time()
     flir_img,flir_val = capture()
+
+
     #flir_val = capture()
     #print(flir_val)
     
@@ -69,7 +71,7 @@ def img_processing():
     flir_val =  cv2.resize(flir_val,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
     flir_val = np.dstack([flir_val]*3)
     dst = cv2.warpPerspective(flir_val,matrix,(ir_weight,ir_height))
-    #dst2 = cv2.warpPerspective(flir_img,matrix,(ir_weight,ir_height)) 
+    #dst2 = cv2.warpPerspective(flir_img,matrix,(ir_weight,ir_height))
     np.place(tmp,(dst>th_100),(0,0,255))    #red
     np.place(tmp,((dst>th_70) & (dst<=th_100)), (163,255,197))  #green
     img_combine = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
@@ -87,8 +89,8 @@ flir_height = 380   #flir_tmp.shape[0]
 flir_weight = 520   #flir_tmp.shape[1]
 move_y = 24
 move_x = 50
-th_70 = 7800        #8900
-th_100 = 7860       #9650
+th_70 = 0        #8900
+th_100 = 0       #9650
 refresh = False
 img_combine = np.zeros((ir_height,ir_weight,3),np.uint8)
 img_combine2 = np.zeros((ir_height,ir_weight,3),np.uint8)
@@ -105,6 +107,12 @@ try:
     s.send(("Nadine").ljust(16).encode())
     save_msg_count = 0
 
+    _, flir_val = capture()
+    val_min = np.min(flir_val)
+    diff = np.max(flir_val)-val_min
+    th_70 = diff * 0.6 + val_min
+    th_100 = diff * 0.8 + val_min
+    
     #pic_count = 0
     while True:
     #while(pic_count<100):
