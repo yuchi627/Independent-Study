@@ -186,7 +186,7 @@ def service_connection(key, mask):
             print(connection_arr[0].ip_addr)
             for i in connection_arr:
                 if(i.ip_addr == str(data.addr[0])):
-                    connection_num[i] = 0
+                    connection_num[i.id_num] = 0
             refresh_map = True
             # Close Connection 的時候取消 Object
             #--------------------------------------------------------------------#
@@ -288,6 +288,7 @@ def helpConditionExec(message,num):
             pass 
     else:
        pass
+    refresh_map = True
 
 def addNewPoint(event,x,y,flags,param):
     global inti_flag
@@ -350,7 +351,7 @@ if __name__ == "__main__":
     cv2.setMouseCallback("Image",addNewPoint)
     keep = image.copy()
 
-    cv2.imshow("Image",image)
+    #cv2.imshow("Image",image)
     
     ##### create a figure with subplot 2*5
     subplot_count = [0,1,2,3]
@@ -371,8 +372,8 @@ if __name__ == "__main__":
         sel.register(lsock, selectors.EVENT_READ, data=None)
         while True:
             #---------------------------------#
-            if(keyboard.is_pressed('i')):
-                show_info()
+            #if(keyboard.is_pressed('i')):
+            #    show_info()
             #---------------------------------#
             events = sel.select(timeout=None)
             for key, mask in events:
@@ -390,6 +391,7 @@ if __name__ == "__main__":
                         cv2.imshow(window_name,img_toshow)
                         cv2.waitKey(1)
                     if(refresh_map):
+                        print("show")
                         refresh_map = False
                         #-------------------------------------------------------------#
                         # to show image
