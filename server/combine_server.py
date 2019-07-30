@@ -383,25 +383,30 @@ if __name__ == "__main__":
                     accept_wrapper(key.fileobj)
                 else:
                     service_connection(key, mask)
-                    if(refresh_img):
-                        refresh_img = False
-                        ##### concate and plot image
-                        img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read()),axis=1)
-                        img_concate_Verti=np.concatenate((client_list[2].img_read(),client_list[3].img_read()),axis=1)
-                        img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
-                        img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
-                        cv2.imshow(window_name,img_toshow)
-                        cv2.waitKey(1)
-                    if(refresh_map):
-                        print("show")
-                        refresh_map = False
-                        #-------------------------------------------------------------#
-                        # to show image
-                        cv2.imshow("Image",image)
+                    if(refresh_img or refresh_map):
+                        if(refresh_img):
+                            refresh_img = False
+                            ##### concate and plot image
+                            img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read()),axis=1)
+                            img_concate_Verti=np.concatenate((client_list[2].img_read(),client_list[3].img_read()),axis=1)
+                            img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
+                            img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
+                            cv2.imshow(window_name,img_toshow)
+                            #cv2.waitKey(1)
+                        if(refresh_map):
+                            print("show")
+                            refresh_map = False
+                            #-------------------------------------------------------------#
+                            # to show image
+                            cv2.imshow("Image",image)
+                            '''
+                            if cv2.waitKey(1) & 0xFF == ord('q'):
+                                break
+                            '''
+                            # Show 我們的圖
+                            #-----------------------------------------------------------------#
                         if cv2.waitKey(1) & 0xFF == ord('q'):
                             break
-                        # Show 我們的圖
-                        #-----------------------------------------------------------------#
                     if(click_to_cancel):
                         set_namespace_color(click_client,(255,255,255),(0, 0, 0))
                         client_list[click_client].set_sos_flag(False)
