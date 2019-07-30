@@ -125,37 +125,37 @@ def service_connection(key, mask):
                 try:
                     ##### recv the img size
                     recv_data = sock.recv(16)
-                    package_num = recv_data.decode().strip()
+                    recv_data_msg = recv_data.decode().strip()
                     print('recv')
-                    print(package_num)
+                    print(recv_data_msg)
                     ##### recv the SOS message
-                    if("SOS" in package_num):
+                    if("SOS" in recv_data_msg):
                         print("SOS msg")
                         client_list[client_host].set_sos_flag(True)
                         ##### send message back to client
                         sock.send("I will save you".encode())
-                    elif("SIZE" in package_num):
+                    elif("SIZE" in recv_data_msg):
                         print("image size msg")
-                        client_list[client_host].package_set(int(package_num[4,:]))
+                        client_list[client_host].package_set(int(recv_data_msg[4,:]))
                     else:
                         #------------------------------------------------------------------#
-                        print("arduino msg:",package_num)
+                        print("arduino msg:",recv_data_msg)
                         for i in connection_arr:
                             if(i.ip_addr == str(data.addr[0])):
                                 i.time_pass = time.time() - init_time
                                 print(i.time_pass)
-                                if(package_num == "HELP"):
+                                if(recv_data_msg == "HELP"):
                                     helpConditionExec("HELP",i.id_num)
-                                elif(package_num == "HELP2"):
+                                elif(recv_data_msg == "HELP2"):
                                     helpConditionExec("HELP2",i.id_num)
-                                elif(package_num[0:4] == "num_"):
-                                    i.fire_num = package_num[4:len(package_num)]
+                                elif(recv_data_msg[0:4] == "num_"):
+                                    i.fire_num = recv_data_msg[4:len(recv_data_msg)]
                                     print(i.fire_num)
-                                elif(package_num[0:5] == "name_"):
-                                    i.fire_name = package_num[5:len(package_num)]
+                                elif(recv_data_msg[0:5] == "name_"):
+                                    i.fire_name = recv_data_msg[5:len(recv_data_msg)]
                                     print(i.fire_name)
                                 else:
-                                    drawNewSpot(package_num,i.id_num,img_fireman)                    
+                                    drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
                                 break
                             # Device 傳輸資料時, call 對應function
                         #--------------------------------------------------------------------#
