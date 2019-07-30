@@ -12,7 +12,8 @@ import os
 
 ##### use "ifconfig" to find your ip
 #host = '192.168.208.126'
-host = '192.168.208.140'
+#host = '192.168.208.102'
+host = '127.0.0.1'
 port = 8888
 
 window_name = 'Firefighter'
@@ -125,7 +126,7 @@ def service_connection(key, mask):
                     ##### recv the img size
                     recv_data = sock.recv(16)
                     package_num = recv_data.decode()
-
+                    print('recv')
                     #------------------------------------------------------------------#
                     if(("HELP" in package_num) or ("num_" in package_num) or ("name_" in package_num)):
                         for i in connection_arr:
@@ -233,6 +234,7 @@ def drawNewSpot(data,index,img_fireman):
             connection_arr[index].color_set = (0,139,0)
             connection_arr[index].addNewPosition("No Turn",float(data))
     refresh_map = True
+    print('refresh')
     for i in range(4):
         image[connection_arr[i].position_y-25 : connection_arr[i].position_y + 25 , connection_arr[i].position_x-25 : connection_arr[i].position_x + 25] = img_fireman
 
