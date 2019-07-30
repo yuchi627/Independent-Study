@@ -13,7 +13,7 @@ import os
 ##### use "ifconfig" to find your ip
 #host = '192.168.208.126'
 #host = '192.168.208.102'
-host = '127.0.0.1'
+host = '192.168.208.140'
 port = 8888
 
 window_name = 'Firefighter'
@@ -125,42 +125,45 @@ def service_connection(key, mask):
                 try:
                     ##### recv the img size
                     recv_data = sock.recv(16)
-                    package_num = recv_data.decode()
+                    package_num = recv_data.decode().strip()
                     print('recv')
-                    #------------------------------------------------------------------#
-                    if(("HELP" in package_num) or ("num_" in package_num) or ("name_" in package_num)):
+                    print(package_num)
+                    ##### recv the SOS message
+                    if("SOS" in package_num):
+                        print("SOS msg")
+                        client_list[client_host].set_sos_flag(True)
+                        ##### send message back to client
+                        sock.send("I will save you".encode())
+                    elif("SIZE" in package_num):
+                        print("image size msg")
+                        client_list[client_host].package_set(int(package_num[4,:]))
+                    else:
+                        #------------------------------------------------------------------#
+                        print("arduino msg:",package_num)
                         for i in connection_arr:
                             if(i.ip_addr == str(data.addr[0])):
                                 i.time_pass = time.time() - init_time
                                 print(i.time_pass)
-                                if(data.outb.decode() == "HELP"):
+                                if(package_num == "HELP"):
                                     helpConditionExec("HELP",i.id_num)
-                                elif(data.outb.decode() == "HELP2"):
+                                elif(package_num == "HELP2"):
                                     helpConditionExec("HELP2",i.id_num)
-                                elif(data.outb.decode()[0:4] == "num_"):
-                                    i.fire_num = data.outb.decode()[4:len(data.outb.decode())]
+                                elif(package_num[0:4] == "num_"):
+                                    i.fire_num = package_num[4:len(package_num)]
                                     print(i.fire_num)
-                                elif(data.outb.decode()[0:5] == "name_"):
-                                    i.fire_name = data.outb.decode()[5:len(data.outb.decode())]
+                                elif(package_num[0:5] == "name_"):
+                                    i.fire_name = package_num[5:len(package_num)]
                                     print(i.fire_name)
                                 else:
-                                    drawNewSpot(data.outb.decode(),i.id_num,img_fireman)                    
+                                    drawNewSpot(package_num,i.id_num,img_fireman)                    
                                 break
-                    # Device 傳輸資料時, call 對應function
-                    #--------------------------------------------------------------------#
-
-                    ##### recv the SOS message
-                    if("SOS" in package_num):
-                        #print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                        client_list[client_host].set_sos_flag(True)
-                        ##### send message back to client
-                        sock.send("I will save you".encode())
-                    else:
-                        client_list[client_host].package_set(int(package_num))
+                            # Device 傳輸資料時, call 對應function
+                        #--------------------------------------------------------------------#
                 except Exception as e:
                     print (e.args)
             else:
                 ##### recv the img
+                print("image msg")
                 recv_data = sock.recv(client_list[client_host].package_size())
                 ##### concatenate recv msg to img
                 client_list[client_host].img_combine(recv_data)
