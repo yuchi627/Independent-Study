@@ -126,7 +126,6 @@ def service_connection(key, mask):
                     ##### recv the img size
                     recv_data = sock.recv(16)
                     recv_data_msg = recv_data.decode()
-                    print('recv')
                     ##### recv the SOS message
                     if("SOS" in recv_data_msg):
                         print("SOS msg")
@@ -134,8 +133,8 @@ def service_connection(key, mask):
                         ##### send message back to client
                         sock.send("I will save you".encode())
                     elif("SIZE" in recv_data_msg):
-                        print("image size msg")
-                        client_list[client_host].package_set(int(recv_data_msg[4,:]))
+                        #print("image size msg")
+                        client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
                     else:
                         #------------------------------------------------------------------#
                         print("type=",type(recv_data_msg))
@@ -163,7 +162,7 @@ def service_connection(key, mask):
                     print (e.args)
             else:
                 ##### recv the img
-                print("image msg")
+                #print("image msg")
                 recv_data = sock.recv(client_list[client_host].package_size())
                 ##### concatenate recv msg to img
                 client_list[client_host].img_combine(recv_data)
