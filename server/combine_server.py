@@ -146,6 +146,7 @@ def service_connection(key, mask):
                                 if(recv_data_msg == "HELP"):
                                     helpConditionExec("HELP",i.id_num)
                                 elif(recv_data_msg == "HELP2"):
+                                    print("in help2")
                                     helpConditionExec("HELP2",i.id_num)
                                 elif(recv_data_msg[0:4] == "num_"):
                                     i.fire_num = recv_data_msg[4:len(recv_data_msg)]
