@@ -13,7 +13,7 @@ import os
 ##### use "ifconfig" to find your ip
 #host = '192.168.208.126'
 #host = '192.168.208.102'
-host = '127.0.0.1'
+host = '192.168.208.140'
 port = 8888
 
 window_name = 'Firefighter'
@@ -125,42 +125,45 @@ def service_connection(key, mask):
                 try:
                     ##### recv the img size
                     recv_data = sock.recv(16)
-                    package_num = recv_data.decode()
-                    print('recv')
-                    #------------------------------------------------------------------#
-                    if(("HELP" in package_num) or ("num_" in package_num) or ("name_" in package_num)):
-                        for i in connection_arr:
-                            if(i.ip_addr == str(data.addr[0])):
-                                i.time_pass = time.time() - init_time
-                                print(i.time_pass)
-                                if(data.outb.decode() == "HELP"):
-                                    helpConditionExec("HELP",i.id_num)
-                                elif(data.outb.decode() == "HELP2"):
-                                    helpConditionExec("HELP2",i.id_num)
-                                elif(data.outb.decode()[0:4] == "num_"):
-                                    i.fire_num = data.outb.decode()[4:len(data.outb.decode())]
-                                    print(i.fire_num)
-                                elif(data.outb.decode()[0:5] == "name_"):
-                                    i.fire_name = data.outb.decode()[5:len(data.outb.decode())]
-                                    print(i.fire_name)
-                                else:
-                                    drawNewSpot(data.outb.decode(),i.id_num,img_fireman)                    
-                                break
-                    # Device 傳輸資料時, call 對應function
-                    #--------------------------------------------------------------------#
-
+                    recv_data_msg = recv_data.decode()
                     ##### recv the SOS message
-                    if("SOS" in package_num):
-                        #print("Save him!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                    if("SOS" in recv_data_msg):
+                        print("SOS msg")
                         client_list[client_host].set_sos_flag(True)
                         ##### send message back to client
                         sock.send("I will save you".encode())
+                    elif("SIZE" in recv_data_msg):
+                        #print("image size msg")
+                        client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
                     else:
-                        client_list[client_host].package_set(int(package_num))
+                        #------------------------------------------------------------------#
+                        print("type=",type(recv_data_msg))
+                        print("{"+recv_data_msg+"}")
+                        for i in connection_arr:
+                            if(i.ip_addr == str(data.addr[0])):
+                                i.time_pass = time.time() - init_time
+                                #print(i.time_pass)
+                                if(recv_data_msg == "HELP"):
+                                    helpConditionExec("HELP",i.id_num)
+                                elif(recv_data_msg == "HELP2"):
+                                    print("in help2")
+                                    helpConditionExec("HELP2",i.id_num)
+                                elif(recv_data_msg[0:4] == "num_"):
+                                    i.fire_num = recv_data_msg[4:len(recv_data_msg)]
+                                    print(i.fire_num)
+                                elif(recv_data_msg[0:5] == "name_"):
+                                    i.fire_name = recv_data_msg[5:len(recv_data_msg)]
+                                    print(i.fire_name)
+                                else:
+                                    drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
+                                break
+                            # Device 傳輸資料時, call 對應function
+                        #--------------------------------------------------------------------#
                 except Exception as e:
                     print (e.args)
             else:
                 ##### recv the img
+                #print("image msg")
                 recv_data = sock.recv(client_list[client_host].package_size())
                 ##### concatenate recv msg to img
                 client_list[client_host].img_combine(recv_data)
@@ -187,7 +190,7 @@ def service_connection(key, mask):
             print(connection_arr[0].ip_addr)
             for i in connection_arr:
                 if(i.ip_addr == str(data.addr[0])):
-                    connection_num[i] = 0
+                    connection_num[i.id_num] = 0
             refresh_map = True
             # Close Connection 的時候取消 Object
             #--------------------------------------------------------------------#
@@ -374,9 +377,8 @@ if __name__ == "__main__":
         sel.register(lsock, selectors.EVENT_READ, data=None)
         while True:
             #---------------------------------#
-            if(keyboard.is_pressed('i')):
-                pass
-                #show_info()
+            #if(keyboard.is_pressed('i')):
+            #    show_info()
             #---------------------------------#
             events = sel.select(timeout=None)
             for key, mask in events:
@@ -384,24 +386,30 @@ if __name__ == "__main__":
                     accept_wrapper(key.fileobj)
                 else:
                     service_connection(key, mask)
-                    if(refresh_img):
-                        refresh_img = False
-                        ##### concate and plot image
-                        img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read()),axis=1)
-                        img_concate_Verti=np.concatenate((client_list[2].img_read(),client_list[3].img_read()),axis=1)
-                        img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
-                        img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
-                        cv2.imshow(window_name,img_toshow)
-                        cv2.waitKey(1)
-                    if(refresh_map):
-                        refresh_map = False
-                        #-------------------------------------------------------------#
-                        # to show image
-                        cv2.imshow("Image",image)
+                    if(refresh_img or refresh_map):
+                        if(refresh_img):
+                            refresh_img = False
+                            ##### concate and plot image
+                            img_concate_Hori=np.concatenate((client_list[0].img_read(),client_list[1].img_read()),axis=1)
+                            img_concate_Verti=np.concatenate((client_list[2].img_read(),client_list[3].img_read()),axis=1)
+                            img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
+                            img_toshow = cv2.resize(img_toshow,(resize_weight,resize_height),interpolation=cv2.INTER_CUBIC)
+                            cv2.imshow(window_name,img_toshow)
+                            #cv2.waitKey(1)
+                        if(refresh_map):
+                            print("show")
+                            refresh_map = False
+                            #-------------------------------------------------------------#
+                            # to show image
+                            cv2.imshow("Image",image)
+                            '''
+                            if cv2.waitKey(1) & 0xFF == ord('q'):
+                                break
+                            '''
+                            # Show 我們的圖
+                            #-----------------------------------------------------------------#
                         if cv2.waitKey(1) & 0xFF == ord('q'):
                             break
-                        # Show 我們的圖
-                        #-----------------------------------------------------------------#
                     if(click_to_cancel):
                         set_namespace_color(click_client,(255,255,255),(0, 0, 0))
                         client_list[click_client].set_sos_flag(False)
