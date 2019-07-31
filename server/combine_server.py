@@ -125,9 +125,8 @@ def service_connection(key, mask):
                 try:
                     ##### recv the img size
                     recv_data = sock.recv(16)
-                    recv_data_msg = recv_data.decode().strip()
+                    recv_data_msg = recv_data.decode()
                     print('recv')
-                    print(recv_data_msg)
                     ##### recv the SOS message
                     if("SOS" in recv_data_msg):
                         print("SOS msg")
@@ -139,11 +138,12 @@ def service_connection(key, mask):
                         client_list[client_host].package_set(int(recv_data_msg[4,:]))
                     else:
                         #------------------------------------------------------------------#
-                        print("arduino msg:",recv_data_msg)
+                        print("type=",type(recv_data_msg))
+                        print("{"+recv_data_msg+"}")
                         for i in connection_arr:
                             if(i.ip_addr == str(data.addr[0])):
                                 i.time_pass = time.time() - init_time
-                                print(i.time_pass)
+                                #print(i.time_pass)
                                 if(recv_data_msg == "HELP"):
                                     helpConditionExec("HELP",i.id_num)
                                 elif(recv_data_msg == "HELP2"):
