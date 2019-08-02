@@ -125,28 +125,33 @@ def service_connection(key, mask):
                 try:
                     ##### recv the img size
                     recv_data = sock.recv(16)
-                    recv_data_msg = recv_data.decode()
+                    recv_data_msg = recv_data.decode().strip()
+                    '''
                     ##### recv the SOS message
                     if("SOS" in recv_data_msg):
                         print("SOS msg")
                         client_list[client_host].set_sos_flag(True)
                         ##### send message back to client
                         sock.send("I will save you".encode())
-                    elif("SIZE" in recv_data_msg):
+                    '''
+                    if("SIZE" in recv_data_msg):
                         #print("image size msg")
                         client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
                     else:
                         #------------------------------------------------------------------#
-                        print("type=",type(recv_data_msg))
-                        print("{"+recv_data_msg+"}")
                         for i in connection_arr:
                             if(i.ip_addr == str(data.addr[0])):
                                 i.time_pass = time.time() - init_time
                                 #print(i.time_pass)
                                 if(recv_data_msg == "HELP"):
+                                    print("HELP1")
                                     helpConditionExec("HELP",i.id_num)
                                 elif(recv_data_msg == "HELP2"):
                                     print("in help2")
+                                    #print("SOS msg")
+                                    client_list[client_host].set_sos_flag(True)
+                                    ##### send message back to client
+                                    sock.send("I will save you".encode())
                                     helpConditionExec("HELP2",i.id_num)
                                 elif(recv_data_msg[0:4] == "num_"):
                                     i.fire_num = recv_data_msg[4:len(recv_data_msg)]
@@ -154,6 +159,8 @@ def service_connection(key, mask):
                                 elif(recv_data_msg[0:5] == "name_"):
                                     i.fire_name = recv_data_msg[5:len(recv_data_msg)]
                                     print(i.fire_name)
+                                elif(len(recv_data_msg) == 0):
+                                    pass
                                 else:
                                     drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
                                 break
@@ -162,6 +169,7 @@ def service_connection(key, mask):
                 except Exception as e:
                     print (e.args)
             else:
+                
                 ##### recv the img
                 #print("image msg")
                 recv_data = sock.recv(client_list[client_host].package_size())
@@ -181,7 +189,8 @@ def service_connection(key, mask):
                     elif (brush_background_ornot == 2):
                         ##### White background black font
                         set_namespace_color(client_host,(255,255,255),(0, 0, 0))
-                    
+                #except Exception as e:
+                #    print(e.args)
 
         if not recv_data:
             print('closing connection to', data.addr)
@@ -237,7 +246,7 @@ def drawNewSpot(data,index,img_fireman):
             connection_arr[index].color_set = (0,139,0)
             connection_arr[index].addNewPosition("No Turn",float(data))
     refresh_map = True
-    print('refresh')
+    #print('refresh')
     for i in range(4):
         image[connection_arr[i].position_y-25 : connection_arr[i].position_y + 25 , connection_arr[i].position_x-25 : connection_arr[i].position_x + 25] = img_fireman
 
@@ -397,7 +406,7 @@ if __name__ == "__main__":
                             cv2.imshow(window_name,img_toshow)
                             #cv2.waitKey(1)
                         if(refresh_map):
-                            print("show")
+                            #print("show")
                             refresh_map = False
                             #-------------------------------------------------------------#
                             # to show image
