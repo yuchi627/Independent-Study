@@ -95,29 +95,7 @@ def flir_capture(q_val,q_img,flip_v = False, device = "/dev/spidev0.0"):
                 #l.release()
             except Exception as e:
                 print(e) 
-'''
-def flir_capture(q_val,q_img):
-    while(1):
-        try:
-            t = time.time()
-            flir_img,flir_val = capture()
-            if  q_img.full():
-                continue
-            #l.acquire()
-            
-            #while not q_val.empty():
-            #    q_val.get()
-            #    q_img.get()
-            
-            q_val.put(flir_val,False)
-            q_img.put(flir_img,False)
-            t1 = time.time()
-            print("flir",t1-t)
-            #l.release()
-        except Exception as e:
-            print(e)
 
-'''
 def img_processing(flir_val,ir):
     '''
     ir_height = 480
@@ -144,7 +122,6 @@ def img_processing(flir_val,ir):
         t2 = time.time()
     '''
     tmp = ir.copy()
-    cv2.imshow("2",tmp)
     flir_val = cv2.resize(flir_val,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
     flir_val = np.dstack([flir_val]*3)
     t3 = time.time()
@@ -172,16 +149,6 @@ if __name__=='__main__':
     save_msg_count = 0
 
     try:
-        '''
-        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        s.connect((HOST,PORT))
-        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),20]
-        s.send(("Client1").ljust(16).encode())
-        
-        camera = picamera.PiCamera()
-        camera.resolution = (640,480)
-        camera.framerate = 20
-        '''
         #l = mp.Lock()
         l2 = mp.Lock()
         q_val = Manager().Queue()
