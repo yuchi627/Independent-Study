@@ -9,9 +9,11 @@ import subprocess
 from pylepton import Lepton
 import select
 import picamera.array
-
+import serial
 HOST = '192.168.208.140'
 PORT = 8888
+
+ser = serial.Serial('/dev/ttyACM0', 9600, timeout = 0.001)
 
 def img_capture(l):
     global ir_img,flir_val,s,flir_img
@@ -62,8 +64,6 @@ def img_processing():
     np.place(tmp,(dst>th_100),(0,0,255))    #red
     np.place(tmp,((dst>th_70) & (dst<=th_100)), (163,255,197))  #green
     img_combine = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
-    #img_combine2 = cv2.addWeighted(ir_img,0.5,dst2,0.5,0)
-
 
 count = 0
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -84,6 +84,8 @@ img_combine2 = np.zeros((ir_height,ir_weight,3),np.uint8)
 ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
 matrix = np.loadtxt('matrix2.txt',delimiter = ',')
+request_flag = 0
+
 try:
     #cv2.namedWindow("combine2",cv2.WINDOW_NORMAL)
     cv2.namedWindow("combine",cv2.WINDOW_NORMAL)
@@ -109,21 +111,51 @@ try:
 
         while True:
             t0 = time.time()
+            
+
+            ######## flir capture ########
             a,_ = l.capture()
             b = np.copy(a)
-
             cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
             np.right_shift(a, 8, a)
             flir_img = np.uint8(a)
             flir_val = np.uint16(b)
-                        #print("flir",t1-t0)
+            ######## ir capture ############
             ir_img = np.empty((480,640,3),dtype = np.uint8)
             camera.capture(ir_img,'bgr',use_video_port = True)
+
+            img_processing()
+
+            ####### recv message from arduino ###########
+            response = ser.read(16)
+            decode_response = bytes.decode(response)
+            if(decode_response.strip() == 'HELP'): ########5s
+                print('HELP1')
+                cv2.putText(img_combine, "Move", (20,250), cv2.FONT_HERSHEY_COMPLEX, 6, (255,255,255), 25)
+            elif(decode_response.strip() == 'HELP2'):  #######10s
+                print('HELP2')
+                if(request_flag == -1):
+                    cv2.putText(img_combine, "Got it", (20,250), cv2.FONT_HERSHEY_COMPLEX, 4, (255,255,255), 25)
+                else:
+                    request_flag = 1
+            else:
+                request_flag = 0
+            ######## encode message ############
+            encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+            result, imgencode = cv2.imencode('.jpg',ir_img,encode_param)
+            data = np.array(imgencode)
+            stringData = data.tostring()
             try:
-                encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
-                result, imgencode = cv2.imencode('.jpg',ir_img,encode_param)
-                data = np.array(imgencode)
-                stringData = data.tostring()
+                if(request_flag == 1):
+                    ready = select.select([s], [], [], 0.05)
+                    if(ready[0]):
+                        recv_data = s.recv(20)
+                        if("I will save you" in recv_data.decode()):
+                            print("I will save you")
+                            cv2.putText(img_combine, "Got it", (20,250), cv2.FONT_HERSHEY_COMPLEX, 4, (255,255,255), 25)
+                            request_flag = -1
+                if(len(response) == 16):
+                    s.send(response)
                 s.send(("SIZE"+str(len(stringData))).ljust(16).encode())
                 s.send(stringData)
             except:
@@ -135,10 +167,6 @@ try:
                     s.send(("Nadine").ljust(16).encode())
                 except:
                     pass
-            #img_capture(l)
-            img_processing()
-            t2 = time.time()
-            #print("process: ",t2-t1)
 
             cv2.imshow("combine",img_combine)
             cv2.waitKey(1)
