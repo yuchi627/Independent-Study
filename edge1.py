@@ -12,22 +12,7 @@ import picamera.array
 
 HOST = '192.168.208.140'
 PORT = 8888
-'''
-def capture(flip_v = False, device = "/dev/spidev0.0"):
 
-    with Lepton(device) as l:
-        a,_ = l.capture()
-        b = np.copy(a)
-    if flip_v:
-        cv2.flip(a,0,a)
-    a,_ = l.capture()
-    b = np.copy(a)
-
-    cv2.normalize(a, a, 0, 65535, cv2.NORM_MINMAX)
-    np.right_shift(a, 8, a)
-    return np.uint8(a), np.uint16(b)
-    #return np.uint16(a)
-'''
 def img_capture(l):
     global ir_img,flir_val,s,flir_img
     t0 = time.time()
@@ -39,24 +24,10 @@ def img_capture(l):
     flir_img = np.uint8(a)
     flir_val = np.uint16(b)
 
-    #flir_img,flir_val = capture()
-
-
-    #flir_val = capture()
-    #print(flir_val)
     
     t1 = time.time()
     ir_img = np.empty((480,640,3),dtype = np.uint8)
-    camera.capture(ir_img,'bgr',use_video_port = True)
-    '''
-    camera.capture("ir2.jpg",use_video_port = True)
-    tmp1 = cv2.imread('ir2.jpg')
-    flir_img = cv2.applyColorMap(flir_img,cv2.COLORMAP_JET)
-    cv2.imwrite("flir2.jpg",flir_img)
-    t2 = time.time()
-    '''
-    #print("flir_time = ",t1-t0)
-    #print("ir_time = ",t2-t1)
+
     try:
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
         result, imgencode = cv2.imencode('.jpg',ir_img,encode_param)
@@ -122,13 +93,7 @@ try:
     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),20]
     s.send(("Nadine").ljust(16).encode())
     save_msg_count = 0
-    '''
-    _, flir_val = capture()
-    val_min = np.min(flir_val)
-    diff = np.max(flir_val)-val_min
-    th_70 = diff * 0.6 + val_min
-    th_100 = diff * 0.8 + val_min
-    '''
+
     device = "/dev/spidev0.0"
     with Lepton(device) as l:
         a,_ = l.capture()
