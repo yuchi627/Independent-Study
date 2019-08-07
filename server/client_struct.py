@@ -78,6 +78,13 @@ class client:
         return return_img
 
     def img_decode(self):
+        '''
+        data = np.fromstring(self.binary_img, dtype = 'uint8')
+        data = cv2.imdecode(data,1)
+        self.binary_img = b''
+        self.img = np.reshape(data,(height,weight,3))
+        self.img = np.concatenate((self.namespace_img,self.img),axis=0)
+        '''
         ##### decode the string and turn to 2 dimension array
         try:
             data = np.fromstring(self.binary_img, dtype = 'uint8')
@@ -85,6 +92,8 @@ class client:
             self.binary_img = b''
             self.img = np.reshape(data,(height,weight,3))
             self.img = np.concatenate((self.namespace_img,self.img),axis=0)
-        except:
+        except Exception as e:
+            print(e.args)
             self.img = white_img
+        
 
