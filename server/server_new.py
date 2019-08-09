@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### use "ifconfig" to find your ip
-host = '192.168.68.100'
+host = '192.168.208.126'
 port = 8888
 
 window_name = 'Firefighter' # image_window_name
@@ -59,7 +59,7 @@ def emergency_cancel(event, x, y, flags, param):
             click_to_cancel = False           
 
 def accept_wrapper(sock):
-    global connection_num, inti_flag
+    global connection_num, inti_flag,refresh_map
     conn, addr = sock.accept()  # Should be ready to read
     print('accepted connection from', addr)
     
@@ -76,6 +76,7 @@ def accept_wrapper(sock):
     subplot_count.remove(min_num)
     
     #--------------------------------------------------------------#
+    refresh_map = True
     i = 0                                                             
     while(i<4):
         if(connection_num[i] == 0):
@@ -298,8 +299,8 @@ def helpConditionExec(message,num):
 
 def addNewPoint(event,x,y,flags,param):
     global inti_flag
-    global client_list
-
+    global client_list, refresh_map
+    refresh_map = True
     if inti_flag != -1 and event == cv2.EVENT_LBUTTONDOWN:
         if client_list[inti_flag].position_x ==25 and client_list[inti_flag].position_y == 25:
             client_list[inti_flag].position_x = x
