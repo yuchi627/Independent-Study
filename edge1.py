@@ -127,7 +127,7 @@ try:
             img_processing()
 
             ####### recv message from arduino ###########
-            response = ser.read(16)
+'''            response = ser.read(16)
             decode_response = bytes.decode(response)
             if(decode_response.strip() == 'HELP'): ########5s
                 print('HELP1')
@@ -140,6 +140,7 @@ try:
                     request_flag = 1
             else:
                 request_flag = 0
+'''
             ######## encode message ############
             encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
             result, imgencode = cv2.imencode('.jpg',ir_img,encode_param)

@@ -20,11 +20,29 @@ class client:
     sos_flag = False
     twinkling = False
     name = "name"
+# ---------------------------------------------#
+    color_set = (0,0,0) # 紅綠燈的燈號
+    fire_num = ""
+    fire_name = ""
+    time_pass = 0
+    id_num = 0 # 顯示在Map的數字
+    ip_addr = "" # 裝置ip
+    position_x = 25 # 裝置在Map的位置(x)
+    position_y = 25 # 裝置在Map的位置(y)
+    direction = -1 # 裝置方向
+    dist_save = 0 # 距離暫存
+    bes_data_list = []
+    gyro_list = []
+#------------------------------------------------#
     def __init__(self):
         self.visible = True
         self.namespace_img = namespace_whiteimg
         self.first = True
-        #self.num = mynum
+
+    def set_info(self,num,ip_position):
+        self.id_num = num
+        self.ip_addr = ip_position
+        self.color_set = (0,255,0)
 
     def namespace_imgset(self,my_namespace_img):
         self.namespace_img = my_namespace_img
@@ -78,6 +96,13 @@ class client:
         return return_img
 
     def img_decode(self):
+        '''
+        data = np.fromstring(self.binary_img, dtype = 'uint8')
+        data = cv2.imdecode(data,1)
+        self.binary_img = b''
+        self.img = np.reshape(data,(height,weight,3))
+        self.img = np.concatenate((self.namespace_img,self.img),axis=0)
+        '''
         ##### decode the string and turn to 2 dimension array
         try:
             data = np.fromstring(self.binary_img, dtype = 'uint8')
@@ -85,6 +110,48 @@ class client:
             self.binary_img = b''
             self.img = np.reshape(data,(height,weight,3))
             self.img = np.concatenate((self.namespace_img,self.img),axis=0)
-        except:
+        except Exception as e:
+            print(e.args)
             self.img = white_img
+        
+
+    def addNewPosition(self,direct,dist): # 我們的function
+        if self.direction != -1:
+# change direction        
+            if direct == "Right":
+                self.dist_save = 0
+                self.direction += 90
+                if self.direction >= 360:
+                    self.direction -= 360
+            elif direct == "Left":
+                self.dist_save = 0
+                self.direction -= 90
+                if self.direction < 0:
+                    self.direction += 360
+            elif direct == "No Turn" or direct == "":
+                pass #no direction changes
+            else:
+                pass
+                #print(direct)
+#change distance
+            #print(self.direction)
+            dist = dist + self.dist_save # avoid error
+            dist_cm = dist*100 # change meter to centimeter
+            if dist_cm < 70:
+                self.dist_save = self.dist_save + dist
+            else:
+                self.dist_save = 0
+                map_cm = dist_cm/228.69 # change the billy ruler
+                pixel_num = int(map_cm*100/1.5) # change to pixel
+                #print("pixel_num: "+str(pixel_num))
+                if self.direction == 0:
+                    self.position_y -= pixel_num
+                elif self.direction == 90:
+                    self.position_x += pixel_num
+                elif self.direction == 180:
+                    self.position_y += pixel_num
+                elif self.direction == 270:
+                    self.position_x -= pixel_num
+                else:
+                    pass
 
