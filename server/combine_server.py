@@ -13,7 +13,7 @@ import os
 ##### use "ifconfig" to find your ip
 #host = '192.168.208.126'
 #host = '192.168.208.102'
-host = '192.168.208.140'
+host = '192.168.208.164'
 port = 8888
 
 window_name = 'Firefighter'

@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### use "ifconfig" to find your ip
-host = '192.168.208.126'
+host = '192.168.208.164'
 port = 8888
 
 window_name = 'Firefighter' # image_window_name
@@ -35,7 +35,7 @@ middle_x = 1170
 middle_y = 700
 init_time = 0
 fireman_image_path = "../IMAGE/fireman.png"
-environment_image_path = "../IMAGE/1f.png"
+environment_image_path = "../IMAGE/5f.png"
 
 def emergency_cancel(event, x, y, flags, param):
     global click_to_cancel,click_client
@@ -235,10 +235,11 @@ def drawNewSpot(data,index,img_fireman):
         client_list[index].color_set = (0,139,0)
         client_list[index].addNewPosition("Right",0)
     else:
-        client_list[index].color_set = (0,139,0)
+       	client_list[index].color_set = (0,139,0)
         client_list[index].addNewPosition("No Turn",float(data))
     refresh_map = True
     #print('refresh')
+    # Update little man's position on the map
     for i in range(4):
         image[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
 
@@ -323,6 +324,9 @@ def addNewPoint(event,x,y,flags,param):
 
 def show_info():
     os.system("sudo python3 show_info.py")    
+
+def count_hot(img):
+	print(len(np.where(img==(0,0,255))))
 
 if __name__ == "__main__":
     img_fireman = []
