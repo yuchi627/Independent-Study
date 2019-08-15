@@ -7,7 +7,7 @@ import socket
 import math
 from scikit import compare_ssim
 
-HOST = '192.168.68.196'
+HOST = '192.168.208.112'
 PORT = 6667
 height = 240
 weight = 320

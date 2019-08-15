@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### use "ifconfig" to find your ip
-host = '192.168.208.126'
+host = '127.0.0.1'
 port = 8888
 
 window_name = 'Firefighter' # image_window_name
@@ -367,7 +367,7 @@ if __name__ == "__main__":
     ##### create a figure with subplot 2*5
     subplot_count = [0,1,2,3]
     cv2.namedWindow(window_name,cv2.WINDOW_NORMAL)
-    cv2.setMouseCallback(window_name, emergency_cancel)
+    #cv2.setMouseCallback(window_name, emergency_cancel)
     cv2.moveWindow(window_name, 20,20)  # Move it to (40,30)
     ##### create a dictionary
     client_dict = {"client":1}
