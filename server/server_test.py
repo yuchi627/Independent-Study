@@ -127,7 +127,7 @@ def service_connection(key, mask):
                     if("IR_S" in recv_data_msg):
                         print("ir image size msg")
                         client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]),1)
-                    elif("flir" in recv_data_msg):
+                    elif("FLIR" in recv_data_msg):
                         print("flir image size msg")
                         client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]),2)
                     elif("TH70" in recv_data_msg):
@@ -164,17 +164,18 @@ def service_connection(key, mask):
                 except Exception as e:
                     print (e.args)
             else:
-                ##### recv the img
+                ##### recv the img #########
+                #print("recv img")	
                 recv_data = sock.recv(client_list[client_host].package_size())
-                ##### concatenate recv msg to img
+                ##### concatenate recv msg to img ############33
                 client_list[client_host].img_combine(recv_data)
                 client_list[client_host].package_decrease(len(recv_data))
                 if(client_list[client_host].package_size() <= 0):
-                    ##### img recv complete
+                    #print("decode")
+                    ##### img recv complete #############
                     send_flag = client_list[client_host].img_decode()
                     if(send_flag):
                         try:
-                            print("send image to client")
                             combine = client_list[client_host].combine_img_read()
                             _,encode = cv2.imencode('.jpg', combine, encode_param)
                             data_combine = np.array(encode)
