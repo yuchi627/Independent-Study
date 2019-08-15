@@ -12,7 +12,8 @@ import smbus
 import multiprocessing as mp
 import time
 #import serial
-HOST = '172.20.10.2'
+#HOST = '172.20.10.2'
+HOST= "127.0.0.1"
 PORT = 8888
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -52,9 +53,9 @@ try:
 		th_100 = diff * 0.8 + val_min
 		s.send(("TH70"+str(th_70)).ljust(16).encode())
 		s.send(("TH100"+str(th_100)).ljust(16).encode())
-		while (count_img<5):
-			count_img += 1
-		#while True:
+		#while (count_img<20):
+		#	count_img += 1
+		while True:
             ######## flir capture ########
 			a,_ = l.capture()
 			b = np.copy(a)
@@ -79,11 +80,13 @@ try:
 				####### send flir image to server #########
 				s.send(("flir"+str(len(flir_val))).ljust(16).encode())
 				s.send(flir_val)
-				ready = select.select([s],[],[],0.05)
+				ready = select.select([s],[],[],0.5)
 				if(ready[0]):
-					print("recv")
-					data = s.recv(16).strip('\x00')
+					#print("recv")
+					data = s.recv(16)
+					#print("data=",data)
 					size = int(data.decode().strip())
+					#print(size)
 					data = s.recv(size)
 					data = np.fromstring(data,dtype = 'uint8')
 					data = cv2.imdecode(data,1)
