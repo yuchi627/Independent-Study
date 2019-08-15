@@ -46,7 +46,7 @@ def emergency_cancel(event, x, y, flags, param):
         click_to_cancel = True
         if((x<=x_bound) and (y<= y_bound)):
             ##### client[0]
-            click_client = 0
+                click_client = 0
         elif((x>=x_bound) and (y<= y_bound)):
             ##### client[1]
             click_client = 1
@@ -63,7 +63,6 @@ def accept_wrapper(sock):
     global connection_num, inti_flag,refresh_map
     conn, addr = sock.accept()  # Should be ready to read
     print('accepted connection from', addr)
-    
     conn.setblocking(False)
     data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
     events = selectors.EVENT_READ | selectors.EVENT_WRITE
@@ -89,12 +88,11 @@ def accept_wrapper(sock):
     # add new connection
     # 創造一個新的Object給Device
 #--------------------------------------------------------------------#
-    
+    '''
     print("Client: ")
     print("\tnum: ",client_list[i].id_num)
     print("\tip_addr: ",client_list[i].ip_addr)
-    
-
+    '''    
 def set_namespace_color(client_index,background_color,font_color):
     namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
     namespace_whiteimg[:,:] = background_color
@@ -104,7 +102,6 @@ def set_namespace_color(client_index,background_color,font_color):
 
 def service_connection(key, mask):
     global connection_num, image, init_time
-
     sock = key.fileobj
     data = key.data
     if mask & selectors.EVENT_READ:
@@ -139,6 +136,8 @@ def service_connection(key, mask):
                     elif("TH100" in recv_data_msg):
                         print("TH100 msg")
                         client_list[client_host].set_th100(float(recv_data_msg[5:len(recv_data_msg)]))
+                    elif(len(recv_data_msg) == 0):
+                        pass
                     else:
                         #------------------------------------------------------------------#
                         for i in client_list:
@@ -157,7 +156,7 @@ def service_connection(key, mask):
                                     i.fire_num = recv_data_msg[4:len(recv_data_msg)]
                                     #print(i.fire_num)
                                 else:
-                                    #print(recv_data_msg)
+                                    #print("msg=",recv_data_msg)
                                     drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
                                 break
                             # Device 傳輸資料時, call 對應function
@@ -175,12 +174,13 @@ def service_connection(key, mask):
                     send_flag = client_list[client_host].img_decode()
                     if(send_flag):
                         try:
+                            print("send image to client")
                             combine = client_list[client_host].combine_img_read()
                             _,encode = cv2.imencode('.jpg', combine, encode_param)
                             data_combine = np.array(encode)
                             stringData = data_combine.tostring()
-                            #sock.send(str(len(stringData)).ljust(16).encode())
-                            #sock.send(stringData)
+                            sock.send(str(len(stringData)).ljust(16).encode())
+                            sock.send(stringData)
                         except:
                             pass
                     client_list[client_host].package_set(-1,0)
