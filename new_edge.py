@@ -40,6 +40,7 @@ ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
 data = b''
+matrix = np.loadtxt('matrix4.txt',delimiter = ',')
 try:
 	cv2.namedWindow("combine",cv2.WND_PROP_FULLSCREEN)
 	#cv2.setWindowProperty("combine",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
