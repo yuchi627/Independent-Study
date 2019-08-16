@@ -9,9 +9,9 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.68.100'
+host = '172.20.10.4'
 #host = '192.168.208.108'
-port = 6667
+port = 6666
 
 ##### windows defined
 img_window_name = 'Firefighter' # image_window_name
@@ -140,12 +140,12 @@ def service_connection(key, mask):
                                 i.time_pass = time.time() - init_time
                                 #print(i.time_pass)
                                 if("HELP2" in recv_data_msg):
-                                    #print("HELP2")
+                                    print("HELP2")
                                     helpConditionExec("HELP2",i.id_num)
                                     client_list[client_host].set_sos_flag(True)
                                     sock.send("I will save you".encode())
                                 elif("HELP" in recv_data_msg):
-                                    #print("HELP")
+                                    print("HELP")
                                     helpConditionExec("HELP",i.id_num)
                                 elif("num" in recv_data_msg):
                                     i.fire_num = recv_data_msg[4:len(recv_data_msg)]
@@ -388,8 +388,8 @@ if __name__ == "__main__":
         print("Waiting For Connection...")
         while True:
             #---------------------------------#
-            if(keyboard.is_pressed('i')):
-                show_info()
+            #if(keyboard.is_pressed('i')):
+            #    show_info()
             #---------------------------------#
             events = sel.select(timeout=None)
             for key, mask in events:
