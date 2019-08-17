@@ -11,8 +11,8 @@ import picamera.array
 #import smbus
 import time
 #import serial
-HOST = '172.20.10.3'
-#HOST= "127.0.0.1"
+#HOST = '192.168.43.84'
+HOST= "127.0.0.1"
 PORT = 8888
 
 def img_processing(ir_img,flir_val):
@@ -22,13 +22,13 @@ def img_processing(ir_img,flir_val):
 	dst = cv2.warpPerspective(flir_val,matrix,(ir_weight,ir_height))
 	np.place(tmp,(dst > th_100),(0,0,255))
 	np.place(tmp,((dst > th_70)&(dst <= th_100)),(163,255,197))
-	return cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
+	add = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
+	return cv2.warpAffine(add, M, (ir_weight,ir_height))
 
 
 
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((HOST,PORT))
+#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#s.connect((HOST,PORT))
 ir_height = 480 #tmp1.shape[0]
 ir_weight = 640 #tmp1.shape[1]
 flir_height = 380   #flir_tmp.shape[0]
@@ -40,14 +40,15 @@ ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
 data = b''
-matrix = np.loadtxt('matrix4.txt',delimiter = ',')
+matrix = np.loadtxt('matrix6.txt',delimiter = ',')
+M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 try:
 	cv2.namedWindow("combine",cv2.WND_PROP_FULLSCREEN)
 	#cv2.setWindowProperty("combine",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 	camera = picamera.PiCamera()
 	camera.resolution = (640,480)
 	camera.framerate = 40
-	s.send(("Nadine").ljust(16).encode())
+	#s.send(("Nadine").ljust(16).encode())
 	device = "/dev/spidev0.0"
 	with Lepton(device) as l:
 		a,_ = l.capture()
@@ -56,8 +57,8 @@ try:
 		diff = np.max(flir_val)-val_min
 		th_70 = diff * 0.6 + val_min
 		th_100 = diff * 0.8 + val_min
-		s.send(("TH70"+str(th_70)).ljust(16).encode())
-		s.send(("TH100"+str(th_100)).ljust(16).encode())
+		#s.send(("TH70"+str(th_70)).ljust(16).encode())
+		#s.send(("TH100"+str(th_100)).ljust(16).encode())
 		count_img = 0
 		#while (count_img<20):
 		#	count_img += 1
@@ -125,7 +126,7 @@ try:
 				except Exception as e:
 					img_combine = img_processing(ir_img,flir_val)
 					data = b''
-					print(e.args)
+					#print(e.args)
 					
 			except:
 				print("reconnecting server")
@@ -138,6 +139,7 @@ try:
 					s.send(("TH100"+str(th_100)).ljust(16).encode())
 				except:
 					pass
+			cv2.putText(img_combine,"Close to danger area",(10,30),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),3)
 			cv2.imshow("combine",img_combine)
 			cv2.waitKey(1)
 			t1 = time.time()
