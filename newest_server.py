@@ -9,9 +9,9 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.208.228'
+host = '192.168.43.84'
 #host = '192.168.208.108'
-port = 8888
+port = 6666
 
 ##### windows defined
 img_window_name = 'Firefighter' # image_window_name
@@ -19,7 +19,7 @@ map_window_name = 'Map'
 info_window_name = 'Info'
 
 ##### Default four element array
-client_list = [client(),client(),client(),client()]
+client_list = [client(0),client(1),client(2),client(3)]
 resize_height = 480+200
 resize_weight = 640+600
 name_space_height = 50
@@ -77,7 +77,7 @@ def accept_wrapper(sock):
     ##### create an client object an put into dictionary with it's address
     min_num = min(subplot_count)
     ##### create an white img with client name
-    client_list[min_num]=client()
+    client_list[min_num]=client(min_num)
     client_dict[str(addr[1])] = min_num
     ##### number remove from list subplot_count
     subplot_count.remove(min_num)
@@ -128,6 +128,37 @@ def service_connection(key, mask):
             
         else:
             if(client_list[client_host].package_size() < 0):
+                recv_data = sock.recv(16)
+                recv_data_msg = recv_data.decode().strip()
+                if("SIZE" in recv_data_msg):
+                    #print("image size msg")
+                    client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
+                else:
+                    #------------------------------------------------------------------#
+                    for i in client_list:
+                        if(i.ip_addr == str(data.addr[0])):
+                            i.time_pass = time.time() - init_time
+                            #print(i.time_pass)
+                            if("HELP2" in recv_data_msg):
+                                #print("HELP2")
+                                helpConditionExec("HELP2",i.id_num)
+                                client_list[client_host].set_sos_flag(True)
+                                sock.send("I will save you".encode())
+                            elif("HELP" in recv_data_msg):
+                                #print("HELP")
+                                helpConditionExec("HELP",i.id_num)
+                            elif("num" in recv_data_msg):
+                                i.fire_num = recv_data_msg[4:len(recv_data_msg)]
+                                #print(i.fire_num)
+                            elif('HOT' in recv_data_msg):
+                                print('HOT')
+                                client_list[client_host].set_hot_flag(True)
+                            else:
+                                print(recv_data_msg)
+                                drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
+                            break
+				
+                '''
                 try:
                     ##### recv the img size
                     recv_data = sock.recv(16)
@@ -156,13 +187,14 @@ def service_connection(key, mask):
                                     print('HOT')
                                     client_list[client_host].set_hot_flag(True)
                                 else:
-                                    #print(recv_data_msg)
+                                    print(recv_data_msg)
                                     drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
                                 break
                             # Device 傳輸資料時, call 對應function
                         #--------------------------------------------------------------------#
                 except Exception as e:
                     print (e.args)
+                '''
             else:
                 ##### recv the img
                 #print("image msg")
@@ -205,9 +237,9 @@ def service_connection(key, mask):
             sock.close()
 
  #######    # running handling
-def drawNewSpot(data,index,img_fireman):
+def drawNewSpot(data,index, img_fireman):
     global client_list, keep, image, inti_flag, refresh_map, hot_mask, keep_hot
-
+	
     image = keep.copy()
     if(index == 0):
         cv2.line(image,(5,5),(middle_x,5),(0,139,0),10,6)
@@ -264,26 +296,16 @@ def drawNewSpot(data,index,img_fireman):
         client_list[index].addNewPosition("No Turn",float(data))
     refresh_map = True
     #print('refresh')
-    for i in range(4):
-        image[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
-        mark_hot(hot_mask, i, client_list[i].last_y-25, client_list[i].last_y+25, client_list[i].last_x-25, client_list[i].last_x+25, keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25])
-        #hot_mask[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25] = keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25]
-        
-        if(client_list[i].hot_flag):
-            #hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = (0,0,255)	
-            mark_hot(hot_mask, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, (0,0,255))
-            client_list[i].set_hot_flag(False)
-            keep_hot = hot_mask.copy()
-        else:
-            #mark_hot(hot_mask, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, img_fireman)
-            mark_hot(keep_hot, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, keep[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25]) 	 
-            hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
-            #keep_hot[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = keep[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] 
-        client_list[i].last_x = client_list[i].position_x
-        client_list[i].last_y = client_list[i].position_y
+    draw_layer()
+    #for i in range(4):
+        #print(client_list[i].position_y, client_list[i].position_x)
+        #image[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
+        #client_list[i].last_x = client_list[i].position_x
+        #client_list[i].last_y = client_list[i].position_y
 
 def helpConditionExec(message,num):
     global image,refresh_map
+    drawNewSpot('0.0',num, img_fireman)
     if("HELP2" in message):
         #print(num)
         client_list[num].color_set = (0,0,255)
@@ -377,6 +399,7 @@ def addNewPoint(event,x,y,flags,param):
 
     if inti_flag != -1 and event == cv2.EVENT_LBUTTONDOWN:
         if client_list[inti_flag].position_x ==25 and client_list[inti_flag].position_y == 25:
+            print('mouse: ',x, ' ',y)
             client_list[inti_flag].position_x = x
             client_list[inti_flag].position_y = y 
         else:
@@ -395,7 +418,8 @@ def addNewPoint(event,x,y,flags,param):
             #print ("dir: ",client_list[inti_flag].direction)
             inti_flag = -1
 
-def mark_hot(dst, num, y0, y1, x0, x1, roi):
+
+def replace_roi(dst, num, y0, y1, x0, x1, roi):
     hot_mask[y0 : y1 , x0 : x1] = roi
     if(num==0):
         next_y0 = y0 + map_height
@@ -434,6 +458,33 @@ def mark_hot(dst, num, y0, y1, x0, x1, roi):
         dst[last_y0 : last_y1 , x0 : x1] = roi
         dst[last_y0 : last_y1 , last_x0 : last_x1] = roi
 
+def draw_layer():
+    global image, hot_mask, keep_hot, img_fireman
+    #temp = np.zeros((50,50,3),np.uint8)
+    alpha_s = img_fireman[:,:,3] / 255.0
+    alpha_l = 1.0 - alpha_s
+    for i in range(4):
+        x_offset = client_list[i].position_x-25
+        y_offset = client_list[i].position_y-25
+        x2 = img_fireman.shape[1] + x_offset
+        y2 = img_fireman.shape[0] + y_offset
+        for c in range(3):
+            image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
+        replace_roi(hot_mask, i, client_list[i].last_y-25, client_list[i].last_y+25, client_list[i].last_x-25, client_list[i].last_x+25, keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25])
+        
+        if(client_list[i].hot_flag):
+            replace_roi(hot_mask, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, (0,0,255))
+            client_list[i].set_hot_flag(False)
+            keep_hot = hot_mask.copy()
+        else:
+            replace_roi(keep_hot, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, keep[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25]) 	 
+            for c in range(3):
+                hot_mask[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
+            #hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
+        client_list[i].last_x = client_list[i].position_x
+        client_list[i].last_y = client_list[i].position_y
+
+
 def show_info():
     print("ya")
 #    os.system("sudo python3 show_info.py")    
@@ -446,7 +497,7 @@ if __name__ == "__main__":
         print("There's no fireman image")
     print("Reading FireFighter Image...")
     while(len(img_fireman) == 0):
-        img_fireman = cv2.imread(fireman_image_path)
+        img_fireman = cv2.imread(fireman_image_path,-1)
     img_fireman = cv2.resize(img_fireman,(50,50))
 
     print("Reading Environment Map...")
@@ -465,7 +516,7 @@ if __name__ == "__main__":
         
     print("Setting Windows...")
     cv2.namedWindow(map_window_name,0)
-    cv2.setWindowProperty(map_window_name,cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN )
+    #cv2.setWindowProperty(map_window_name,cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN )
     
     print("Drawing Security Line...")
     image = cv2.line(image,(5,5),(middle_x*2,5),(0,139,0),10,6)
@@ -526,9 +577,8 @@ if __name__ == "__main__":
                             #-------------------------------------------------------------#
                             # to show imagei
                             image = cv2.addWeighted(image,0.5,hot_mask,0.5,0)
-                            cv2.imshow('hot_mask',hot_mask)
-                            cv2.imshow('keep_hot',keep_hot)
                             cv2.imshow(map_window_name,image)
+                            #cv2.imshow('not mask',hot_mask)
                             '''
 							if cv2.waitKey(1) & 0xFF == ord('q'):
                                 break
