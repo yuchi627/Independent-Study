@@ -88,7 +88,7 @@ def accept_wrapper(sock):
     # add new connection
     # 創造一個新的Object給Device
 #--------------------------------------------------------------------#
-    
+	    
     print("Client: ")
     print("\tnum: ",client_list[i].id_num)
     print("\tip_addr: ",client_list[i].ip_addr)
