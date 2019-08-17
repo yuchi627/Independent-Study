@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import select
 
-HOST = '192.168.43.84'
+HOST = '192.168.83.11'
 PORT = 6666
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
