@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 import select
 
-HOST = '192.168.208.228'
-PORT = 8888
+HOST = '192.168.43.84'
+PORT = 6666
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
@@ -457,13 +457,17 @@ def help_me():
 	print("enter help_condition")
 	while count < 10:
 		s.send((("HELP").encode()).ljust(16))
-		send_image()
+		s.send('HOT'.ljust(16).encode())
+		print('HELP')
+		#send_image()
 		time.sleep(0.5)
 		count += 1
 	count = 0
 	while count < 10:
 		s.send((("HELP2").encode()).ljust(16))
-		send_image()
+		s.send('HOT'.ljust(16).encode())
+		print('HELP2')
+		#send_image()
 		time.sleep(0.5)
 		count += 1
 
@@ -472,7 +476,10 @@ def not_help():
 	print("enter not_really_need_help")
 	while count < 7:
 		s.send((("HELP").encode()).ljust(16))
-		send_image()
+		s.send('HOT'.ljust(16).encode())
+		print('HELP')
+		
+		#send_image()
 		time.sleep(0.5)
 		count += 1
 

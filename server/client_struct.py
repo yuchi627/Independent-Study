@@ -10,6 +10,10 @@ white_img[:,:] = (255,255,255)
 namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
 namespace_whiteimg[:,:] = (255,255,255)
 
+border_w= 1174*2 - 25
+border_h = 705*2 - 25
+right_x = 25+1174
+bottom_y = 25+705
 class client:
     remain_package_size = -1
     binary_img = b''
@@ -37,10 +41,17 @@ class client:
     bes_data_list = []
     gyro_list = []
 #------------------------------------------------#
-    def __init__(self):
+    def __init__(self,num):
         self.visible = True
         self.namespace_img = namespace_whiteimg
         self.first = True
+        if(num==1):
+            self.position_x = right_x
+        elif(num==2):
+            self.position_y = bottom_y
+        elif(num==3):
+            self.position_x = right_x
+            self.position_y = bottom_y
 
     def set_info(self,num,ip_position):
         self.id_num = num
@@ -152,12 +163,19 @@ class client:
                 #print("pixel_num: "+str(pixel_num))
                 if self.direction == 0:
                     self.position_y -= pixel_num
+                    if(self.position_y < 25):
+                        self.position_y = 25
                 elif self.direction == 90:
                     self.position_x += pixel_num
+                    if(self.position_x > border_w):
+                        self.position_x = border_w
                 elif self.direction == 180:
                     self.position_y += pixel_num
+                    if(self.position_y > border_h):
+                        self.position_y = border_h
                 elif self.direction == 270:
                     self.position_x -= pixel_num
+                    if(self.position_x < 25):
+                        self.position_x = 25
                 else:
                     pass
-
