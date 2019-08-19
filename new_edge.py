@@ -19,10 +19,12 @@ def img_processing(ir_img,flir_val):
 	tmp = ir_img.copy()
 	flir_val = cv2.resize(flir_val,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
 	flir_val = np.dstack([flir_val]*3)
+	######### combine ir & flir image ################
 	dst = cv2.warpPerspective(flir_val,matrix,(ir_weight,ir_height))
 	np.place(tmp,(dst > th_100),(0,0,255))
 	np.place(tmp,((dst > th_70)&(dst <= th_100)),(163,255,197))
 	add = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
+	######## rotate image 180 #################
 	return cv2.warpAffine(add, M, (ir_weight,ir_height))
 
 
