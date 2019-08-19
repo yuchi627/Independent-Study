@@ -43,25 +43,23 @@ matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 save_flag = False
 danger_flag = False
+encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+
 try:
 	cv2.namedWindow(window_name,cv2.WINDOW_NORMAL)
 	#cv2.namedWindow("combine",cv2.WINDOW_NORMAL)
-	camera = picamera.PiCamera()
-	camera.resolution = (640,480)
-	camera.framerate = 40
-	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
-	device = "/dev/spidev0.0"
-	with Lepton(device) as l:
-		a,_ = l.capture()
-		flir_val = np.uint16(a)
-		val_min = np.min(flir_val)
-		diff = np.max(flir_val) - val_min
-		th_70 = diff * 0.6 + val_min
-		th_100 = diff * 0.8 + val_min
-		while True:
-			a,_ = l.capture()
-			flir_val = np.uint16(a)
-			camera.capture(ir_img, 'bgr', use_video_port = True)
+	th_70 = 7700
+	th_100 = 7800
+	count_img = 0
+	while True:
+		count_img += 1
+		if(count_img == 81):
+			count_img = 1
+		ir_img = cv2.imread("ir/img"+str(count_img)+".jpg")
+		flir_val = np.loadtxt("flir/flir"+str(count_img)+".txt")
+		flir_val = np.reshape(flir_val,(60,80,1))
+		flir_val = flir_val.astype(np.uint16)
+		try:	
 			red_flag, combine = img_processing(ir_img, flir_val)
 			######## encode & send image #############
 			_, encode_img = cv2.imencode('.jpg', combine, encode_param)
@@ -115,9 +113,10 @@ try:
 
 			cv2.imshow(window_name,combine)
 			cv2.waitKey(1)
-		
+		except Exception as e:
+			print(e.args)
 finally:
-        camera.close()
+        #camera.close()
         s.close()
 
 
