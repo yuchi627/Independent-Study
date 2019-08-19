@@ -177,15 +177,12 @@ def service_connection(key, mask):
                     send_flag = client_list[client_host].img_decode()
                     if(send_flag):
                         try:
-                            print('sssssssssssend')
                             combine = client_list[client_host].combine_img_read()
                             _,encode = cv2.imencode('.jpg', combine, encode_param)
                             data_combine = np.array(encode)
                             stringData = data_combine.tostring()
                             sock.send(str(len(stringData)).ljust(16).encode())
-                            print("size = ",len(stringData))
                             byte = sock.send(stringData)
-                            print(byte)
                         except:
                             pass
                     client_list[client_host].package_set(-1,0)

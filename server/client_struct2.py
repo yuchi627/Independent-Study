@@ -29,6 +29,7 @@ class client:
     first = False
     sos_flag = False
     twinkling = False
+	close_danger = False
     name = "name"
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
@@ -61,6 +62,9 @@ class client:
     def set_th100(self,th100):
         self.th_100 = th100
         print(th100)
+
+	def set_close_danger(self,flag):
+		self.close_danger = flag
 
     def namespace_imgset(self,my_namespace_img):
         self.namespace_img = my_namespace_img
@@ -150,6 +154,8 @@ class client:
 				########## rotate image ###################
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
                 self.combine_img = rotate_img
+				if(self.close_danger):
+					cv2.putText(self.combine,"Close to danger area",(20,40),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),3)
                 self.img = np.concatenate((self.namespace_img,self.combine_img),axis=0)
                 return True
             #return True
