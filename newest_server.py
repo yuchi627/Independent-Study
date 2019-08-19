@@ -9,9 +9,9 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '172.20.10.3'
+host = '192.168.43.84'
 #host = '192.168.208.108'
-port = 6666
+port = 7777
 
 ##### windows defined
 img_window_name = 'Firefighter' # image_window_name
@@ -91,6 +91,7 @@ def accept_wrapper(sock):
             client_list[i].set_info(i,str(addr[0]))
             connection_num[i] = 1
             inti_flag = i
+            print('inti_flag: ', inti_flag)
             break
         i = i + 1
     # add new connection
@@ -153,10 +154,10 @@ def service_connection(key, mask):
                                 i.fire_num = recv_data_msg[4:len(recv_data_msg)]
                                 #print(i.fire_num)
                             elif('HOT' in recv_data_msg):
-                                print('HOT')
+                                #print('HOT')
                                 client_list[client_host].set_hot_flag(True)
                             else:
-                                print(recv_data_msg)
+                                #print(recv_data_msg)
                                 drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
                             break
 				
@@ -400,10 +401,11 @@ def addNewPoint(event,x,y,flags,param):
     global client_list
 
     if inti_flag != -1 and event == cv2.EVENT_LBUTTONDOWN:
-        if client_list[inti_flag].position_x ==25 and client_list[inti_flag].position_y == 25:
+        if not client_list[inti_flag].set_start:
             print('mouse: ',x, ' ',y)
             client_list[inti_flag].position_x = x
-            client_list[inti_flag].position_y = y 
+            client_list[inti_flag].position_y = y
+            client_list[inti_flag].set_start = True
         else:
             temp_x = x
             temp_y = y
@@ -465,22 +467,28 @@ def draw_layer():
     alpha_s = img_fireman[:,:,3] / 255.0
     alpha_l = 1.0 - alpha_s
     for i in range(4):
+        #print(i)
         x_offset = client_list[i].position_x-25
         y_offset = client_list[i].position_y-25
         x2 = img_fireman.shape[1] + x_offset
         y2 = img_fireman.shape[0] + y_offset
         #print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
-        for c in range(3):
-            image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
+        #for c in range(3):
+        #    image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
          
-        hot_mask[client_list[i].last_y-25 : client_list[i].last_y+25, client_list[i].last_x-25 : client_list[i].last_x+25] = keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25]
+        #hot_mask[client_list[i].last_y-25 : client_list[i].last_y+25, client_list[i].last_x-25 : client_list[i].last_x+25] = keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25]
+        #cv2.imshow('hot_mask',hot_mask)
         if(client_list[i].hot_flag):
-            replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (0,0,255))
+            replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (1,1,1))
             client_list[i].set_hot_flag(False)
-            keep_hot = hot_mask.copy()
+            #keep_hot = hot_mask.copy()
         else:
-            replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
-            hot_mask[y_offset : y2, x_offset : x2] = image[y_offset : y2 , x_offset : x2]
+            replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, 0)
+            #print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
+            #replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
+            #cv2.imshow('image',image)
+            #hot_mask[y_offset : y2, x_offset : x2] = image[y_offset : y2 , x_offset : x2]
+            '''
             x_offset -= 50
             x2 += 50
             y_offset -= 50
@@ -493,9 +501,17 @@ def draw_layer():
                 y_offset = 0
             elif(y2 > max_y):
                 y2 = max_y
+            #print('i:',i,' y: ',y_offset,' y2: ', y2)
             temp = cv2.inRange(keep_hot[y_offset : y2 , x_offset : x2],(0,0,0),(255,255,255))
-            cv2.imshow('keep_hot',keep_hot)
-            print(np.where(temp == (0,0,0)))
+            #cv2.imshow('keep_hot',keep_hot)
+	    #print(np.where(temp == (0,0,0)))
+	    '''
+        np.place(image, (hot_mask==1), (0,0,255))
+        for c in range(3):
+            image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
+	#image = cv2.addWeighted(image,0.5,hot_mask,0.5,0)
+        #cv2.imshow(map_window_name,image)
+
         client_list[i].last_x = client_list[i].position_x
         client_list[i].last_y = client_list[i].position_y
 
@@ -548,7 +564,8 @@ if __name__ == "__main__":
     image = cv2.line(image,(5,5),(5,middle_y*2),(0,139,0),10,6)
     image = cv2.line(image,(middle_x,5),(middle_x,middle_y*2),(0,139,0),10,6)
     image = cv2.line(image,(middle_x*2,5),(middle_x*2,middle_y*2),(0,139,0),10,6)
-    hot_mask = image.copy()
+    #hot_mask = image.copy()
+    hot_mask = np.zeros(image.shape,np.uint8)
     keep_hot = hot_mask.copy()
 
     cv2.setMouseCallback(map_window_name,addNewPoint)
@@ -595,7 +612,7 @@ if __name__ == "__main__":
                             refresh_map = False
                             #-------------------------------------------------------------#
                             # to show imagei
-                            image = cv2.addWeighted(image,0.5,hot_mask,0.5,0)
+                            #image = cv2.addWeighted(image,0.5,hot_mask,0.5,0)
                             cv2.imshow(map_window_name,image)
                             #cv2.imshow('not mask',hot_mask)
                             '''
