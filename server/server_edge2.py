@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.43.84'
+host = '192.168.43.118'
 #host = '192.168.208.108'
 port = 8888
 
