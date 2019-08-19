@@ -1,4 +1,4 @@
-import selectors
+﻿import selectors
 import socket
 import types
 import numpy as np
@@ -9,9 +9,9 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '172.20.10.3'
+host = '172.20.10.6'
 #host = '192.168.208.108'
-port = 6666
+port = 8888
 
 ##### windows defined
 img_window_name = 'Firefighter' # image_window_name
@@ -130,38 +130,45 @@ def service_connection(key, mask):
             if(client_list[client_host].package_size() < 0):
                 recv_data = sock.recv(16)
                 recv_data_msg = recv_data.decode().strip()
-                if("RIMG" in recv_data_msg):
-                    #print("image size msg")
-					print('HOT')
-                    client_list[client_host].set_hot_flag(True)
-                    client_list[client_host].package_set(int(recv_data_msg[5:len(recv_data_msg)]))
-                elif("IMG" in recv_data_msg):
-					client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
+                print('msg:' ,recv_data_msg)
+                try:
+                    #recv_data = sock.recv(16)
+                    #recv_data_msg = recv_data.decode().strip()
+                    #print(recv_data_msg)
+                    if("RIMG" in recv_data_msg):
+                        #print("image size msg")
+                        print('HOT')
+                        client_list[client_host].set_hot_flag(True)
+                        client_list[client_host].package_set(int(recv_data_msg[5:len(recv_data_msg)]))
+                    elif("IMG" in recv_data_msg):
+                        client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
 
-				else:
-                    #------------------------------------------------------------------#
-                    for i in client_list:
-                        if(i.ip_addr == str(data.addr[0])):
-                            i.time_pass = time.time() - init_time
-                            #print(i.time_pass)
-                            if("HELP2" in recv_data_msg):
-                                #print("HELP2")
-                                helpConditionExec("HELP2",i.id_num)
-                                client_list[client_host].set_sos_flag(True)
-                                sock.send("I will save you".encode())
-                            elif("HELP" in recv_data_msg):
-                                #print("HELP")
-                                helpConditionExec("HELP",i.id_num)
-                            elif("num" in recv_data_msg):
-                                i.fire_num = recv_data_msg[4:len(recv_data_msg)]
-                                #print(i.fire_num)
-                            elif('HOT' in recv_data_msg):
-                                print('HOT')
-                                client_list[client_host].set_hot_flag(True)
-                            else:
-                                print(recv_data_msg)
-                                drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
-                            break
+                    else:
+                        #------------------------------------------------------------------#
+                        for i in client_list:
+                            if(i.ip_addr == str(data.addr[0])):
+                                i.time_pass = time.time() - init_time
+                                #print(i.time_pass)
+                                if("HELP2" in recv_data_msg):
+                                    #print("HELP2")
+                                    helpConditionExec("HELP2",i.id_num)
+                                    client_list[client_host].set_sos_flag(True)
+                                    sock.send("I will save you".encode())
+                                elif("HELP" in recv_data_msg):
+                                    #print("HELP")
+                                    helpConditionExec("HELP",i.id_num)
+                                elif("num" in recv_data_msg):
+                                    i.fire_num = recv_data_msg[4:len(recv_data_msg)]
+                                    #print(i.fire_num)
+                                elif('HOT' in recv_data_msg):
+                                    print('HOT')
+                                    client_list[client_host].set_hot_flag(True)
+                                else:
+                                    print(recv_data_msg)
+                                    drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
+                                break
+                except Exception as e:
+                    print (e.args)
 				
                 '''
                 try:
