@@ -9,9 +9,9 @@ import keyboard
 import os
 
 ##### use "ifconfig" to find your ip
-host = '192.168.43.118'
+host = '192.168.43.84'
 
-port = 8888
+port = 6666
 
 window_name = 'Firefighter' # image_window_name
 ##### Default four element array
@@ -126,16 +126,16 @@ def service_connection(key, mask):
                     recv_data = sock.recv(16)
                     recv_data_msg = recv_data.decode().strip()
                     if("IR_S" in recv_data_msg):
-                        print("ir image size msg")
+                        #print("ir image size msg")
                         client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]),1)
                     elif("FLIR" in recv_data_msg):
-                        print("flir image size msg")
+                        #print("flir image size msg")
                         client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]),2)
                     elif("TH70" in recv_data_msg):
-                        print("TH70 msg")
+                        #print("TH70 msg")
                         client_list[client_host].set_th70(float(recv_data_msg[4:len(recv_data_msg)]))
                     elif("TH100" in recv_data_msg):
-                        print("TH100 msg")
+                        #print("TH100 msg")
                         client_list[client_host].set_th100(float(recv_data_msg[5:len(recv_data_msg)]))
                     elif(len(recv_data_msg) == 0):
                         pass

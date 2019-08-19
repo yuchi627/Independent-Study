@@ -25,6 +25,7 @@ class client:
     hot_flag = False
     twinkling = False
     name = "name"
+    set_start = False
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""

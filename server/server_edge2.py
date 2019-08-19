@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.43.118'
+host = '192.168.43.84'
 #host = '192.168.208.108'
 port = 8888
 
@@ -43,7 +43,7 @@ middle_y = 700
 init_time = 0
 fireman_image_path = "../IMAGE/fireman.png"
 environment_image_path = "../IMAGE/1f.png"
-
+send_count = 0
 def emergency_cancel(event, x, y, flags, param):
     global click_to_cancel,click_client
     if event == cv2.EVENT_LBUTTONUP:  
@@ -217,7 +217,11 @@ def service_connection(key, mask):
                 client_list[client_host].img_combine(recv_data)
                 client_list[client_host].package_decrease(len(recv_data))
                 if(client_list[client_host].package_size() <= 0):
-                    ##### img recv complete
+                    global send_count
+                    send_count += 1
+                    if(send_count % 10 == 0):
+                        sock.send("I will save you".encode())
+		    ##### img recv complete
                     client_list[client_host].img_decode()
                     client_list[client_host].package_set(-1)
                     refresh_img = True
