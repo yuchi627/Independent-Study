@@ -7,7 +7,9 @@ from pylepton import Lepton
 import select
 import picamera.array
 import time
-HOST = '172.20.10.6'
+#HOST = '172.20.10.3'
+#HOST = '192.168.43.118'
+HOST = '192.168.43.84'
 #HOST= "127.0.0.1"
 PORT = 8888
 
@@ -27,9 +29,6 @@ def img_processing(ir_img,flir_val):
 
 ir_height = 480 #tmp1.shape[0]
 ir_weight = 640 #tmp1.shape[1]
-flir_height = 380   #flir_tmp.shape[0]
-flir_weight = 520   #flir_tmp.shape[1]
-refresh = False
 img_combine = np.zeros((ir_height,ir_weight,3),np.uint8)
 ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
@@ -53,8 +52,8 @@ try:
 		######## 70 & 10 degree threshold ########3
 		th_70 = diff * 0.6 + val_min
 		th_100 = diff * 0.8 + val_min
-		count_img = 0
-		#while (count_img<20):
+		#count_img = 0
+		#while (count_img<80):
 		#	count_img += 1
 		while True:
 			#count_img += 1
@@ -63,6 +62,7 @@ try:
 			flir_val = np.uint16(a)
 			######## ir capture ############
 			camera.capture(ir_img,'bgr',use_video_port = True)
+				
 			######## encode message ############
 			_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
 			data_ir = np.array(imgencode_ir)
@@ -115,9 +115,9 @@ try:
 					s.send(("TH100"+str(th_100)).ljust(16).encode())
 				except:
 					pass
-			#cv2.putText(img_combine,"Close to danger area",(10,30),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),3)
 			cv2.imshow("combine",img_combine)
 			cv2.waitKey(1)
+			
 finally:
 		camera.close()
 		s.close()
