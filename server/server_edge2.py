@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '172.20.10.6'
+host = '192.168.43.84'
 #host = '192.168.208.108'
 port = 8888
 
@@ -130,18 +130,20 @@ def service_connection(key, mask):
             if(client_list[client_host].package_size() < 0):
                 recv_data = sock.recv(16)
                 recv_data_msg = recv_data.decode().strip()
-                print('msg:' ,recv_data_msg)
                 try:
                     #recv_data = sock.recv(16)
                     #recv_data_msg = recv_data.decode().strip()
                     #print(recv_data_msg)
-                    if("RIMG" in recv_data_msg):
+                    if("SIZE" in recv_data_msg):
+                        #print("image size msg")
+                        client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
+                    elif("RIMG" in recv_data_msg):
                         #print("image size msg")
                         print('HOT')
                         client_list[client_host].set_hot_flag(True)
-                        client_list[client_host].package_set(int(recv_data_msg[5:len(recv_data_msg)]))
-                    elif("IMG" in recv_data_msg):
                         client_list[client_host].package_set(int(recv_data_msg[4:len(recv_data_msg)]))
+                    elif("IMG" in recv_data_msg):
+                        client_list[client_host].package_set(int(recv_data_msg[3:len(recv_data_msg)]))
 
                     else:
                         #------------------------------------------------------------------#
