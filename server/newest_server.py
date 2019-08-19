@@ -299,7 +299,7 @@ def drawNewSpot(data,index, img_fireman):
         client_list[index].addNewPosition("No Turn",float(data))
     refresh_map = True
     #print('refresh')
-    draw_layer()
+    draw_layer(index)
     #for i in range(4):
         #print(client_list[i].position_y, client_list[i].position_x)
         #image[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
@@ -462,7 +462,7 @@ def replace_roi(dst, num, y0, y1, x0, x1, roi):
         dst[last_y0 : last_y1 , x0 : x1] = roi
         dst[last_y0 : last_y1 , last_x0 : last_x1] = roi
 
-def draw_layer():
+def draw_layer(num):
     global image, hot_mask, keep_hot, img_fireman
     alpha_s = img_fireman[:,:,3] / 255.0
     alpha_l = 1.0 - alpha_s
@@ -478,12 +478,13 @@ def draw_layer():
          
         #hot_mask[client_list[i].last_y-25 : client_list[i].last_y+25, client_list[i].last_x-25 : client_list[i].last_x+25] = keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25]
         #cv2.imshow('hot_mask',hot_mask)
-        if(client_list[i].hot_flag):
-            replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (1,1,1))
-            client_list[i].set_hot_flag(False)
+        if(i==num):
+            if(client_list[i].hot_flag):
+                replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (1,1,1))
+                client_list[i].set_hot_flag(False)
             #keep_hot = hot_mask.copy()
-        else:
-            replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, 0)
+            else:
+                replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (0,0,0))
             #print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
             #replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
             #cv2.imshow('image',image)
