@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.83.11'
+host = '172.20.10.3'
 #host = '192.168.208.108'
 port = 6666
 
@@ -467,6 +467,7 @@ def draw_layer():
         y_offset = client_list[i].position_y-25
         x2 = img_fireman.shape[1] + x_offset
         y2 = img_fireman.shape[0] + y_offset
+        print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
         for c in range(3):
             image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
          
