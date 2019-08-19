@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.83.11'
+host = '172.20.10.3'
 #host = '192.168.208.108'
 port = 6666
 
@@ -477,17 +477,8 @@ def draw_layer():
             client_list[i].set_hot_flag(False)
             keep_hot = hot_mask.copy()
         else:
-<<<<<<< HEAD
-            replace_roi(keep_hot, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, keep[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25]) 	 
-            print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
-            for c in range(3):
-                hot_mask[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * hot_mask[y_offset:y2 , x_offset:x2, c])
-            cv2.imshow('hot_mask', hot_mask)
-			#hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
-=======
             replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
             hot_mask[y_offset : y2, x_offset : x2] = image[y_offset : y2 , x_offset : x2]
->>>>>>> 04d2c411a649c5b075ba166312e6dd02ff487c82
         client_list[i].last_x = client_list[i].position_x
         client_list[i].last_y = client_list[i].position_y
 
