@@ -6,7 +6,11 @@ import numpy as np
 import select
 
 HOST = '192.168.43.84'
+<<<<<<< HEAD
 PORT = 8888
+=======
+PORT = 6666
+>>>>>>> 4ee95940481d4b2971694d09f3b8f1acd8f83005
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
