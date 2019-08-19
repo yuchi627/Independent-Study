@@ -468,6 +468,7 @@ def draw_layer():
         y_offset = client_list[i].position_y-25
         x2 = img_fireman.shape[1] + x_offset
         y2 = img_fireman.shape[0] + y_offset
+        print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
         for c in range(3):
             image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
         replace_roi(hot_mask, i, client_list[i].last_y-25, client_list[i].last_y+25, client_list[i].last_x-25, client_list[i].last_x+25, keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25])
@@ -478,9 +479,11 @@ def draw_layer():
             keep_hot = hot_mask.copy()
         else:
             replace_roi(keep_hot, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, keep[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25]) 	 
+            print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
             for c in range(3):
-                hot_mask[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
-            #hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
+                hot_mask[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * hot_mask[y_offset:y2 , x_offset:x2, c])
+            cv2.imshow('hot_mask', hot_mask)
+			#hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
         client_list[i].last_x = client_list[i].position_x
         client_list[i].last_y = client_list[i].position_y
 
@@ -551,15 +554,6 @@ if __name__ == "__main__":
 
         print("Waiting For Connection...")
         while True:
-            #---------------------------------#
-<<<<<<< HEAD
-            #if(keyboard.is_pressed('i')):
-            #    show_info()
-=======
-           # if(keyboard.is_pressed('i')):
-           #     show_info()
->>>>>>> 4a360402e1eff9ea92782f9ff9e42e5ec31899dc
-            #---------------------------------#
             events = sel.select(timeout=None)
             for key, mask in events:
                 if key.data is None:
