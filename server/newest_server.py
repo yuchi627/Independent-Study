@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '192.168.43.84'
+host = '172.20.10.3'
 #host = '192.168.208.108'
 port = 6666
 
@@ -420,7 +420,7 @@ def addNewPoint(event,x,y,flags,param):
 
 
 def replace_roi(dst, num, y0, y1, x0, x1, roi):
-    hot_mask[y0 : y1 , x0 : x1] = roi
+    dst[y0 : y1 , x0 : x1] = roi
     if(num==0):
         next_y0 = y0 + map_height
         next_y1 = y1 + map_height
@@ -460,7 +460,6 @@ def replace_roi(dst, num, y0, y1, x0, x1, roi):
 
 def draw_layer():
     global image, hot_mask, keep_hot, img_fireman
-    #temp = np.zeros((50,50,3),np.uint8)
     alpha_s = img_fireman[:,:,3] / 255.0
     alpha_l = 1.0 - alpha_s
     for i in range(4):
@@ -468,19 +467,18 @@ def draw_layer():
         y_offset = client_list[i].position_y-25
         x2 = img_fireman.shape[1] + x_offset
         y2 = img_fireman.shape[0] + y_offset
+        print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
         for c in range(3):
             image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
-        replace_roi(hot_mask, i, client_list[i].last_y-25, client_list[i].last_y+25, client_list[i].last_x-25, client_list[i].last_x+25, keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25])
-        
+         
+        hot_mask[client_list[i].last_y-25 : client_list[i].last_y+25, client_list[i].last_x-25 : client_list[i].last_x+25] = keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25]
         if(client_list[i].hot_flag):
-            replace_roi(hot_mask, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, (0,0,255))
+            replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (0,0,255))
             client_list[i].set_hot_flag(False)
             keep_hot = hot_mask.copy()
         else:
-            replace_roi(keep_hot, i, client_list[i].position_y-25, client_list[i].position_y + 25, client_list[i].position_x-25, client_list[i].position_x + 25, keep[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25]) 	 
-            for c in range(3):
-                hot_mask[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
-            #hot_mask[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
+            replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
+            hot_mask[y_offset : y2, x_offset : x2] = image[y_offset : y2 , x_offset : x2]
         client_list[i].last_x = client_list[i].position_x
         client_list[i].last_y = client_list[i].position_y
 
@@ -551,15 +549,6 @@ if __name__ == "__main__":
 
         print("Waiting For Connection...")
         while True:
-            #---------------------------------#
-<<<<<<< HEAD
-            #if(keyboard.is_pressed('i')):
-            #    show_info()
-=======
-           # if(keyboard.is_pressed('i')):
-           #     show_info()
->>>>>>> 4a360402e1eff9ea92782f9ff9e42e5ec31899dc
-            #---------------------------------#
             events = sel.select(timeout=None)
             for key, mask in events:
                 if key.data is None:
