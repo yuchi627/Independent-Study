@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### socket connection: use "ifconfig" to find your ip
-host = '172.20.10.3'
+host = '192.168.43.84'
 #host = '192.168.208.108'
 port = 6666
 
@@ -40,6 +40,8 @@ keep = []
 keep_hot = []
 middle_x = 1170 
 middle_y = 700
+max_x = 1174*2
+max_y = 705*2
 init_time = 0
 fireman_image_path = "../IMAGE/fireman.png"
 environment_image_path = "../IMAGE/1f.png"
@@ -467,7 +469,7 @@ def draw_layer():
         y_offset = client_list[i].position_y-25
         x2 = img_fireman.shape[1] + x_offset
         y2 = img_fireman.shape[0] + y_offset
-        print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
+        #print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
         for c in range(3):
             image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
          
@@ -479,10 +481,34 @@ def draw_layer():
         else:
             replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
             hot_mask[y_offset : y2, x_offset : x2] = image[y_offset : y2 , x_offset : x2]
+            x_offset -= 50
+            x2 += 50
+            y_offset -= 50
+            y2 += 50
+            if(x_offset < 0):
+                x_offset = 0
+            elif(x2 > max_x):
+                x2 = max_x
+            if(y_offset < 0):
+                y_offset = 0
+            elif(y2 > max_y):
+                y2 = max_y
+            print('i:',i,' y: ',y_offset,' x: ', x_offset)
+            temp = cv2.inRange(keep_hot[y_offset : y2 , x_offset : x2],(0,0,0),(255,255,255))
+            cv2.imshow('keep_hot',keep_hot)
+            print(np.where(temp == (0,0,0)))
         client_list[i].last_x = client_list[i].position_x
         client_list[i].last_y = client_list[i].position_y
 
 
+
+def detect_hot():
+    for i in range(4):
+        if(client_list[i].position_x < 75):
+            temp = cv2.inRange(keep_hot[client_list[i].position_y-25 : client_list[i].position_y+75 , client_list[i].position_x-75 : client_list[i].position_x+75],(0,0,255),(0,0,255))
+        cv2.imshow('temp',temp)
+        print('close to red')
+        
 def show_info():
     print("ya")
 #    os.system("sudo python3 show_info.py")    
@@ -579,6 +605,7 @@ if __name__ == "__main__":
                             ''' 
                             # Show 我們的圖
                             #-----------------------------------------------------------------#
+                        #detect_hot()
                         if cv2.waitKey(1) & 0xFF == ord('q'):
                             break
                     if(click_to_cancel):
