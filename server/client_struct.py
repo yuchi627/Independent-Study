@@ -35,8 +35,6 @@ class client:
     ip_addr = "" # 裝置ip
     position_x = 25 # 裝置在Map的位置(x)
     position_y = 25 # 裝置在Map的位置(y)
-    last_x = 25
-    last_y = 25
     direction = -1 # 裝置方向
     dist_save = 0 # 距離暫存
     bes_data_list = []

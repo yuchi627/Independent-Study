@@ -131,7 +131,8 @@ def service_connection(key, mask):
             
         else:
             if(client_list[client_host].package_size() < 0):
-                recv_data = sock.recv(16)
+                '''
+		recv_data = sock.recv(16)
                 recv_data_msg = recv_data.decode().strip()
                 if("SIZE" in recv_data_msg):
                     #print("image size msg")
@@ -176,28 +177,27 @@ def service_connection(key, mask):
                                 i.time_pass = time.time() - init_time
                                 #print(i.time_pass)
                                 if("HELP2" in recv_data_msg):
-                                    print("HELP2")
+                                    #print("HELP2")
                                     helpConditionExec("HELP2",i.id_num)
                                     client_list[client_host].set_sos_flag(True)
                                     sock.send("I will save you".encode())
                                 elif("HELP" in recv_data_msg):
-                                    print("HELP")
+                                    #print("HELP")
                                     helpConditionExec("HELP",i.id_num)
                                	elif("num" in recv_data_msg):
                                     i.fire_num = recv_data_msg[4:len(recv_data_msg)]
                                     #print(i.fire_num)
                                 elif('HOT' in recv_data_msg):
-                                    print('HOT')
+                                    #print('HOT')
                                     client_list[client_host].set_hot_flag(True)
                                 else:
-                                    print(recv_data_msg)
+                                    #print(recv_data_msg)
                                     drawNewSpot(recv_data_msg,i.id_num,img_fireman)                    
                                 break
                             # Device 傳輸資料時, call 對應function
                         #--------------------------------------------------------------------#
                 except Exception as e:
                     print (e.args)
-                '''
             else:
                 ##### recv the img
                 #print("image msg")
@@ -249,37 +249,21 @@ def drawNewSpot(data,index, img_fireman):
         cv2.line(image,(5,middle_y),(middle_x,middle_y),(0,139,0),10,6)
         cv2.line(image,(5,5),(5,middle_y),(0,139,0),10,6)
         cv2.line(image,(middle_x,5),(middle_x,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(5,5),(middle_x,5),(0,139,0),10,6)
-        cv2.line(hot_mask,(5,middle_y),(middle_x,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(5,5),(5,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,5),(middle_x,middle_y),(0,139,0),10,6)
     elif (index == 1):
         cv2.line(image,(middle_x,5),(middle_x*2,5),(0,139,0),10,6)   
         cv2.line(image,(middle_x,middle_y),(middle_x*2,middle_y),(0,139,0),10,6)
         cv2.line(image,(middle_x*2,5),(middle_x*2,middle_y),(0,139,0),10,6)
         cv2.line(image,(middle_x,5),(middle_x,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,5),(middle_x*2,5),(0,139,0),10,6)   
-        cv2.line(hot_mask,(middle_x,middle_y),(middle_x*2,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x*2,5),(middle_x*2,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,5),(middle_x,middle_y),(0,139,0),10,6)
     elif(index == 2):
         cv2.line(image,(5,middle_y),(5,middle_y*2),(0,139,0),10,6)
         cv2.line(image,(middle_x,middle_y),(middle_x,middle_y*2),(0,139,0),10,6)
         cv2.line(image,(5,middle_y),(middle_x,middle_y),(0,139,0),10,6)
         cv2.line(image,(5,middle_y*2),(middle_x,middle_y*2),(0,139,0),10,6)
-        cv2.line(hot_mask,(5,middle_y),(5,middle_y*2),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,middle_y),(middle_x,middle_y*2),(0,139,0),10,6)
-        cv2.line(hot_mask,(5,middle_y),(middle_x,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(5,middle_y*2),(middle_x,middle_y*2),(0,139,0),10,6)
     elif(index == 3):
         cv2.line(image,(middle_x,middle_y),(middle_x*2,middle_y),(0,139,0),10,6)
         cv2.line(image,(middle_x,middle_y*2),(middle_x*2,middle_y*2),(0,139,0),10,6)
         cv2.line(image,(middle_x,middle_y),(middle_x,middle_y*2),(0,139,0),10,6)
         cv2.line(image,(middle_x*2,middle_y),(middle_x*2,middle_y*2),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,middle_y),(middle_x*2,middle_y),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,middle_y*2),(middle_x*2,middle_y*2),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x,middle_y),(middle_x,middle_y*2),(0,139,0),10,6)
-        cv2.line(hot_mask,(middle_x*2,middle_y),(middle_x*2,middle_y*2),(0,139,0),10,6)
     else:
         pass
         
@@ -298,13 +282,7 @@ def drawNewSpot(data,index, img_fireman):
         client_list[index].color_set = (0,139,0)
         client_list[index].addNewPosition("No Turn",float(data))
     refresh_map = True
-    #print('refresh')
     draw_layer(index)
-    #for i in range(4):
-        #print(client_list[i].position_y, client_list[i].position_x)
-        #image[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
-        #client_list[i].last_x = client_list[i].position_x
-        #client_list[i].last_y = client_list[i].position_y
 
 def helpConditionExec(message,num):
     global image,refresh_map
@@ -317,38 +295,21 @@ def helpConditionExec(message,num):
             cv2.line(image,(5,middle_y),(middle_x,middle_y),(0,0,255),10,6)
             cv2.line(image,(5,5),(5,middle_y),(0,0,255),10,6)
             cv2.line(image,(middle_x,5),(middle_x,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(5,5),(middle_x,5),(0,0,255),10,6)
-            cv2.line(hot_mask,(5,middle_y),(middle_x,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(5,5),(5,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x,5),(middle_x,middle_y),(0,0,255),10,6)
-
         elif (num == 1):
             cv2.line(image,(middle_x,5),(middle_x*2,5),(0,0,255),10,6) 
             cv2.line(image,(middle_x,middle_y),(middle_x*2,middle_y),(0,0,255),10,6)
             cv2.line(image,(middle_x*2,5),(middle_x*2,middle_y),(0,0,255),10,6)
             cv2.line(image,(middle_x,5),(middle_x,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x,5),(middle_x*2,5),(0,0,255),10,6) 
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x*2,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x*2,5),(middle_x*2,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x,5),(middle_x,middle_y),(0,0,255),10,6)
         elif(num == 2):                                    
             cv2.line(image,(5,middle_y),(5,middle_y*2),(0,0,255),10,6) 
             cv2.line(image,(middle_x,middle_y),(middle_x,middle_y*2),(0,0,255),10,6)
             cv2.line(image,(5,middle_y),(middle_x,middle_y),(0,0,255),10,6)
             cv2.line(image,(5,middle_y*2),(middle_x,middle_y*2),(0,0,255),10,6)
-            cv2.line(hot_mask,(5,middle_y),(5,middle_y*2),(0,0,255),10,6) 
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x,middle_y*2),(0,0,255),10,6)
-            cv2.line(hot_mask,(5,middle_y),(middle_x,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(5,middle_y*2),(middle_x,middle_y*2),(0,0,255),10,6)
         elif(num == 3): 
             cv2.line(image,(middle_x,middle_y),(middle_x*2,middle_y),(0,0,255),10,6)
             cv2.line(image,(middle_x,middle_y*2),(middle_x*2,middle_y*2),(0,0,255),10,6)
             cv2.line(image,(middle_x,middle_y),(middle_x,middle_y*2),(0,0,255),10,6)
             cv2.line(image,(middle_x*2,middle_y),(middle_x*2,middle_y*2),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x*2,middle_y),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x,middle_y*2),(middle_x*2,middle_y*2),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x,middle_y*2),(0,0,255),10,6)
-            cv2.line(hot_mask,(middle_x*2,middle_y),(middle_x*2,middle_y*2),(0,0,255),10,6)
         else:    
             pass 
     elif ("HELP" in message):
@@ -358,38 +319,21 @@ def helpConditionExec(message,num):
             cv2.line(image,(5,middle_y),(middle_x,middle_y),(0,165,255),10,6)
             cv2.line(image,(5,5),(5,middle_y),(0,165,255),10,6)
             cv2.line(image,(middle_x,5),(middle_x,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(5,5),(middle_x,5),(0,165,255),10,6)
-            cv2.line(hot_mask,(5,middle_y),(middle_x,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(5,5),(5,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x,5),(middle_x,middle_y),(0,165,255),10,6)
-
         elif (num == 1):
             cv2.line(image,(middle_x,5),(middle_x*2,5),(0,165,255),10,6) 
             cv2.line(image,(middle_x,middle_y),(middle_x*2,middle_y),(0,165,255),10,6)
             cv2.line(image,(middle_x*2,5),(middle_x*2,middle_y),(0,165,255),10,6)
             cv2.line(image,(middle_x,5),(middle_x,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x,5),(middle_x*2,5),(0,165,255),10,6) 
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x*2,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x*2,5),(middle_x*2,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x,5),(middle_x,middle_y),(0,165,255),10,6)
         elif(num == 2):                                    
             cv2.line(image,(5,middle_y),(5,middle_y*2),(0,165,255),10,6) 
             cv2.line(image,(middle_x,middle_y),(middle_x,middle_y*2),(0,165,255),10,6)
             cv2.line(image,(5,middle_y),(middle_x,middle_y),(0,165,255),10,6)
             cv2.line(image,(5,middle_y*2),(middle_x,middle_y*2),(0,165,255),10,6)
-            cv2.line(hot_mask,(5,middle_y),(5,middle_y*2),(0,165,255),10,6) 
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x,middle_y*2),(0,165,255),10,6)
-            cv2.line(hot_mask,(5,middle_y),(middle_x,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(5,middle_y*2),(middle_x,middle_y*2),(0,165,255),10,6)
         elif(num == 3): 
             cv2.line(image,(middle_x,middle_y),(middle_x*2,middle_y),(0,165,255),10,6)
             cv2.line(image,(middle_x,middle_y*2),(middle_x*2,middle_y*2),(0,165,255),10,6)
             cv2.line(image,(middle_x,middle_y),(middle_x,middle_y*2),(0,165,255),10,6)
             cv2.line(image,(middle_x*2,middle_y),(middle_x*2,middle_y*2),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x*2,middle_y),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x,middle_y*2),(middle_x*2,middle_y*2),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x,middle_y),(middle_x,middle_y*2),(0,165,255),10,6)
-            cv2.line(hot_mask,(middle_x*2,middle_y),(middle_x*2,middle_y*2),(0,165,255),10,6)
         else:    
             pass 
     else:
@@ -466,57 +410,27 @@ def draw_layer(num):
     global image, hot_mask, keep_hot, img_fireman
     alpha_s = img_fireman[:,:,3] / 255.0
     alpha_l = 1.0 - alpha_s
+    x_offset = client_list[num].position_x-25
+    y_offset = client_list[num].position_y-25
+    if(client_list[num].hot_flag):
+        replace_roi(hot_mask, num, y_offset, img_fireman.shape[0] + y_offset, x_offset, img_fireman.shape[1] + x_offset, (1,1,1))
+        client_list[num].set_hot_flag(False)
+    else:
+        replace_roi(hot_mask, num, y_offset, img_fireman.shape[0] + y_offset, x_offset, img_fireman.shape[1] + x_offset, (0,0,0))
+
+    index_tuple = np.where(hot_mask[:,:,0]==1)
+    row = index_tuple[0]
+    col = index_tuple[1]
+    for c in range(2):     
+        image[row,col,c] = image[row, col, c]*0.5
+    image[row, col, 2] = image[row, col, 2]*0.5 + 122
     for i in range(4):
-        #print(i)
         x_offset = client_list[i].position_x-25
         y_offset = client_list[i].position_y-25
         x2 = img_fireman.shape[1] + x_offset
         y2 = img_fireman.shape[0] + y_offset
-        #print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
-        #for c in range(3):
-        #    image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
-         
-        #hot_mask[client_list[i].last_y-25 : client_list[i].last_y+25, client_list[i].last_x-25 : client_list[i].last_x+25] = keep_hot[client_list[i].last_y-25 : client_list[i].last_y + 25 , client_list[i].last_x-25 : client_list[i].last_x + 25]
-        #cv2.imshow('hot_mask',hot_mask)
-        if(i==num):
-            if(client_list[i].hot_flag):
-                replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (1,1,1))
-                client_list[i].set_hot_flag(False)
-            #keep_hot = hot_mask.copy()
-            else:
-                replace_roi(hot_mask, i, y_offset, y2, x_offset, x2, (0,0,0))
-            #print(y_offset, ' ', y2, ' ', x_offset, ' ', x2)
-            #replace_roi(keep_hot, i, y_offset, y2, x_offset, x2, keep[y_offset : y2 , x_offset : x2]) 	 
-            #cv2.imshow('image',image)
-            #hot_mask[y_offset : y2, x_offset : x2] = image[y_offset : y2 , x_offset : x2]
-            '''
-            x_offset -= 50
-            x2 += 50
-            y_offset -= 50
-            y2 += 50
-            if(x_offset < 0):
-                x_offset = 0
-            elif(x2 > max_x):
-                x2 = max_x
-            if(y_offset < 0):
-                y_offset = 0
-            elif(y2 > max_y):
-                y2 = max_y
-            #print('i:',i,' y: ',y_offset,' y2: ', y2)
-            temp = cv2.inRange(keep_hot[y_offset : y2 , x_offset : x2],(0,0,0),(255,255,255))
-            #cv2.imshow('keep_hot',keep_hot)
-	    #print(np.where(temp == (0,0,0)))
-	    '''
-        np.place(image, (hot_mask==1), (0,0,255))
         for c in range(3):
             image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
-	#image = cv2.addWeighted(image,0.5,hot_mask,0.5,0)
-        #cv2.imshow(map_window_name,image)
-
-        client_list[i].last_x = client_list[i].position_x
-        client_list[i].last_y = client_list[i].position_y
-
-
 
 def detect_hot():
     for i in range(4):
@@ -613,9 +527,7 @@ if __name__ == "__main__":
                             refresh_map = False
                             #-------------------------------------------------------------#
                             # to show imagei
-                            #image = cv2.addWeighted(image,0.5,hot_mask,0.5,0)
                             cv2.imshow(map_window_name,image)
-                            #cv2.imshow('not mask',hot_mask)
                             '''
 							if cv2.waitKey(1) & 0xFF == ord('q'):
                                 break
