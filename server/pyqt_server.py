@@ -106,6 +106,7 @@ class AppWindow(QDialog):
             image = self.image_info
         else:
             pass
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 #        cv2.imshow("Image",image)
 #        cv2.waitKey(0)
@@ -148,16 +149,16 @@ class AppWindow(QDialog):
                 print("Left Mouse, y: ",event.pos().y())
             elif(self.image_image_flag):
                 self.click_to_cancel = True
-                if((event.pos().x() <= self.x_bound) and (event.pos().y()<= self.y_bound)):
+                if((event.pos().x() <= self.x_bound) and (event.pos().y() <= self.y_bound)):
                     ##### client[0]
                     self.click_client = 0
-                elif((event.pos().x() >= self.x_bound) and (event.pos().y()<= self.y_bound)):
+                elif((event.pos().x() >= self.x_bound) and (event.pos().y() <= self.y_bound)):
                     ##### client[1]
                     self.click_client = 1
-                elif((event.pos().x() <= self.x_bound) and (event.pos().y()>= self.y_bound)):
+                elif((event.pos().x() <= self.x_bound) and (event.pos().y() >= self.y_bound)):
                     ##### client[2]
                     self.click_client = 2
-                elif((event.pos().x() >= self.x_bound) and (event.pos().y()>= self.y_bound)):
+                elif((event.pos().x() >= self.x_bound) and (event.pos().y() >= self.y_bound)):
                     ##### client[3]
                     self.click_client = 3
                 else:
@@ -276,8 +277,8 @@ class AppWindow(QDialog):
 #                    if cv2.waitKey(1) & 0xFF == ord('q'):
 #                        break
                     if(self.click_to_cancel):
-                        self.set_namespace_color(click_client,(255,255,255),(0, 0, 0))
-                        self.client_list[click_client].set_sos_flag(False)
+                        self.set_namespace_color(self.click_client,(255,255,255),(0, 0, 0))
+                        self.client_list[self.click_client].set_sos_flag(False)
                         self.click_to_cancel = False
  
     def accept_wrapper(self,sock):
@@ -360,8 +361,6 @@ class AppWindow(QDialog):
                         elif(len(recv_data_msg) == 0):
                             pass
                         else:
-                            pass
-                            '''
                             #------------------------------------------------------------------#
                             for i in self.client_list:
                                 if(i.ip_addr == str(data.addr[0])):
@@ -371,7 +370,6 @@ class AppWindow(QDialog):
                                         print("HELP2")
                                         self.helpConditionExec("HELP2",i.id_num)
                                         self.client_list[client_host].set_sos_flag(True)
-                                        sock.send("I will save you".encode())
                                     elif("HELP" in recv_data_msg):
                                         print("HELP")
                                         self.helpConditionExec("HELP",i.id_num)
@@ -385,7 +383,6 @@ class AppWindow(QDialog):
                                     break
                                 # Device 傳輸資料時, call 對應function
                             #--------------------------------------------------------------------#
-                            '''
                     except Exception as e:
                         pass
                         #print ("error in get msg: ",e.args)
@@ -401,6 +398,7 @@ class AppWindow(QDialog):
                         ###### image recv complete ######
                         send_flag = self.client_list[client_host].decode_img()
                         if(send_flag):
+                            self.refresh_img = True
                             send_flag = False
                             try:
                                 combine = self.client_list[client_host].read_combine_img()
@@ -408,19 +406,18 @@ class AppWindow(QDialog):
                                 data_combine = np.array(encode)
                                 stringData = data_combine.tostring()
                                 sock.send(str(len(stringData)).ljust(16).encode())
-                                byte = sock.send(stringData)
+                                sock.send(stringData)
                             except Exception as e:
                                 print("error in send image to client : ",e.args)
+                            ###### decide which background color to brush ######
+                            brush_background_ornot = self.client_list[client_host].brush_namespace_background()
+                            if(brush_background_ornot == 1):
+                                ###### Red background with white font ######
+                                self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
+                            elif (brush_background_ornot == 2):
+                                ###### White background with black font ######
+                                self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
                         self.client_list[client_host].set_package(-1,0)
-                        self.refresh_img = True
-                        ###### decide which background color to brush ######
-                        brush_background_ornot = self.client_list[client_host].brush_namespace_background()
-                        if(brush_background_ornot == 1):
-                            ###### Red background white font ######
-                            self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
-                        elif (brush_background_ornot == 2):
-                            ###### White background black font ######
-                            self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
  
             if not recv_data:
                 print('closing connection to', data.addr)
