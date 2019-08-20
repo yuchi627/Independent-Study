@@ -9,12 +9,16 @@ import picamera.array
 import time
 #HOST = '172.20.10.3'
 #HOST = '192.168.43.118'
-HOST = '192.168.43.84'
+#HOST = '192.168.43.84'
+HOST = '192.168.43.149'
 #HOST= "127.0.0.1"
 PORT = 8888
 
 def img_processing(ir_img,flir_val):
+	flag = False
 	tmp = ir_img.copy()
+	if(np.sum((flir_val > th_100)) >= (flir_val.size / 3)):
+		flag = True
 	flir_val = cv2.resize(flir_val,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
 	flir_val = np.dstack([flir_val]*3)
 	######### combine ir & flir image ################
@@ -23,8 +27,11 @@ def img_processing(ir_img,flir_val):
 	np.place(tmp,((dst > th_70)&(dst <= th_100)),(163,255,197))
 	add = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
 	######## rotate image 180 #################
-	return cv2.warpAffine(add, M, (ir_weight,ir_height))
-
+	rotate = cv2.warpAffine(add, M, (ir_weight,ir_height))
+	if(flag):
+		flag = False
+		cv2.putText(rotate,"In danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX,1, (255,255,255), 3)
+	return rotate
 
 
 ir_height = 480 #tmp1.shape[0]
@@ -72,7 +79,7 @@ try:
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
 			try:
 				######## send ir image ###############
-				s.send(("IR_S"+str(len(stringData_ir))).ljust(16).encode())
+				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 				s.send(stringData_ir)
 				####### send flir image to server #########
 				s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
@@ -80,7 +87,7 @@ try:
 				t4 = time.time()
 				try:
 					####### recv the combine image from server #############
-					ready = select.select([s],[],[],0.1)
+					ready = select.select([s],[],[],0.01)
 					if(ready[0]):
 						data = s.recv(16)
 						size_data = data[0:16]

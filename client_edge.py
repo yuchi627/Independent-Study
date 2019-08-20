@@ -7,7 +7,7 @@ import math
 from pylepton import Lepton
 import select
 #HOST = '172.20.10.3'
-HOST = '192.168.43.118'
+HOST = '192.168.43.149'
 #HOST = '192.168.43.84'
 PORT = 8888
 
@@ -100,7 +100,7 @@ try:
 						print("re")
 						reconnect_count = count
 				else:
-					print("-=1")
+					#print("-=1")
 					reconnect_count -= 1
 			if(save_flag):
 				cv2.putText(combine, "You will be saved", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
