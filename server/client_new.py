@@ -51,28 +51,28 @@ class client:
         self.first_flag = True
         self.namespace_img = namespace_whiteimg
 
-    def set_info(self,num,ip_position):
+    def set_info(self, num, ip_position):
         self.id_num = num
         self.ip_addr = ip_position
         self.color_set = (0,255,0)
 
-    def set_th70(self,th70):
-        ###### set the 70 degree threshold of flir value ######
-        self.th_70 = th70
+    def set_threshold(self, th70_or_100, num):
+        if(th70_or_100 == 1):
+            ###### set the 70 degree threshold of flir value ######
+            self.th_70 = num
+        else:
+            ###### set the 100 degree threshold of flir value ######
+            self.th_100 = num
 
-    def set_th100(self,th100):
-        ###### set the 100 degree threshold of flir value ######
-        self.th_100 = th100
-
-    def set_close_danger(self,flag):
+    def set_close_danger(self, flag):
         self.closing_danger_flag = flag
 
-    def set_namespace(self,my_namespace_img):
+    def set_namespace(self, my_namespace_img):
         ###### set the image with name ######
         self.first_flag = False
         self.namespace_img = my_namespace_img
 
-    def set_sos_flag(self,flag):
+    def set_sos_flag(self, flag):
         self.sos_flag = flag
 
     def brush_namespace_background(self):
@@ -88,10 +88,10 @@ class client:
     def first_time_recv(self):
         return self.first_flag
 
-    def set_visible(self,flag):
+    def set_visible(self, flag):
         self.visible_flag = flag
 
-    def set_name(self,myname):
+    def set_name(self, myname):
         self.name = myname
 
     def get_name(self):
@@ -100,7 +100,7 @@ class client:
     def get_package_size(self):
         return self.remain_package_size
 
-    def set_package(self,package_num,ir_or_flir):
+    def set_package(self, package_num, ir_or_flir):
         self.remain_package_size = package_num
         if(ir_or_flir == 1):
             self.recv_ir_flag = True
@@ -113,7 +113,8 @@ class client:
     def decrease_package_size(self, num):
         self.remain_package_size -= num
 
-    def combine_img(self,recv_str):
+    def combine_recv_img(self,recv_str):
+        print(type(recv_str), type(self.binary_img))
         self.binary_img += recv_str
     
     def read_img(self):
@@ -132,25 +133,25 @@ class client:
                 ###### decode ir image ######
                 self.recv_ir_flag = False
                 data = np.fromstring(self.binary_img, dtype = 'uint8')
-                data = cv2.imdecode(data,1)
+                data = cv2.imdecode(data, 1)
                 self.binary_img = b''
-                self.ir_img = np.reshape(data,(height,weight,3))
+                self.ir_img = np.reshape(data, (height, weight, 3))
                 return False
             elif(self.recv_flir_flag):
                 ###### decode flir value ######
                 self.recv_flir_flag = False
-                data = struct.unpack("4800I",self.binary_img)
+                data = struct.unpack("4800I", self.binary_img)
                 self.binary_img = b''
                 data = (np.asarray(data)).astype(np.float32)
-                data = np.reshape(data,(60,80,1))
+                data = np.reshape(data, (60,80,1))
                 ###### if over threshold, replace part of ir image with red or green color ######
-                dst = cv2.resize(data,(weight,height),interpolation= cv2.INTER_CUBIC)
+                dst = cv2.resize(data, (weight,height), interpolation= cv2.INTER_CUBIC)
                 dst = np.dstack([dst]*3)
                 tmp = self.ir_img.copy()
-                dst = cv2.warpPerspective(dst,matrix,(weight,height))
-                np.place(tmp,(dst > self.th_100),(0,0,255))
-                np.place(tmp,((dst > self.th_70)&(dst <= self.th_100)),(163,255,197))
-                before_rotate_img = cv2.addWeighted(self.ir_img,0.5,tmp,0.5,0)
+                dst = cv2.warpPerspective(dst,matrix, (weight,height))
+                np.place(tmp, (dst > self.th_100), (0,0,255))
+                np.place(tmp, ((dst > self.th_70)&(dst <= self.th_100)), (163,255,197))
+                before_rotate_img = cv2.addWeighted(self.ir_img, 0.5, tmp, 0.5, 0)
                 ###### rotate image ######
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
                 self.combine_img = rotate_img
@@ -158,12 +159,12 @@ class client:
                 if(np.sum(data) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
-                    cv2.putText(self.combine,"In danger area !",(20,40),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),3)
+                    cv2.putText(self.combine_img, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                 elif(self.closing_danger_flag):
-                    cv2.putText(self.combine,"Close to danger area",(20,40),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),3)
+                    cv2.putText(self.combine_img, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                     self.closing_danger_flag = False
                 ###### concatenate the combine_img and namespace ######
-                self.show_img = np.concatenate((self.namespace_img,self.combine_img),axis=0)
+                self.show_img = np.concatenate((self.namespace_img, self.combine_img), axis=0)
                 return True
             return False
 
