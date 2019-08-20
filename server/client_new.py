@@ -14,6 +14,7 @@ namespace_whiteimg[:,:] = (255,255,255)
 
 matrix = np.loadtxt("matrix6.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
+
 class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
@@ -30,7 +31,7 @@ class client:
     sos_flag = False
     twinkling_flag = False
     closing_danger_flag = False     ###### close to the danger area
-    in_danger_flag = False      ###### the red area more one third of pic
+    in_danger_flag = False      ###### the red area more than one third of pic
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
