@@ -6,11 +6,11 @@ height = 480
 weight = 640
 name_space_height = 50
 
-white_img = np.zeros((height+name_space_height,weight,3), np.uint8)
-white_img[:,:] = (255,255,255)
+img_white = np.zeros((height+name_space_height,weight,3), np.uint8)
+img_white[:,:] = (255,255,255)
 
-namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
-namespace_whiteimg[:,:] = (255,255,255)
+img_white_namespace = np.zeros((name_space_height,weight,3), np.uint8)
+img_white_namespace[:,:] = (255,255,255)
 
 matrix = np.loadtxt("matrix6.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
@@ -19,10 +19,10 @@ class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
     remain_package_size = 0
-    binary_img = b''
-    ir_img = white_img
-    combine_img = white_img
-    show_img = white_img    
+    img_binary = b''
+    img_ir = img_white
+    img_combine = img_white
+    img_show = img_white    
     name = "name"
     recv_ir_flag = False
     recv_flir_flag = False
@@ -49,7 +49,7 @@ class client:
     def __init__(self):
         self.visible_flag = True
         self.first_flag = True
-        self.namespace_img = namespace_whiteimg
+        self.namespace_img = img_white_namespace
 
     def set_info(self, num, ip_position):
         self.id_num = num
@@ -114,64 +114,63 @@ class client:
         self.remain_package_size -= num
 
     def combine_recv_img(self,recv_str):
-        print(type(recv_str), type(self.binary_img))
-        self.binary_img += recv_str
+        self.img_binary += recv_str
     
     def read_img(self):
         if(self.visible_flag):
-            return_img = self.show_img
+            return_img = self.img_show
         else:
-            return_img = white_img
+            return_img = img_white
         return return_img
 
     def read_combine_img(self):
-        return self.combine_img
+        return self.img_combine
 
     def decode_img(self):
         try:
             if(self.recv_ir_flag):
                 ###### decode ir image ######
                 self.recv_ir_flag = False
-                data = np.fromstring(self.binary_img, dtype = 'uint8')
+                data = np.fromstring(self.img_binary, dtype = 'uint8')
                 data = cv2.imdecode(data, 1)
-                self.binary_img = b''
-                self.ir_img = np.reshape(data, (height, weight, 3))
+                self.img_binary = b''
+                self.img_ir = np.reshape(data, (height, weight, 3))
                 return False
             elif(self.recv_flir_flag):
                 ###### decode flir value ######
                 self.recv_flir_flag = False
-                data = struct.unpack("4800I", self.binary_img)
-                self.binary_img = b''
+                data = struct.unpack("4800I", self.img_binary)
+                self.img_binary = b''
                 data = (np.asarray(data)).astype(np.float32)
                 data = np.reshape(data, (60,80,1))
                 ###### if over threshold, replace part of ir image with red or green color ######
                 dst = cv2.resize(data, (weight,height), interpolation= cv2.INTER_CUBIC)
                 dst = np.dstack([dst]*3)
-                tmp = self.ir_img.copy()
+                tmp = self.img_ir.copy()
                 dst = cv2.warpPerspective(dst,matrix, (weight,height))
                 np.place(tmp, (dst > self.th_100), (0,0,255))
                 np.place(tmp, ((dst > self.th_70)&(dst <= self.th_100)), (163,255,197))
-                before_rotate_img = cv2.addWeighted(self.ir_img, 0.5, tmp, 0.5, 0)
+                before_rotate_img = cv2.addWeighted(self.img_ir, 0.5, tmp, 0.5, 0)
                 ###### rotate image ######
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
-                self.combine_img = rotate_img
+                self.img_combine = rotate_img
                 ###### put the warning message on pic ######
                 if(np.sum(data) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
-                    cv2.putText(self.combine_img, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+                    cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                 elif(self.closing_danger_flag):
-                    cv2.putText(self.combine_img, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+                    cv2.putText(self.img_combine, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                     self.closing_danger_flag = False
-                ###### concatenate the combine_img and namespace ######
-                self.show_img = np.concatenate((self.namespace_img, self.combine_img), axis=0)
+                ###### concatenate the img_combine and namespace ######
+                self.img_show = np.concatenate((self.namespace_img, self.img_combine), axis=0)
                 return True
             return False
 
         except Exception as e:
             print(e.args)
             ###### if decode image fail, show the white image ######
-            self.show_img = white_img
+            self.img_show = img_white
             return False
         return False
 
