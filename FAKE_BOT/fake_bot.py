@@ -583,6 +583,8 @@ def recv_msg():
 	
 s.send((("Tony").encode()).ljust(16))
 print("Tony")
+s.send(("TH70"+str(th_70)).ljust(16).encode()) 
+s.send(("TH100"+str(th_100)).ljust(16).encode())
 time.sleep(1)
 s.send((("0.0").encode()).ljust(16))
 print("0.0")
