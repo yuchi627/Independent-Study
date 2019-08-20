@@ -9,7 +9,7 @@ import keyboard
 import os
 
 ##### use "ifconfig" to find your ip
-host = '192.168.208.164'
+host = '192.168.43.84'
 port = 8888
 
 window_name = 'Firefighter' # image_window_name
@@ -88,7 +88,7 @@ def accept_wrapper(sock):
     # add new connection
     # 創造一個新的Object給Device
 #--------------------------------------------------------------------#
-    
+	    
     print("Client: ")
     print("\tnum: ",client_list[i].id_num)
     print("\tip_addr: ",client_list[i].ip_addr)
