@@ -298,13 +298,7 @@ def drawNewSpot(data,index, img_fireman):
         client_list[index].color_set = (0,139,0)
         client_list[index].addNewPosition("No Turn",float(data))
     refresh_map = True
-    #print('refresh')
     draw_layer()
-    #for i in range(4):
-        #print(client_list[i].position_y, client_list[i].position_x)
-        #image[client_list[i].position_y-25 : client_list[i].position_y + 25 , client_list[i].position_x-25 : client_list[i].position_x + 25] = img_fireman
-        #client_list[i].last_x = client_list[i].position_x
-        #client_list[i].last_y = client_list[i].position_y
 
 def helpConditionExec(message,num):
     global image,refresh_map
