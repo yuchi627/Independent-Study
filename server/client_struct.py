@@ -1,5 +1,7 @@
 import numpy as np
 import cv2
+import struct
+
 height = 480
 weight = 640
 name_space_height = 50
@@ -10,22 +12,26 @@ white_img[:,:] = (255,255,255)
 namespace_whiteimg = np.zeros((name_space_height,weight,3), np.uint8)
 namespace_whiteimg[:,:] = (255,255,255)
 
-border_w= 1174*2 - 25
-border_h = 705*2 - 25
-right_x = 25+1174
-bottom_y = 25+705
+matrix = np.loadtxt("matrix6.txt", delimiter=',')
+M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
+
 class client:
-    remain_package_size = -1
+    th_70 = 0   ###### threshold for 70 degree flir value
+    th_100 = 0  ###### threshold for 100 degree flir value
+    remain_package_size = 0
     binary_img = b''
-    subplot_number = 0
-    img = white_img
-    visible = False
-    first = False
-    sos_flag = False
-    hot_flag = False
-    twinkling = False
+    ir_img = white_img
+    combine_img = white_img
+    show_img = white_img    
     name = "name"
-    set_start = False
+    recv_ir_flag = False
+    recv_flir_flag = False
+    visible_flag = False
+    first_flag = False  ###### first time recv msg
+    sos_flag = False
+    twinkling_flag = False
+    closing_danger_flag = False     ###### close to the danger area
+    in_danger_flag = False      ###### the red area more than one third of pic
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -40,96 +46,134 @@ class client:
     bes_data_list = []
     gyro_list = []
 #------------------------------------------------#
-    def __init__(self,num):
-        self.visible = True
+    def __init__(self):
+        self.visible_flag = True
+        self.first_flag = True
         self.namespace_img = namespace_whiteimg
-        self.first = True
-        if(num==1):
-            self.position_x = right_x
-        elif(num==2):
-            self.position_y = bottom_y
-        elif(num==3):
-            self.position_x = right_x
-            self.position_y = bottom_y
 
-    def set_info(self,num,ip_position):
+    def set_info(self, num, ip_position):
         self.id_num = num
         self.ip_addr = ip_position
         self.color_set = (0,255,0)
 
-    def namespace_imgset(self,my_namespace_img):
+    def set_threshold(self, th70_or_100, num):
+        if(th70_or_100 == 1):
+            ###### set the 70 degree threshold of flir value ######
+            self.th_70 = num
+        else:
+            ###### set the 100 degree threshold of flir value ######
+            self.th_100 = num
+
+    def set_close_danger(self, flag):
+        self.closing_danger_flag = flag
+
+    def set_namespace(self, my_namespace_img):
+        ###### set the image with name ######
+        self.first_flag = False
         self.namespace_img = my_namespace_img
-        self.first = False
 
-    def set_sos_flag(self,flag):
+    def set_sos_flag(self, flag):
         self.sos_flag = flag
-	
-    def set_hot_flag(self,flag):
-        self.hot_flag = flag
 
-    def brush_background(self):
+    def brush_namespace_background(self):
         if(self.sos_flag):
-            if(self.twinkling):
-                self.twinkling = False
-                return 1    ##### red background
-            else:   
-                self.twinkling = True
-                return 2    ##### white background
-            return 0    ##### do not need to brush background
+            if(self.twinkling_flag):
+                self.twinkling_flag = False
+                return 1    ###### red background
+            else:
+                self.twinkling_flag = True
+                return 2    ###### white background
+        return 0    ###### do not need to brush background
 
     def first_time_recv(self):
-        return self.first
+        return self.first_flag
 
-    def set_visible(self,tORf):
-        self.visible = tORf
+    def set_visible(self, flag):
+        self.visible_flag = flag
 
-    def set_name(self,myname):
+    def set_name(self, myname):
         self.name = myname
 
     def get_name(self):
         return self.name
-    '''
-    def get_num(self):
-        return self.num
-    '''
-    def package_size(self):
+        
+    def get_package_size(self):
         return self.remain_package_size
 
-    def package_set(self,package_num):
+    def set_package(self, package_num, ir_or_flir):
         self.remain_package_size = package_num
+        if(ir_or_flir == 1):
+            self.recv_ir_flag = True
+        elif(ir_or_flir == 2):
+            self.recv_flir_flag = True
+        else:
+            self.recv_ir_flag = False
+            self.recv_flir_flag = False
 
-    def package_decrease(self, decrease_num):
-        self.remain_package_size -= decrease_num
+    def decrease_package_size(self, num):
+        self.remain_package_size -= num
 
-    def img_combine(self,recv_str):
+    def combine_recv_img(self,recv_str):
+        print(type(recv_str), type(self.binary_img))
         self.binary_img += recv_str
     
-    def img_read(self):
-        if(self.visible):
-            return_img = self.img
+    def read_img(self):
+        if(self.visible_flag):
+            return_img = self.show_img
         else:
             return_img = white_img
         return return_img
 
-    def img_decode(self):
-        '''
-        data = np.fromstring(self.binary_img, dtype = 'uint8')
-        data = cv2.imdecode(data,1)
-        self.binary_img = b''
-        self.img = np.reshape(data,(height,weight,3))
-        self.img = np.concatenate((self.namespace_img,self.img),axis=0)
-        '''
-        ##### decode the string and turn to 2 dimension array
+    def read_combine_img(self):
+        return self.combine_img
+
+    def decode_img(self):
         try:
-            data = np.fromstring(self.binary_img, dtype = 'uint8')
-            data = cv2.imdecode(data,1)
-            self.binary_img = b''
-            self.img = np.reshape(data,(height,weight,3))
-            self.img = np.concatenate((self.namespace_img,self.img),axis=0)
+            if(self.recv_ir_flag):
+                ###### decode ir image ######
+                self.recv_ir_flag = False
+                data = np.fromstring(self.binary_img, dtype = 'uint8')
+                data = cv2.imdecode(data, 1)
+                self.binary_img = b''
+                self.ir_img = np.reshape(data, (height, weight, 3))
+                return False
+            elif(self.recv_flir_flag):
+                ###### decode flir value ######
+                self.recv_flir_flag = False
+                data = struct.unpack("4800I", self.binary_img)
+                self.binary_img = b''
+                data = (np.asarray(data)).astype(np.float32)
+                data = np.reshape(data, (60,80,1))
+                ###### if over threshold, replace part of ir image with red or green color ######
+                dst = cv2.resize(data, (weight,height), interpolation= cv2.INTER_CUBIC)
+                dst = np.dstack([dst]*3)
+                tmp = self.ir_img.copy()
+                dst = cv2.warpPerspective(dst,matrix, (weight,height))
+                np.place(tmp, (dst > self.th_100), (0,0,255))
+                np.place(tmp, ((dst > self.th_70)&(dst <= self.th_100)), (163,255,197))
+                before_rotate_img = cv2.addWeighted(self.ir_img, 0.5, tmp, 0.5, 0)
+                ###### rotate image ######
+                rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
+                self.combine_img = rotate_img
+                ###### put the warning message on pic ######
+                if(np.sum(data) >= (data.size / 3)):
+                    ###### if the red area more one third of pic, rise the in_danger_flag ######
+                    self.in_danger_flag = True
+                    cv2.putText(self.combine_img, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+                elif(self.closing_danger_flag):
+                    cv2.putText(self.combine_img, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+                    self.closing_danger_flag = False
+                ###### concatenate the combine_img and namespace ######
+                self.show_img = np.concatenate((self.namespace_img, self.combine_img), axis=0)
+                return True
+            return False
+
         except Exception as e:
             print(e.args)
-            self.img = white_img
-        
+            ###### if decode image fail, show the white image ######
+            self.show_img = white_img
+            return False
+        return False
 
     def addNewPosition(self,direct,dist): # 我們的function
         if self.direction != -1:
@@ -162,19 +206,12 @@ class client:
                 #print("pixel_num: "+str(pixel_num))
                 if self.direction == 0:
                     self.position_y -= pixel_num
-                    if(self.position_y < 25):
-                        self.position_y = 25
                 elif self.direction == 90:
                     self.position_x += pixel_num
-                    if(self.position_x > border_w):
-                        self.position_x = border_w
                 elif self.direction == 180:
                     self.position_y += pixel_num
-                    if(self.position_y > border_h):
-                        self.position_y = border_h
                 elif self.direction == 270:
                     self.position_x -= pixel_num
-                    if(self.position_x < 25):
-                        self.position_x = 25
                 else:
                     pass
+
