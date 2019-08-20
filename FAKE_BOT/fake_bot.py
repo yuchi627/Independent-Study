@@ -561,16 +561,16 @@ def send_image():
 				data = b''
 					
 		except:
-	    		print("reconnecting server")
-	    		img_combine = img_processing(ir_img,flir_val)
-	    		try:
+			print("reconnecting server")
+			img_combine = img_processing(ir_img,flir_val)
+			try:
 				####### reconnect server #########
 				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				s.connect((HOST,PORT))
 				s.send(("Nadine").ljust(16).encode())
 				s.send(("TH70"+str(th_70)).ljust(16).encode()) 
 				s.send(("TH100"+str(th_100)).ljust(16).encode())
-	    		except:
+			except:
 				pass
 	except Exception as e:
 		print(e.args)	
