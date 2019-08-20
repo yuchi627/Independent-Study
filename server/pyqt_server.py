@@ -146,6 +146,22 @@ class AppWindow(QDialog):
                     i += 1
                 print("Left Mouse, x: ",event.pos().x())
                 print("Left Mouse, y: ",event.pos().y())
+            elif(self.image_image_flag):
+                self.click_to_cancel = True
+                if((event.pos().x() <= self.x_bound) and (event.pos().y()<= self.y_bound)):
+                    ##### client[0]
+                    self.click_client = 0
+                elif((event.pos().x() >= self.x_bound) and (event.pos().y()<= self.y_bound)):
+                    ##### client[1]
+                    self.click_client = 1
+                elif((event.pos().x() <= self.x_bound) and (event.pos().y()>= self.y_bound)):
+                    ##### client[2]
+                    self.click_client = 2
+                elif((event.pos().x() >= self.x_bound) and (event.pos().y()>= self.y_bound)):
+                    ##### client[3]
+                    self.click_client = 3
+                else:
+                    self.click_to_cancel = False     
             else:
                 pass
         else:
