@@ -511,68 +511,68 @@ th_100 = 7800
 count_img = 0
 
 def send_image():
-    count_img += 1
-    if(count_img == 81):
-	count_img = 1
-    ir_img = cv2.imread("../ir/img"+str(count_img)+".jpg")
-    flir_val = np.loadtxt("../flir/flir"+str(count_img)+".txt")
-    flir_val = np.reshape(flir_val,(60,80,1))
-    flir_val = flir_val.astype(np.uint16)
-    try:
-	######## encode message ############
-	_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
-	data_ir = np.array(imgencode_ir)
-        stringData_ir = data_ir.tostring()
-	######### encode flir_val ###########
-	flir_val_ravel = flir_val.ravel()
-	flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
-
+	count_img += 1
+	if(count_img == 81):
+		count_img = 1
+	ir_img = cv2.imread("../ir/img"+str(count_img)+".jpg")
+	flir_val = np.loadtxt("../flir/flir"+str(count_img)+".txt")
+	flir_val = np.reshape(flir_val,(60,80,1))
+	flir_val = flir_val.astype(np.uint16)
 	try:
-            ####### send ir image ###############
-	    s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
-            s.send(stringData_ir)
-	    ####### send flir image to server #########
-	    s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
-	    s.send(flir_val_pack)
-	    t4 = time.time()
-	    try:
-		####### recv the combine image from server #############
-		ready = select.select([s],[],[],0.1)
-		if(ready[0]):
-		    data = s.recv(16)
-		    size_data = data[0:16]
-		    if(len(data) == len(size_data)):
-			data = b''
-		    else:
-			data = data[len(size_data):len(data)]
-			size = int((size_data.decode()).strip())
-			while(size > len(data)):
-			    data += s.recv(size)
-			data_img = data[0:size]
-			if(len(data_img) == len(data)):
-			    data = b''
-			else:
-			    data = data[len(data_img):len(data)]
-			data_img = np.fromstring(data_img,dtype = 'uint8')
-			data_img = cv2.imdecode(data_img,1)
-			img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
-	    except Exception as e:
-		img_combine = img_processing(ir_img,flir_val)
-		data = b''
+		######## encode message ############
+		_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
+		data_ir = np.array(imgencode_ir)
+		stringData_ir = data_ir.tostring()
+		######### encode flir_val ###########
+		flir_val_ravel = flir_val.ravel()
+		flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
+
+		try:
+			####### send ir image ###############
+			s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
+			s.send(stringData_ir)
+			####### send flir image to server #########
+			s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
+			s.send(flir_val_pack)
+			t4 = time.time()
+			try:
+				####### recv the combine image from server #############
+				ready = select.select([s],[],[],0.1)
+				if(ready[0]):
+		    			data = s.recv(16)
+				size_data = data[0:16]
+				if(len(data) == len(size_data)):
+					data = b''
+				else:
+					data = data[len(size_data):len(data)]
+				size = int((size_data.decode()).strip())
+				while(size > len(data)):
+			    		data += s.recv(size)
+				data_img = data[0:size]
+				if(len(data_img) == len(data)):
+			    		data = b''
+				else:
+			    		data = data[len(data_img):len(data)]
+				data_img = np.fromstring(data_img,dtype = 'uint8')
+				data_img = cv2.imdecode(data_img,1)
+				img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+			except Exception as e:
+				img_combine = img_processing(ir_img,flir_val)
+				data = b''
 					
-        except:
-	    print("reconnecting server")
-	    img_combine = img_processing(ir_img,flir_val)
-	    try:
-		####### reconnect server #########
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			s.connect((HOST,PORT))
-			s.send(("Nadine").ljust(16).encode())
-			s.send(("TH70"+str(th_70)).ljust(16).encode()) 
-			s.send(("TH100"+str(th_100)).ljust(16).encode())
-	    except:
-			pass
-    except Exception as e:
+		except:
+	    		print("reconnecting server")
+	    		img_combine = img_processing(ir_img,flir_val)
+	    		try:
+				####### reconnect server #########
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				s.connect((HOST,PORT))
+				s.send(("Nadine").ljust(16).encode())
+				s.send(("TH70"+str(th_70)).ljust(16).encode()) 
+				s.send(("TH100"+str(th_100)).ljust(16).encode())
+	    		except:
+				pass
+	except Exception as e:
 		print(e.args)	
 def recv_msg():
 	ready = select.select([s],[],[],0.05)
