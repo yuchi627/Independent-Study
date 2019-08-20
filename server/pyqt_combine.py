@@ -181,7 +181,7 @@ class AppWindow(QDialog):
             while(len(self.img_fireman) == 0):
                 self.img_fireman = cv2.imread(fireman_img_map_path)
             self.img_fireman = cv2.resize(self.img_fireman,(50,50))
-            self.img_fireman = cv2.cvtColor(self.img_fireman,cv2.COLOR_RGB2BGR)
+            self.img_fireman = cv2.cvtColor(self.img_fireman,cv2.COLOR_RGB2BGR,-1)
         else:
             print("There is no FireFighter Image")
 
@@ -384,7 +384,7 @@ class AppWindow(QDialog):
                                     else:
                                         print("id: ",i.id_num)
                                         print(recv_data_msg)
-                                        self.drawNewSpot(recv_data_msg,i.id_num,self.img_fireman)                    
+                                        self.drawNewSpot(recv_data_msg,i.id_num)                    
                                     break
                                 # Device 傳輸資料時, call 對應function
                             #--------------------------------------------------------------------#
@@ -442,7 +442,7 @@ class AppWindow(QDialog):
                 self.sel.unregister(sock)
                 sock.close()
 
-    def drawNewSpot(self,data,index,img_fireman):
+    def drawNewSpot(self,data,index):
         self.image = self.keep.copy()
  
         left_spot_x = 5 + (self.middle_x-5)*(index%2)
@@ -466,12 +466,8 @@ class AppWindow(QDialog):
         else:
             self.client_list[index].addNewPosition("No Turn",float(data))
         self.refresh_map = True
-        #print('refresh')
-        print("lalax: ",self.client_list[0].position_x)
-        print("lalay: ",self.client_list[0].position_y)
-        for i in range(4):
-            self.image[self.client_list[i].position_y-25 : self.client_list[i].position_y + 25 ,self.client_list[i].position_x-25 : self.client_list[i].position_x + 25] = img_fireman
- 
+        self.draw_layer(index)     
+
     def helpConditionExec(self,message,index):
         self.drawNewSpot('0.0',index)
         if("HELP2" in message):
