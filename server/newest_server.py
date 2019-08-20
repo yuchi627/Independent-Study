@@ -19,7 +19,7 @@ map_window_name = 'Map'
 info_window_name = 'Info'
 
 ##### Default four element array
-client_list = [client(0),client(1),client(2),client(3)]
+client_list = [client(),client(),client(),client()]
 resize_height = 480+200
 resize_weight = 640+600
 name_space_height = 50
@@ -37,7 +37,6 @@ inti_flag = -1
 image = []
 hot_mask = []
 keep = []
-keep_hot = []
 middle_x = 1170 
 middle_y = 700
 max_x = 1174*2
@@ -79,7 +78,7 @@ def accept_wrapper(sock):
     ##### create an client object an put into dictionary with it's address
     min_num = min(subplot_count)
     ##### create an white img with client name
-    client_list[min_num]=client(min_num)
+    client_list[min_num]=client()
     client_dict[str(addr[1])] = min_num
     ##### number remove from list subplot_count
     subplot_count.remove(min_num)
@@ -241,7 +240,7 @@ def service_connection(key, mask):
 
  #######    # running handling
 def drawNewSpot(data,index, img_fireman):
-    global client_list, keep, image, inti_flag, refresh_map, hot_mask, keep_hot
+    global client_list, keep, image, inti_flag, refresh_map, hot_mask
 	
     image = keep.copy()
     if(index == 0):
@@ -407,7 +406,7 @@ def replace_roi(dst, num, y0, y1, x0, x1, roi):
         dst[last_y0 : last_y1 , last_x0 : last_x1] = roi
 
 def draw_layer(num):
-    global image, hot_mask, keep_hot, img_fireman
+    global image, hot_mask, img_fireman
     alpha_s = img_fireman[:,:,3] / 255.0
     alpha_l = 1.0 - alpha_s
     x_offset = client_list[num].position_x-25
@@ -497,7 +496,6 @@ if __name__ == "__main__":
     image = cv2.line(image,(middle_x*2,5),(middle_x*2,middle_y*2),(0,139,0),10,6)
     #hot_mask = image.copy()
     hot_mask = np.zeros(image.shape,np.uint8)
-    keep_hot = hot_mask.copy()
 
     cv2.setMouseCallback(map_window_name,addNewPoint)
     keep = image.copy()
