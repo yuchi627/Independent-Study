@@ -51,7 +51,7 @@ class AppWindow(QDialog):
         self.image_info_flag = False   
         self.middle_x = 1170
         self.middle_y = 700
-        self.host = '192.168.43.149'
+        self.host = '192.168.43.84'
         self.port = 8888
         self.time_press = 0
         self.info_flag = 0
@@ -543,7 +543,7 @@ class AppWindow(QDialog):
         col = index_tuple[1]
         for c in range(2):     
             self.image_map[row,col,c] = self.image_map[row, col, c]*0.5
-        self.image_map[row, col, 2] = self.image_map[row, col, 2]*0.5 + 122
+        self.image_map[row, col, 0] = self.image_map[row, col, 0]*0.5 + 122
         for i in range(4):
             x_offset = self.client_list[i].position_x-25
             y_offset = self.client_list[i].position_y-25
