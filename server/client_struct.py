@@ -24,6 +24,8 @@ class client:
     sos_flag = False
     hot_flag = False
     twinkling = False
+    closing_danger_flag = False
+    in_danger_flag = False
     name = "name"
     set_start = False
 # ---------------------------------------------#

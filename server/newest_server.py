@@ -414,7 +414,6 @@ def draw_layer(num):
     y_offset = client_list[num].position_y-25
     if(client_list[num].hot_flag):
         replace_roi(hot_mask, num, y_offset, img_fireman.shape[0] + y_offset, x_offset, img_fireman.shape[1] + x_offset, (1,1,1))
-        client_list[num].set_hot_flag(False)
     else:
         replace_roi(hot_mask, num, y_offset, img_fireman.shape[0] + y_offset, x_offset, img_fireman.shape[1] + x_offset, (0,0,0))
 
@@ -431,14 +430,31 @@ def draw_layer(num):
         y2 = img_fireman.shape[0] + y_offset
         for c in range(3):
             image[y_offset:y2 , x_offset:x2, c] = (alpha_s * img_fireman[:,:,c] + alpha_l * image[y_offset:y2 , x_offset:x2, c])
-
-def detect_hot():
+    ###### detect_danger ######
     for i in range(4):
-        if(client_list[i].position_x < 75):
-            temp = cv2.inRange(keep_hot[client_list[i].position_y-25 : client_list[i].position_y+75 , client_list[i].position_x-75 : client_list[i].position_x+75],(0,0,255),(0,0,255))
-        cv2.imshow('temp',temp)
-        print('close to red')
-        
+        x1 = client_list[i].position_x-50
+        y1 = client_list[i].position_y-50
+        x2 = client_list[i].position_x+50
+        y2 = client_list[i].position_y+50
+        if x1 < 0:
+            x1 = 0
+        elif x2 > max_x:
+            x2 = max_x
+        if y1 < 0:
+            y1 = 0
+        elif y2 > max_y:
+            y2 = max_y	
+        if np.sum(hot_mask[y1:y2, x1:x2] > 0):
+            if(client_list[i].hot_flag):
+                client_list[i].in_danger_flag = True
+            else:
+                client_list[i].closing_danger_flag = True
+        else:
+            client_list[i].in_danger_flag = False
+            client_list[i].closing_danger_flag = False
+        client_list[i].hot_flag = False
+        #print(i,client_list[i].in_danger_flag, client_list[i].closing_danger_flag)
+
 def show_info():
     print("ya")
 #    os.system("sudo python3 show_info.py")    
