@@ -330,16 +330,16 @@ class AppWindow(QDialog):
                         recv_data_msg = recv_data.decode().strip()
                         #print("msg = ", recv_data_msg)
                         if("FLIR" in recv_data_msg):
-                            print("flir image size msg")
+                            #print("flir image size msg")
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
                         elif("IR" in recv_data_msg):
-                            print("ir image size msg")
+                            #print("ir image size msg")
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
                         elif("TH70" in recv_data_msg):
-                            print("TH70 msg")
+                            #print("TH70 msg")
                             self.client_list[client_host].set_threshold(1, float(recv_data_msg[4:len(recv_data_msg)]))
                         elif("TH100" in recv_data_msg):
-                            print("TH100 msg")
+                            #print("TH100 msg")
                             self.client_list[client_host].set_threshold(2, float(recv_data_msg[5:len(recv_data_msg)]))
                         elif(len(recv_data_msg) == 0):
                             pass
@@ -375,7 +375,7 @@ class AppWindow(QDialog):
                         #print ("error in get msg: ",e.args)
                 else:
                     ###### recv the img ######
-                    print("image msg")
+                    #print("image msg")
                     recv_data = sock.recv(self.client_list[client_host].get_package_size())
                     ###### concatenate recv msg to image ######
                     #print(type(recv_data))
