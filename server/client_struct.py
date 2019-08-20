@@ -16,19 +16,6 @@ matrix = np.loadtxt("matrix6.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 
 class client:
-<<<<<<< HEAD
-    remain_package_size = -1
-    binary_img = b''
-    subplot_number = 0
-    img = white_img
-    visible = False
-    first = False
-    sos_flag = False
-    hot_flag = False
-    twinkling = False
-    closing_danger_flag = False
-    in_danger_flag = False
-=======
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
     remain_package_size = 0
@@ -36,7 +23,6 @@ class client:
     img_ir = img_white
     img_combine = img_white
     img_show = img_white    
->>>>>>> eadd2819754d4e42fd65fed03cda18555548d07e
     name = "name"
     recv_ir_flag = False
     recv_flir_flag = False
@@ -169,7 +155,8 @@ class client:
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
                 self.img_combine = rotate_img
                 ###### put the warning message on pic ######
-                if(np.sum(data) >= (data.size / 3)):
+                if(np.sum((data> self.th_100)) >= (data.size / 3)):
+                    print("sum= ",np.sum((data> self.th_100)),"size= ",data.size)
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
                     cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
