@@ -12,6 +12,12 @@ img_white[:,:] = (255,255,255)
 img_white_namespace = np.zeros((name_space_height,weight,3), np.uint8)
 img_white_namespace[:,:] = (255,255,255)
 
+bound_w = 1174
+bound_h = 705
+right_x = 25 + bound_w
+bottom_y = 25 + bound_h
+
+
 matrix = np.loadtxt("matrix6.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 
@@ -33,6 +39,10 @@ class client:
     closing_danger_flag = False     ###### close to the danger area
     in_danger_flag = False      ###### the red area more than one third of pic
     set_start = False
+    bound_top = 0
+    bound_buttom = 0
+    bound_left = 0
+    bound_right = 0
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -47,10 +57,36 @@ class client:
     bes_data_list = []
     gyro_list = []
 #------------------------------------------------#
-    def __init__(self):
+    def __init__(self, num):
         self.visible_flag = True
         self.first_flag = True
         self.namespace_img = img_white_namespace
+        if(num == 0):
+            self.bound_top = 25
+            self.bound_buttom = bound_h-25
+            self.bound_left = 25
+            self.bound_right = bound_w-25
+        elif(num == 1):
+            self.bound_top = 25
+            self.bound_buttom = bound_h-25
+            self.bound_left = bound_w+25
+            self.bound_right = bound_w * 2 -25
+            self.position_x = right_x
+        elif(num == 2):
+            self.bound_top = bound_h + 25
+            self.bound_buttom = bound_h * 2 -25
+            self.bound_left = 25
+            self.bound_right = bound_w-25
+            self.position_y = bottom_y
+        elif(num == 3):
+            self.bound_top = bound_h + 25
+            self.bound_buttom = bound_h * 2 -25
+            self.bound_left = bound_w + 25
+            self.bound_right = bound_w * 2 -25
+            self.position_x = right_x
+            self.position_y = bottom_y
+
+        
 
     def set_info(self, num, ip_position):
         self.id_num = num
@@ -157,7 +193,7 @@ class client:
                 self.img_combine = rotate_img
                 ###### put the warning message on pic ######
                 if(np.sum((data> self.th_100)) >= (data.size / 3)):
-                    print("sum= ",np.sum((data> self.th_100)),"size= ",data.size)
+                    #print("sum= ",np.sum((data> self.th_100)),"size= ",data.size)
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
                     cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
