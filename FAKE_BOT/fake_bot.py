@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 import select
 
-HOST = '192.168.43.84'
-PORT = 7777
+HOST = '172.20.10.2'
+PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
@@ -483,37 +483,97 @@ def not_help():
 		time.sleep(0.5)
 		count += 1
 
+def img_processing(ir_img,flir_val):
+	tmp = ir_img.copy()
+	flir_val = cv2.resize(flir_val,(ir_weight,ir_height),interpolation = cv2.INTER_CUBIC)
+	flir_val = np.dstack([flir_val]*3)
+	######### combine ir & flir image ################
+	dst = cv2.warpPerspective(flir_val,matrix,(ir_weight,ir_height))
+	np.place(tmp,(dst > th_100),(0,0,255))
+	np.place(tmp,((dst > th_70)&(dst <= th_100)),(163,255,197))
+	add = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
+	######## rotate image 180 #################
+	return cv2.warpAffine(add, M, (ir_weight,ir_height))
+ir_height = 480 #tmp1.shape[0]
+ir_weight = 640 #tmp1.shape[1]
+flir_height = 380   #flir_tmp.shape[0]
+flir_weight = 520   #flir_tmp.shape[1]
+refresh = False
+img_combine = np.zeros((ir_height,ir_weight,3),np.uint8)
+ir_img = np.empty((ir_height,ir_weight,3),np.uint8)
+flir_val = np.zeros((ir_height,ir_weight),np.uint16)
+encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
+data = b''
+matrix = np.loadtxt('matrix6.txt',delimiter = ',')
+M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
+th_70 = 7700
+th_100 = 7800
+count_img = 0
+
 def send_image():
-	global num
-	img = cv2.imread('test_image/'+str(num)+'.jpg')
-	#cv2.imshow('img',img)
-	#cv2.waitKey(8000)
-	#img = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-	#print(img)
-	#t0 = time.time()
-	#hot_area = len(np.where( (img>=(230,0,0)) & (img<=(255,110,110)) )[0])
-	#cv2.imshow('hot_area', hot_area)
-	#cv2.waitKey(1000)
-	#print(hot_area)
-	#hot_area = len(np.where( (img>=(156,43,46)) & (img<=(180,255,255)) )[0])
-	#t1 = time.time()
-	#print(hot_area)
-	#print(t1-t0)
-	#hot_percent = hot_area/total_area
-	#print(hot_percent)
-	encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
-	result, imgencode = cv2.imencode('.jpg',img,encode_param)
-	data = np.array(imgencode)
-	stringData = data.tostring()
-	s.send(('SIZE'+str(len(stringData))).ljust(16).encode())
-	s.send(stringData)
-	recv_msg()
-	if(num%3==0):
-		print('HOT')
-		s.send('HOT'.ljust(16).encode())
-	num += 1
-	if(num > 20):
-		num = 1
+	count_img += 1
+	if(count_img == 81):
+		count_img = 1
+	ir_img = cv2.imread("../ir/img"+str(count_img)+".jpg")
+	flir_val = np.loadtxt("../flir/flir"+str(count_img)+".txt")
+	flir_val = np.reshape(flir_val,(60,80,1))
+	flir_val = flir_val.astype(np.uint16)
+	try:
+		######## encode message ############
+		_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
+		data_ir = np.array(imgencode_ir)
+		stringData_ir = data_ir.tostring()
+		######### encode flir_val ###########
+		flir_val_ravel = flir_val.ravel()
+		flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
+
+		try:
+			####### send ir image ###############
+			s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
+			s.send(stringData_ir)
+			####### send flir image to server #########
+			s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
+			s.send(flir_val_pack)
+			t4 = time.time()
+			try:
+				####### recv the combine image from server #############
+				ready = select.select([s],[],[],0.1)
+				if(ready[0]):
+		    			data = s.recv(16)
+				size_data = data[0:16]
+				if(len(data) == len(size_data)):
+					data = b''
+				else:
+					data = data[len(size_data):len(data)]
+				size = int((size_data.decode()).strip())
+				while(size > len(data)):
+			    		data += s.recv(size)
+				data_img = data[0:size]
+				if(len(data_img) == len(data)):
+			    		data = b''
+				else:
+			    		data = data[len(data_img):len(data)]
+				data_img = np.fromstring(data_img,dtype = 'uint8')
+				data_img = cv2.imdecode(data_img,1)
+				img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+			except Exception as e:
+				img_combine = img_processing(ir_img,flir_val)
+				data = b''
+					
+		except:
+			print("reconnecting server")
+			img_combine = img_processing(ir_img,flir_val)
+			try:
+				####### reconnect server #########
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				s.connect((HOST,PORT))
+				s.send(("Nadine").ljust(16).encode())
+				s.send(("TH70"+str(th_70)).ljust(16).encode()) 
+				s.send(("TH100"+str(th_100)).ljust(16).encode())
+			except:
+				pass
+	except Exception as e:
+		print(e.args)	
 def recv_msg():
 	ready = select.select([s],[],[],0.05)
 	if(ready[0]):
@@ -523,6 +583,8 @@ def recv_msg():
 	
 s.send((("Tony").encode()).ljust(16))
 print("Tony")
+s.send(("TH70"+str(th_70)).ljust(16).encode()) 
+s.send(("TH100"+str(th_100)).ljust(16).encode())
 time.sleep(1)
 s.send((("0.0").encode()).ljust(16))
 print("0.0")
