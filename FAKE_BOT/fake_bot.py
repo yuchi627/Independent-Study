@@ -358,9 +358,10 @@ def move7():
 	
 	while count < 5:
 		s.send((("1.4").encode()).ljust(16))
+		print(1.4)
 		send_image()
 		count += 1
-		#time.sleep(0.5)
+		time.sleep(0.2)
 
 		#random help
 		ran = random.randint(1,10)
@@ -369,12 +370,13 @@ def move7():
 
 	s.send((("Left").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.2)
 	count = 0
 	while count < 6:
 		s.send((("1.5").encode()).ljust(16))
+		print(1.5)
 		send_image()
-		#time.sleep(0.5)
+		time.sleep(0.2)
 		count += 1
 
 		#random help
@@ -383,22 +385,22 @@ def move7():
 			help_me()
 	
 	s.send((("Left").encode()).ljust(16))
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	send_image()
 	count = 0
 	loop = 0
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	while loop < 4:
 		while count < 4:
 			s.send((("1.5").encode()).ljust(16))
 			send_image()
 			count += 1
-			#time.sleep(0.5)
+			time.sleep(0.1)
 
 			#random help
 			ran = random.randint(1,20)
@@ -409,32 +411,32 @@ def move7():
 
 		s.send((("Right").encode()).ljust(16))
 		send_image()		
-		#time.sleep(0.5)
+		time.sleep(0.1)
 		count = 0
 		loop += 1
 	
 	s.send((("Left").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("Left").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("Right").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	
 	count = 0
 	while count < 6:
 		s.send((("1.5").encode()).ljust(16))
 		send_image()
 		count += 1
-		#time.sleep(0.5)
+		time.sleep(0.1)
 
 		#random help
 		ran = random.randint(1,10)
@@ -444,12 +446,12 @@ def move7():
 	count = 0
 	s.send((("Right").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	while count < 5:
 		s.send((("1.4").encode()).ljust(16))
 		send_image()
 		count += 1
-		#time.sleep(0.5)
+		time.sleep(0.1)
 
 		#random help
 		ran = random.randint(1,10)
@@ -458,10 +460,10 @@ def move7():
 
 	s.send((("Right").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("Right").encode()).ljust(16))
 	send_image()
-	#time.sleep(0.5)
+	time.sleep(0.1)
 
 def help_me():
 	count = 0
@@ -471,7 +473,7 @@ def help_me():
 		#s.send('HOT'.ljust(16).encode())
 		print('HELP')
 		send_image()
-		#time.sleep(0.5)
+		time.sleep(0.1)
 		count += 1
 	count = 0
 	while count < 10:
@@ -479,7 +481,7 @@ def help_me():
 		#s.send('HOT'.ljust(16).encode())
 		print('HELP2')
 		send_image()
-		#time.sleep(0.5)
+		time.sleep(0.1)
 		count += 1
 
 def not_help():
@@ -491,7 +493,7 @@ def not_help():
 		print('HELP')
 		
 		send_image()
-		#time.sleep(0.5)
+		time.sleep(0.1)
 		count += 1
 
 def img_processing(ir_img,flir_val):
@@ -600,6 +602,8 @@ def send_image():
 				data_img = np.fromstring(data_img,dtype = 'uint8')
 				data_img = cv2.imdecode(data_img,1)
 				img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+				cv2.imshow('image',img_combine)
+				cv2.waitKey(1)
 			except Exception as e:
 				img_combine = img_processing(ir_img,flir_val)
 				data = b''
