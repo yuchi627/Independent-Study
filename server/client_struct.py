@@ -24,6 +24,7 @@ M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
+    t= 0
     remain_package_size = 0
     img_binary = b''
     img_ir = img_white
@@ -38,6 +39,7 @@ class client:
     twinkling_flag = False
     closing_danger_flag = False     ###### close to the danger area
     in_danger_flag = False      ###### the red area more than one third of pic
+    in_explosion_flag = False
     set_start = False
     fireman_bound_top = 0
     fireman_bound_bottom = 0
@@ -73,7 +75,7 @@ class client:
             self.explosion_bound_right = bound_w - line_W
             
             self.fireman_bound_top = 25 
-            self.fireman_bound_bottom = bound_h-25
+            self.fireman_bound_bottom = bound_h-30
             self.fireman_bound_left = 25
             self.fireman_bound_right = bound_w-25
             
@@ -84,9 +86,10 @@ class client:
             self.explosion_bound_right = bound_w * 2 - int(line_W * 1.5)
             
             self.fireman_bound_top = 25
-            self.fireman_bound_bottom = bound_h-25
+            self.fireman_bound_bottom = bound_h-30
             self.fireman_bound_left = bound_w+25
             self.fireman_bound_right = bound_w * 2 -25
+
             self.position_x = right_x
             
         elif(num == 2):
@@ -99,6 +102,7 @@ class client:
             self.fireman_bound_bottom = bound_h * 2 -25
             self.fireman_bound_left = 25
             self.fireman_bound_right = bound_w-25
+
             self.position_y = bottom_y
             
         elif(num == 3):
@@ -111,11 +115,16 @@ class client:
             self.fireman_bound_bottom = bound_h * 2 -25
             self.fireman_bound_left = bound_w + 25
             self.fireman_bound_right = bound_w * 2 -25
+
             self.position_x = right_x
             self.position_y = bottom_y
             
 
-        
+    def except_for_img(self):
+        img_binary = b''
+        self.remain_package_size = 0
+        self.recv_ir_flag = False
+        self.recv_flir_flag = False
 
     def set_info(self, num, ip_position):
         self.id_num = num
@@ -221,9 +230,9 @@ class client:
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
                 self.img_combine = rotate_img
                 ###### put the warning message on pic ######
-                if(self.in_danger_flag):
+                if(self.in_danger_flag | self.in_explosion_flag):
                     cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
-                    self.in_danger_flag = False
+                    self.in_explosion_flag = False
                 elif(self.closing_danger_flag):
                     cv2.putText(self.img_combine, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                     self.closing_danger_flag = False
