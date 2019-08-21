@@ -19,7 +19,7 @@ class AppWindow(QDialog):
         self.initVar() 
         self.timer=QTimer(self)
         self.timer.timeout.connect(self.update_image)
-        self.timer.start(500)
+        self.timer.start(100)
 
         self.timer2 = QTimer(self)
         self.timer2.timeout.connect(self.get_socket_data)
@@ -56,6 +56,7 @@ class AppWindow(QDialog):
         self.image_info_flag = False   
         self.middle_x = 1170
         self.middle_y = 700
+        self.keep_fire = []
         self.host = '172.20.10.2'
         self.port = 8888
         self.time_press = 0
@@ -217,7 +218,8 @@ class AppWindow(QDialog):
         #self.image_map = img_map.copy()
         #self.image = img_map.copy()
         self.hot_mask = np .zeros(self.image_map.shape,np.uint8)
-
+        self.draw_layer(0)
+        self.keep_fire = self.image_map.copy()
         self.offset_x = self.image_map.shape[1] / self.offset_x
         self.offset_y = self.image_map.shape[0] / self.offset_y
 
@@ -448,7 +450,8 @@ class AppWindow(QDialog):
                 for i in self.client_list:
                     if(i.ip_addr == data.addr):
                         self.connection_num[i.id_num] = 0
-                self.image_map = self.keep.copy()
+                        self.client_list[i.id_num] = client(i.id_num)
+                self.image_map = self.keep_fire.copy()
                 self.refresh_map = True
                 # Close Connection 的時候取消 Object
                 #--------------------------------------------------------------------#
@@ -554,8 +557,21 @@ class AppWindow(QDialog):
         
         alpha_s = self.img_fireman[:,:,3] / 255.0
         alpha_l = 1.0 - alpha_s
-        x_offset = self.client_list[num].position_x-25
-        y_offset = self.client_list[num].position_y-25
+        if(self.client_list[num].position_x > self.client_list[num].bound_right):
+            x_offset = self.client_list[num].bound_right
+        elif(self.client_list[num].position_x < self.client_list[num].bound_left):
+            x_offset = self.client_list[num].bound_left
+        else:
+            x_offset = self.client_list[num].position_x-25
+        if(self.client_list[num].position_y > self.client_list[num].bound_buttom):
+            y_offset = self.client_list[num].bound_buttom
+        elif(self.client_list[num].position_y < self.client_list[num].bound_top):
+            y_offset = self.client_list[num].bound_top
+        else:
+            y_offset = self.client_list[num].position_y-25
+
+        #x_offset = self.client_list[num].position_x-25
+        #y_offset = self.client_list[num].position_y-25
         if(self.client_list[num].in_danger_flag):
             self.replace_roi(self.hot_mask, num, y_offset, self.img_fireman.shape[0] + y_offset, x_offset, self.img_fireman.shape[1] + x_offset, (1,1,1))
             self.client_list[num].in_danger_flag = False
@@ -569,14 +585,24 @@ class AppWindow(QDialog):
             self.image_map[row,col,c] = self.image_map[row, col, c]*0.5
         self.image_map[row, col, 0] = self.image_map[row, col, 0]*0.5 + 122
         for i in range(4):
-            x_offset = self.client_list[i].position_x-25
-            y_offset = self.client_list[i].position_y-25
+            ###### avoid out of bounds ######
+            if(self.client_list[i].position_x > self.client_list[i].bound_right):
+                x_offset = self.client_list[i].bound_right
+            elif(self.client_list[i].position_x < self.client_list[i].bound_left):
+                x_offset = self.client_list[i].bound_left
+            else:
+                x_offset = self.client_list[i].position_x-25
+            if(self.client_list[i].position_y > self.client_list[i].bound_buttom):
+                y_offset = self.client_list[i].bound_buttom
+            elif(self.client_list[i].position_y < self.client_list[i].bound_top):
+                y_offset = self.client_list[i].bound_top
+            else:
+                y_offset = self.client_list[i].position_y-25
             x2 = self.img_fireman.shape[1] + x_offset
             y2 = self.img_fireman.shape[0] + y_offset
             for c in range(3):
                 self.image_map[y_offset:y2 , x_offset:x2, c] = (alpha_s * self.img_fireman[:,:,c] + alpha_l * self.image_map[y_offset:y2 , x_offset:x2, c])
-    ###### detect_danger ######
-        for i in range(4):
+            ###### detect_danger ######
             x1 = self.client_list[i].position_x-50
             y1 = self.client_list[i].position_y-50
             x2 = self.client_list[i].position_x+50
