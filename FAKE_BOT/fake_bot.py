@@ -5,8 +5,8 @@ import cv2
 import numpy as np
 import select
 
-HOST = '192.168.43.84'
-PORT = 7777
+HOST = '192.168.43.149'
+PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
@@ -356,7 +356,7 @@ def move7():
 	
 	while count < 5:
 		s.send((("1.4").encode()).ljust(16))
-		send_image()
+		#send_image()
 		count += 1
 		time.sleep(0.5)
 
@@ -370,7 +370,7 @@ def move7():
 	count = 0
 	while count < 6:
 		s.send((("1.5").encode()).ljust(16))
-		send_image()
+		#send_image()
 		time.sleep(0.5)
 		count += 1
 
@@ -384,15 +384,15 @@ def move7():
 	count = 0
 	loop = 0
 	s.send((("1.5").encode()).ljust(16))
-	send_image()
+	#send_image()
 	time.sleep(0.5)
 	s.send((("1.5").encode()).ljust(16))
-	send_image()
+	#send_image()
 	time.sleep(0.5)
 	while loop < 4:
 		while count < 4:
 			s.send((("1.5").encode()).ljust(16))
-			send_image()
+			#send_image()
 			count += 1
 			time.sleep(0.5)
 
@@ -424,7 +424,7 @@ def move7():
 	count = 0
 	while count < 6:
 		s.send((("1.5").encode()).ljust(16))
-		send_image()
+		#send_image()
 		count += 1
 		time.sleep(0.5)
 
@@ -438,7 +438,7 @@ def move7():
 	time.sleep(0.5)
 	while count < 5:
 		s.send((("1.4").encode()).ljust(16))
-		send_image()
+		#send_image()
 		count += 1
 		time.sleep(0.5)
 

@@ -10,7 +10,8 @@ import time
 #HOST = '172.20.10.3'
 #HOST = '192.168.43.118'
 #HOST = '192.168.43.84'
-HOST = '192.168.43.149'
+HOST = '172.20.10.2'
+#HOST = '192.168.43.149'
 #HOST= "127.0.0.1"
 PORT = 8888
 
@@ -51,6 +52,7 @@ try:
 	camera.framerate = 40
 	####### set flir camera ###########
 	device = "/dev/spidev0.0"
+	help_count = 80
 	with Lepton(device) as l:
 		a,_ = l.capture()
 		flir_val = np.uint16(a)
@@ -78,6 +80,11 @@ try:
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
 			try:
+				help_count += 1
+				if(help_count == 100):
+					s.send("HELP2".ljust(16).encode())
+					print("send help2")
+					help_count = -100
 				######## send ir image ###############
 				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 				s.send(stringData_ir)
