@@ -1,3 +1,4 @@
+import struct
 import socket
 import time
 import random
@@ -6,6 +7,7 @@ import numpy as np
 import select
 
 HOST = '172.20.10.2'
+#HOST = '192.168.68.100'
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -356,9 +358,10 @@ def move7():
 	
 	while count < 5:
 		s.send((("1.4").encode()).ljust(16))
+		print(1.4)
 		send_image()
 		count += 1
-		time.sleep(0.5)
+		time.sleep(0.2)
 
 		#random help
 		ran = random.randint(1,10)
@@ -366,12 +369,14 @@ def move7():
 			not_help()
 
 	s.send((("Left").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.2)
 	count = 0
 	while count < 6:
 		s.send((("1.5").encode()).ljust(16))
+		print(1.5)
 		send_image()
-		time.sleep(0.5)
+		time.sleep(0.2)
 		count += 1
 
 		#random help
@@ -380,21 +385,22 @@ def move7():
 			help_me()
 	
 	s.send((("Left").encode()).ljust(16))
-	time.sleep(0.5)
+	time.sleep(0.1)
+	send_image()
 	count = 0
 	loop = 0
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.5)
+	time.sleep(0.1)
 	while loop < 4:
 		while count < 4:
 			s.send((("1.5").encode()).ljust(16))
 			send_image()
 			count += 1
-			time.sleep(0.5)
+			time.sleep(0.1)
 
 			#random help
 			ran = random.randint(1,20)
@@ -404,29 +410,33 @@ def move7():
 				help_me()
 
 		s.send((("Right").encode()).ljust(16))
-		time.sleep(0.5)
+		send_image()		
+		time.sleep(0.1)
 		count = 0
 		loop += 1
 	
 	s.send((("Left").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.1)
 	s.send((("Left").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.1)
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.5)
+	time.sleep(0.1)
 	s.send((("Right").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.1)
 	
 	count = 0
 	while count < 6:
 		s.send((("1.5").encode()).ljust(16))
 		send_image()
 		count += 1
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 		#random help
 		ran = random.randint(1,10)
@@ -435,12 +445,13 @@ def move7():
 
 	count = 0
 	s.send((("Right").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.1)
 	while count < 5:
 		s.send((("1.4").encode()).ljust(16))
 		send_image()
 		count += 1
-		time.sleep(0.5)
+		time.sleep(0.1)
 
 		#random help
 		ran = random.randint(1,10)
@@ -448,27 +459,29 @@ def move7():
 			not_help()
 
 	s.send((("Right").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.1)
 	s.send((("Right").encode()).ljust(16))
-	time.sleep(0.5)
+	send_image()
+	time.sleep(0.1)
 
 def help_me():
 	count = 0
 	print("enter help_condition")
 	while count < 10:
 		s.send((("HELP").encode()).ljust(16))
-		s.send('HOT'.ljust(16).encode())
+		#s.send('HOT'.ljust(16).encode())
 		print('HELP')
-		#send_image()
-		time.sleep(0.5)
+		send_image()
+		time.sleep(0.1)
 		count += 1
 	count = 0
 	while count < 10:
 		s.send((("HELP2").encode()).ljust(16))
-		s.send('HOT'.ljust(16).encode())
+		#s.send('HOT'.ljust(16).encode())
 		print('HELP2')
-		#send_image()
-		time.sleep(0.5)
+		send_image()
+		time.sleep(0.1)
 		count += 1
 
 def not_help():
@@ -476,11 +489,11 @@ def not_help():
 	print("enter not_really_need_help")
 	while count < 7:
 		s.send((("HELP").encode()).ljust(16))
-		s.send('HOT'.ljust(16).encode())
+		#s.send('HOT'.ljust(16).encode())
 		print('HELP')
 		
-		#send_image()
-		time.sleep(0.5)
+		send_image()
+		time.sleep(0.1)
 		count += 1
 
 def img_processing(ir_img,flir_val):
@@ -511,6 +524,7 @@ th_100 = 7800
 count_img = 0
 
 def send_image():
+	global count_img
 	count_img += 1
 	if(count_img == 81):
 		count_img = 1
@@ -526,8 +540,40 @@ def send_image():
 		######### encode flir_val ###########
 		flir_val_ravel = flir_val.ravel()
 		flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
-
+		'''
+		s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
+		s.send(stringData_ir)
+		####### send flir image to server #########
+		s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
+		s.send(flir_val_pack)
+		t4 = time.time()
 		try:
+			####### recv the combine image from server #############
+			ready = select.select([s],[],[],0.1)
+			if(ready[0]):
+		    		data = s.recv(16)
+			size_data = data[0:16]
+			if(len(data) == len(size_data)):
+				data = b''
+			else:
+				data = data[len(size_data):len(data)]
+			size = int((size_data.decode()).strip())
+			while(size > len(data)):
+			    	data += s.recv(size)
+			data_img = data[0:size]
+			if(len(data_img) == len(data)):
+			    	data = b''
+			else:
+			    	data = data[len(data_img):len(data)]
+			data_img = np.fromstring(data_img,dtype = 'uint8')
+			data_img = cv2.imdecode(data_img,1)
+			img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+		except Exception as e:
+			img_combine = img_processing(ir_img,flir_val)
+			data = b''
+		'''
+		try:
+			global s
 			####### send ir image ###############
 			s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 			s.send(stringData_ir)
@@ -556,11 +602,14 @@ def send_image():
 				data_img = np.fromstring(data_img,dtype = 'uint8')
 				data_img = cv2.imdecode(data_img,1)
 				img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+				cv2.imshow('image',img_combine)
+				cv2.waitKey(1)
 			except Exception as e:
 				img_combine = img_processing(ir_img,flir_val)
 				data = b''
 					
-		except:
+		except Exception as e:
+			print(e)
 			print("reconnecting server")
 			img_combine = img_processing(ir_img,flir_val)
 			try:
