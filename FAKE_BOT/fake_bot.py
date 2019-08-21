@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 import select
 
-HOST = '172.20.10.2'
-#HOST = '192.168.68.100'
+#HOST = '172.20.10.2'
+HOST = '192.168.43.149'
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -357,7 +357,7 @@ def move7():
 	count = 0
 	
 	while count < 5:
-		s.send((("1.4").encode()).ljust(16))
+		s.send((("DRAW1.4").encode()).ljust(16))
 		print(1.4)
 		send_image()
 		count += 1
@@ -368,12 +368,12 @@ def move7():
 		if ran == 10:
 			not_help()
 
-	s.send((("Left").encode()).ljust(16))
+	s.send((("DRAAWLeft").encode()).ljust(16))
 	send_image()
 	time.sleep(0.2)
 	count = 0
 	while count < 6:
-		s.send((("1.5").encode()).ljust(16))
+		s.send((("DRAW1.5").encode()).ljust(16))
 		print(1.5)
 		send_image()
 		time.sleep(0.2)
@@ -384,23 +384,23 @@ def move7():
 		if ran == 10:
 			help_me()
 	
-	s.send((("Left").encode()).ljust(16))
-	time.sleep(0.1)
+	s.send((("DRAWLeft").encode()).ljust(16))
+	time.sleep(0.2)
 	send_image()
 	count = 0
 	loop = 0
-	s.send((("1.5").encode()).ljust(16))
+	s.send((("DRAW1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
-	s.send((("1.5").encode()).ljust(16))
+	time.sleep(0.2)
+	s.send((("DRAW1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
+	time.sleep(0.2)
 	while loop < 4:
 		while count < 4:
-			s.send((("1.5").encode()).ljust(16))
+			s.send((("DRAW1.5").encode()).ljust(16))
 			send_image()
 			count += 1
-			time.sleep(0.1)
+			time.sleep(0.2)
 
 			#random help
 			ran = random.randint(1,20)
@@ -409,34 +409,34 @@ def move7():
 			elif ran == 20:
 				help_me()
 
-		s.send((("Right").encode()).ljust(16))
+		s.send((("DRAWRight").encode()).ljust(16))
 		send_image()		
-		time.sleep(0.1)
+		time.sleep(0.2)
 		count = 0
 		loop += 1
 	
-	s.send((("Left").encode()).ljust(16))
+	s.send((("DRAWLeft").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
-	s.send((("Left").encode()).ljust(16))
+	time.sleep(0.2)
+	s.send((("DRAWLeft").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
-	s.send((("1.5").encode()).ljust(16))
+	time.sleep(0.2)
+	s.send((("DRAw1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
-	s.send((("1.5").encode()).ljust(16))
+	time.sleep(0.2)
+	s.send((("DRAW1.5").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
-	s.send((("Right").encode()).ljust(16))
+	time.sleep(0.2)
+	s.send((("DRAWRight").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
+	time.sleep(0.2)
 	
 	count = 0
 	while count < 6:
-		s.send((("1.5").encode()).ljust(16))
+		s.send((("DRAW1.5").encode()).ljust(16))
 		send_image()
 		count += 1
-		time.sleep(0.1)
+		time.sleep(0.2)
 
 		#random help
 		ran = random.randint(1,10)
@@ -444,26 +444,26 @@ def move7():
 			help_me()
 
 	count = 0
-	s.send((("Right").encode()).ljust(16))
+	s.send((("DRAWRight").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
+	time.sleep(0.2)
 	while count < 5:
-		s.send((("1.4").encode()).ljust(16))
+		s.send((("DRAW1.4").encode()).ljust(16))
 		send_image()
 		count += 1
-		time.sleep(0.1)
+		time.sleep(0.2)
 
 		#random help
 		ran = random.randint(1,10)
 		if ran == 10:
 			not_help()
 
-	s.send((("Right").encode()).ljust(16))
+	s.send((("DRAWRight").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
-	s.send((("Right").encode()).ljust(16))
+	time.sleep(0.2)
+	s.send((("DRAWRight").encode()).ljust(16))
 	send_image()
-	time.sleep(0.1)
+	time.sleep(0.2)
 
 def help_me():
 	count = 0
@@ -473,7 +473,7 @@ def help_me():
 		#s.send('HOT'.ljust(16).encode())
 		print('HELP')
 		send_image()
-		time.sleep(0.1)
+		time.sleep(0.2)
 		count += 1
 	count = 0
 	while count < 10:
@@ -481,7 +481,7 @@ def help_me():
 		#s.send('HOT'.ljust(16).encode())
 		print('HELP2')
 		send_image()
-		time.sleep(0.1)
+		time.sleep(0.2)
 		count += 1
 
 def not_help():
@@ -493,7 +493,7 @@ def not_help():
 		print('HELP')
 		
 		send_image()
-		time.sleep(0.1)
+		time.sleep(0.2)
 		count += 1
 
 def img_processing(ir_img,flir_val):
