@@ -68,7 +68,8 @@ class AppWindow(QDialog):
         self.middle_x = 1170    ##### middle of map image
         self.middle_y = 700
         self.keep_fire = []
-        self.host = '172.20.10.2'
+        #self.host = '172.20.10.2'
+        self.host = '192.168.43.149'
         self.port = 8888
         self.time_press = 0
         self.info_flag = 0
@@ -166,6 +167,8 @@ class AppWindow(QDialog):
             self.image_map = self.keep.copy()
             self.draw_layer(self.choose_fireman)
             self.choose_fireman = -1
+            self.start_point = (0,0)
+            self.end_point = (0,0)
 
     def update_image(self):
         image = self.image_map.copy()
@@ -466,10 +469,13 @@ class AppWindow(QDialog):
                         #print("msg = ", recv_data_msg)
                         if("FLIR" in recv_data_msg):
                             #print("flir image size msg")
+                            print("IR-FLIR=",time.time() - self.client_list[client_host].t)
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
                         elif("IR" in recv_data_msg):
                             #print("ir image size msg")
+                            self.client_list[client_host].t = time.time()
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
+                            print("recv IR size = ",time.time() - self.client_list[client_host].t)
                         elif("TH70" in recv_data_msg):
                             #print("TH70 msg")
                             self.client_list[client_host].set_threshold(1, float(recv_data_msg[4:len(recv_data_msg)]))
@@ -505,43 +511,53 @@ class AppWindow(QDialog):
                                         break
                                 # Device 傳輸資料時, call 對應function
                             #--------------------------------------------------------------------#
+                    
                     except Exception as e:
-                        #print ("error in get msg: ",e.args)
-                        pass
+                        print ("error in get msg: ",e.args)
+                        #pass
                     
                 else:
                     ###### recv the img ######
                     #print("image msg")
-                    recv_data = sock.recv(self.client_list[client_host].get_package_size())
-                    ###### concatenate recv msg to image ######
-                    #print(type(recv_data))
-                    self.client_list[client_host].combine_recv_img(recv_data)
-                    self.client_list[client_host].decrease_package_size(len(recv_data))
-                    if(self.client_list[client_host].get_package_size() <= 0):
-                        ###### image recv complete ######
-                        send_flag = self.client_list[client_host].decode_img()
-                        if(send_flag):
-                            self.refresh_img = True
-                            send_flag = False
-                            try:
-                                combine = self.client_list[client_host].read_combine_img()
-                                _,encode = cv2.imencode('.jpg', combine, self.encode_param)
-                                data_combine = np.array(encode)
-                                stringData = data_combine.tostring()
-                                sock.send(str(len(stringData)).ljust(16).encode())
-                                sock.send(stringData)
-                            except Exception as e:
-                                #print("error in send image to client : ",e.args)
-                                pass
-                            ###### decide which background color to brush ######
-                            brush_background_ornot = self.client_list[client_host].brush_namespace_background()
-                            if(brush_background_ornot == 1):
-                                ###### Red background with white font ######
-                                self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
-                            elif (brush_background_ornot == 2):
-                                ###### White background with black font ######
-                                self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
-                        self.client_list[client_host].set_package(-1,0)
+                    try:
+                        t1 = time.time()
+                        recv_data = sock.recv(self.client_list[client_host].get_package_size())
+                        print("recv img = ",time.time() - t1)
+                        ###### concatenate recv msg to image ######
+                        #print(type(recv_data))
+                        self.client_list[client_host].combine_recv_img(recv_data)
+                        self.client_list[client_host].decrease_package_size(len(recv_data))
+                        if(self.client_list[client_host].get_package_size() <= 0):
+                            ###### image recv complete ######
+                            t = time.time()
+                            send_flag = self.client_list[client_host].decode_img()
+                            print("decode_img time = ",time.time() - t)
+                            if(send_flag):
+                                self.refresh_img = True
+                                send_flag = False
+                                try:
+                                    combine = self.client_list[client_host].read_combine_img()
+                                    _,encode = cv2.imencode('.jpg', combine, self.encode_param)
+                                    data_combine = np.array(encode)
+                                    stringData = data_combine.tostring()
+                                    sock.send(str(len(stringData)).ljust(16).encode())
+                                    sock.send(stringData)
+                                    print("time = ",time.time() - self.client_list[client_host].t)
+                                except Exception as e:
+                                    print("error in send image to client : ",e.args)
+                                    #pass
+                                ###### decide which background color to brush ######
+                                brush_background_ornot = self.client_list[client_host].brush_namespace_background()
+                                if(brush_background_ornot == 1):
+                                    ###### Red background with white font ######
+                                    self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
+                                elif (brush_background_ornot == 2):
+                                    ###### White background with black font ######
+                                    self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
+                            self.client_list[client_host].set_package(-1,0)
+                    except Exception as e:
+                        print ("error in get image msg: ",e.args)
+                        self.client_list[client_host].except_for_img()
  
             if not recv_data:
                 print('closing connection to', data.addr)
@@ -565,6 +581,7 @@ class AppWindow(QDialog):
 
     def drawNewSpot(self,data,index):
         #print("drawNewSpot")
+        t = time.time()
         self.image_map = self.keep.copy()
  
         left_spot_x = 5 + (self.middle_x-5)*(index%2)
@@ -589,12 +606,13 @@ class AppWindow(QDialog):
             self.client_list[index].addNewPosition("No Turn",float(data))
         self.refresh_map = True
         self.draw_layer(index)     
-        
+        print("drawNewSpot= ",time.time()-t)
         '''for i in range(0,4):
             self.image_map[self.client_list[i].position_y - 25 : self.client_list[i].position_y + 25 , self.client_list[i].position_x - 25 : self.client_list[i].position_x + 25] = self.img_fireman
             print("position",self.client_list[i].position_x,self.client_list[i].position_y)'''
         
     def helpConditionExec(self,message,index):
+        t=time.time()
         self.drawNewSpot('0.0',index)
         if("HELP2" in message):
             self.client_list[index].color_set = (0,0,255)
@@ -614,7 +632,7 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(right_spot_x,up_spot_y),(right_spot_x,down_spot_y),self.client_list[index].color_set,10,6)
     
         self.refresh_map = True
-
+        print("helpConditionExec= ",time.time()-t)
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
         if(y0 > y1):
             y0, y1 = y1, y0
@@ -686,9 +704,9 @@ class AppWindow(QDialog):
         index_tuple = np.where(self.hot_mask[:,:,0]==1)
         row = index_tuple[0]
         col = index_tuple[1]
-        for c in range(1,3):     
+        for c in range(0,2):     
             self.image_map[row,col,c] = self.image_map[row, col, c]*0.5
-        self.image_map[row, col, 0] = self.image_map[row, col, 0]*0.5 + 122
+        self.image_map[row, col, 2] = self.image_map[row, col, 0]*0.5 + 122
         ###### refresh explosion mask ######
         index_tuple = np.where(self.explosion_mask[:,:,0]==1)
         row = index_tuple[0]
@@ -727,12 +745,12 @@ class AppWindow(QDialog):
                 y1 = 0
             elif y2 > self.max_y:
                 y2 = self.max_y	
-            if (np.sum(self.explosion_mask[y1+25:y2-25, x1+25:x2-25]) > 0):
-                print("in_danger_flag")
-                self.client_list[i].in_danger_flag = True
+            if (np.sum(self.explosion_mask[y1+35:y2-35, x1+35:x2-35]) > 0):
+                #print("in_danger_flag")
+                self.client_list[i].in_explosion_flag = True
                 self.client_list[i].closing_danger_flag = False
             elif ((np.sum(self.hot_mask[y1:y2, x1:x2]) > 0) or (np.sum(self.explosion_mask[y1:y2, x1:x2]) > 0)):
-                print("closing_danger_flag")
+                #print("closing_danger_flag")
                 self.client_list[i].in_danger_flag = False
                 self.client_list[i].closing_danger_flag = True
             else:
