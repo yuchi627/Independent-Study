@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import struct
+import time
 
 height = 480
 weight = 640
@@ -223,9 +224,11 @@ class client:
                 dst = np.dstack([dst]*3)
                 tmp = self.img_ir.copy()
                 dst = cv2.warpPerspective(dst,matrix, (weight,height))
+
                 np.place(tmp, (dst > self.th_100), (0,0,255))
                 np.place(tmp, ((dst > self.th_70)&(dst <= self.th_100)), (163,255,197))
                 before_rotate_img = cv2.addWeighted(self.img_ir, 0.5, tmp, 0.5, 0)
+                
                 ###### rotate image ######
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
                 self.img_combine = rotate_img
