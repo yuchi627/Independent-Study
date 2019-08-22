@@ -184,15 +184,6 @@ try:
 		######## 70 & 10 degree threshold ########3
 		th_70 = diff * 0.6 + val_min
 		th_100 = diff * 0.8 + val_min
-		'''
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect((HOST,PORT))
-		s.send(("Nadine").ljust(16).encode())
-		s.send((("0.0").encode()).ljust(16))
-		s.send((("0.0").encode()).ljust(16))
-		s.send(("TH70"+str(th_70)).ljust(16).encode()) 
-		s.send(("TH100"+str(th_100)).ljust(16).encode())
-		'''
 		time_sett = 0
 		#count_img = 0
 		#while (count_img<80):
@@ -213,108 +204,7 @@ try:
 			######### encode flir_val ###########
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
-			
-			'''
-			######## send ir image ###############
-			s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
-			s.send(stringData_ir)
-			####### send flir image to server #########
-			s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
-			s.send(flir_val_pack)
-			t4 = time.time()
-			try:
-				####### recv the combine image from server #############
-				ready = select.select([s],[],[],0.01)
-				if(ready[0]):
-					data = s.recv(16)
-					size_data = data[0:16]
-					if(len(data) == len(size_data)):
-						data = b''
-					else:
-						data = data[len(size_data):len(data)]
-					size = int((size_data.decode()).strip())
-					while(size > len(data)):
-						data += s.recv(size)
-					data_img = data[0:size]
-					if(len(data_img) == len(data)):
-						data = b''
-					else:
-						data = data[len(data_img):len(data)]
-					data_img = np.fromstring(data_img,dtype = 'uint8')
-					data_img = cv2.imdecode(data_img,1)
-					img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
-			except Exception as e:
-				img_combine = img_processing(ir_img,flir_val)
-				data = b''
-			#td = time.time()
-			#print('image',td-tc)
-			#ta = time.time()
-			#check if falling
-			bes_xout = read_bes_x()
-			#print("help: ", bes_xout)
-			if bes_xout > -4.0:
-				help_wait_time = time.time()
-				if start_warning_time == 0:
-					start_warning_time = time.time()
-					print("START HELP")
-					#time.sleep(1)
-				else:
-					if time.time() - start_warning_time >= 5 and time.time() - start_warning_time < 10:
-						s.send((("HELP").encode()).ljust(16))
-						print("HELP")
-						help_flag = True
-					elif time.time() - start_warning_time >= 10:
-						s.send((("HELP2").encode()).ljust(16))
-						print("HELP2")
-			else:
-				start_warning_time = 0
-				help_flag = False
 
-			#send turning
-			if help_flag == False:
-				if turn_flag.value == 0:
-					#print("No Turn")
-					turning_flag = False
-				
-				elif turn_flag.value == 1 and time.time() - help_wait_time > 2 and time.time() - time_sett > 0.5:
-					turning_flag = True
-					s.send((("DRAWLeft").encode()).ljust(16))
-					print("Left")
-					time_sett = time.time()
-					#time.sleep(1)
-					turn_wait_time = time.time()
-					help_wait_time = 0
-				elif time.time() - help_wait_time > 2 and time.time() - time_sett > 0.5:
-					turning_flag = True
-					s.send((("DRAWRight").encode()).ljust(16))
-					print("Right")
-					time_sett =time.time()
-					#time.sleep(1)
-					turn_wait_time = time.time()
-					help_wait_time = 0
-				else:
-					pass
-				turning_flag = False
-				turn.value = 0
-				turn_flag.value = 0
-			else:
-				turn.value = 0
-				turn_flag.value = 0
-				
-			if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
-				temp_dis = str(distance.value)
-				s.send(('DRAW'+temp_dis).ljust(16).encode())
-				print(temp_dis)
-				distance.value = 0
-				#time.sleep(0.15)
-				turn_wait_time = 0
-				help_wait_time = 0
-			else:
-				distance.value = 0
-
-			#tb = time.time()
-			#print('pos',tb-ta)
-			'''
 			######## encode message ############
 			try:
 				######## send ir image ###############
