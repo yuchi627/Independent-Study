@@ -13,7 +13,7 @@ import time
 #HOST = '192.168.43.118'
 #HOST = '192.168.43.84'
 #HOST = '192.168.43.149'
-HOST = '172.20.10.2'
+HOST = '172.20.10.7'
 #HOST= "127.0.0.1"
 PORT = 8888
 # Register
@@ -65,38 +65,48 @@ def get_bes(mutex, distance, dis_flag):
 	bes_arr = []
 
 	while True:
-		temp_data = read_bes_z()
-		bes_arr.append(temp_data)
-		if len(bes_arr) >= 100:
-			real_bes = np.std(bes_arr)
-			print('real_bes: ', real_bes)
-			mutex.acquire()
-			if (real_bes <= 0.3 and real_bes > 0):
-				distance.value += 0.0
-			else:
-				distance.value = distance.value + 1.3
-			mutex.release()
-			bes_arr = []
-			#print(distance.value)
+		#t0 = time.time()
+		try:
+			temp_data = read_bes_z()
+			bes_arr.append(temp_data)
+			if len(bes_arr) >= 100:
+				real_bes = np.std(bes_arr)
+				#print('real_bes: ', real_bes)
+				mutex.acquire()
+				if (real_bes <= 0.3 and real_bes > 0):
+					distance.value += 0.0
+				else:
+					distance.value = distance.value + 1.3
+				mutex.release()
+				bes_arr = []
+				#print(distance.value)
+		except Exception as e:
+			print(e.args)
 		if stop_key == True:
 			break
-
+		#t1 = time.time()
+		#print('get_bes',t1-t0)
 def check_turning(mutex, turn, turn_flag):
 	global real_gyro
 	global stop_key
 	while True:
-		turn.value = read_gyro()
-		mutex.acquire()
-		if turn.value >= -12000 and turn.value <= 12000:
-			turn_flag.value = 0 #no turn
-		elif turn.value < 12000:
-			turn_flag.value = 1 #left
-		else:
-			turn_flag.value = 2 #right
-		mutex.release()
-		
+		#t0 = time.time()
+		try:
+			turn.value = read_gyro()
+			mutex.acquire()
+			if turn.value >= -12000 and turn.value <= 12000:
+				turn_flag.value = 0 #no turn
+			elif turn.value < 12000:
+				turn_flag.value = 1 #left
+			else:
+				turn_flag.value = 2 #right
+			mutex.release()
+		except Exception as e:
+			print(e.args)
 		if stop_key == True:
 			break
+		#t1 = time.time()
+		#print(t1-t0)
 		    
 def img_processing(ir_img,flir_val):
 	flag = False
@@ -157,7 +167,7 @@ p1.start()
 turn_wait_time = 0
 help_wait_time = 0
 
-try:
+try:	
 	delay_times = 0
 	cv2.namedWindow("combine",cv2.WND_PROP_FULLSCREEN)
 	####### set ir camera ##########
@@ -174,11 +184,13 @@ try:
 		######## 70 & 10 degree threshold ########3
 		th_70 = diff * 0.6 + val_min
 		th_100 = diff * 0.8 + val_min
+		time_sett = 0
 		#count_img = 0
 		#while (count_img<80):
 		#	count_img += 1
 		while True:
 			#count_img += 1
+			#tc = time.time()
            	######## flir capture ########
 			a,_ = l.capture()
 			flir_val = np.uint16(a)
@@ -192,6 +204,8 @@ try:
 			######### encode flir_val ###########
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
+
+			######## encode message ############
 			try:
 				######## send ir image ###############
 				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
@@ -224,66 +238,70 @@ try:
 				except Exception as e:
 					img_combine = img_processing(ir_img,flir_val)
 					data = b''
-				#check if falling
-				bes_xout = read_bes_x()
-				#print("help: ", bes_xout)
-				if bes_xout > -4.0:
-					help_wait_time = time.time()
-					if start_warning_time == 0:
-						start_warning_time = time.time()
-						print("START HELP")
-						#time.sleep(1)
+				try:
+					#check if falling
+					bes_xout = read_bes_x()
+					#print("help: ", bes_xout)
+					if bes_xout > -4.0:
+						help_wait_time = time.time()
+						if start_warning_time == 0:
+							start_warning_time = time.time()
+							print("START HELP")
+							#time.sleep(1)
+						else:
+							if time.time() - start_warning_time >= 5 and time.time() - start_warning_time < 10:
+								s.send((("HELP").encode()).ljust(16))
+								print("HELP")
+								help_flag = True
+							elif time.time() - start_warning_time >= 10:
+								s.send((("HELP2").encode()).ljust(16))
+								print("HELP2")
 					else:
-						if time.time() - start_warning_time >= 5 and time.time() - start_warning_time < 10:
-							s.send((("HELP").encode()).ljust(16))
-							print("HELP")
-							help_flag = True
-						elif time.time() - start_warning_time >= 10:
-							s.send((("HELP2").encode()).ljust(16))
-							print("HELP2")
-				else:
-					start_warning_time = 0
-					help_flag = False
+						start_warning_time = 0
+						help_flag = False
 
-				#send turning
-				if help_flag == False:
-					if turn_flag.value == 0:
-						#print("No Turn")
-						turning_flag = False
+					#send turning
+					if help_flag == False:
+						if turn_flag.value == 0:
+							#print("No Turn")
+							turning_flag = False
 				
-					elif turn_flag.value == 1 and time.time() - help_wait_time > 2:
-						turning_flag = True
-						s.send((("Left").encode()).ljust(16))
-						print("Left")
-						#time.sleep(1)
-						turn_wait_time = time.time()
-						help_wait_time = 0
-					elif time.time() - help_wait_time > 2:
-						turning_flag = True
-						s.send((("Right").encode()).ljust(16))
-						print("Right")
-						#time.sleep(1)
-						turn_wait_time = time.time()
+						elif turn_flag.value == 1 and time.time() - help_wait_time > 2:
+							turning_flag = True
+							s.send((("DRAWLeft").encode()).ljust(16))
+							print("Left")
+							#time.sleep(1)
+							turn_wait_time = time.time()
+							help_wait_time = 0
+						elif time.time() - help_wait_time > 2:
+							turning_flag = True
+							s.send((("DRAWRight").encode()).ljust(16))
+							print("Right")
+							#time.sleep(1)
+							turn_wait_time = time.time()
+							help_wait_time = 0
+						else:
+							pass
+						turning_flag = False
+						turn.value = 0
+						turn_flag.value = 0
+					else:
+						turn.value = 0
+						turn_flag.value = 0
+				
+					if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
+						temp_dis = str(distance.value)
+						s.send(('DRAW'+temp_dis).ljust(16).encode())
+						print(temp_dis)
+						distance.value = 0
+						#time.sleep(0.15)
+						turn_wait_time = 0
 						help_wait_time = 0
 					else:
-						pass
-					turning_flag = False
-					turn.value = 0
-					turn_flag.value = 0
-				else:
-					turn.value = 0
-					turn_flag.value = 0
-				
-				if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
-					temp_dis = str(distance.value)
-					s.send(((temp_dis).encode()).ljust(16))
-					print(temp_dis)
-					distance.value = 0
-					time.sleep(0.15)
-					turn_wait_time = 0
-					help_wait_time = 0
-				else:
-					distance.value = 0
+						distance.value = 0
+				except Exception as e:
+					print(e.args)
+					
 					
 			except:
 				print("reconnecting server")
@@ -299,6 +317,7 @@ try:
 					s.send(("TH100"+str(th_100)).ljust(16).encode())
 				except:
 					pass
+
 			cv2.imshow("combine",img_combine)
 			cv2.waitKey(1)
 			
@@ -307,8 +326,4 @@ finally:
 		s.close()
 		print('close')
 		stop_key = True
-
-
-
-
 

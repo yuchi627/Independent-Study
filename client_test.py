@@ -64,7 +64,7 @@ try:
 
 			try:
 				######## send ir image ###############
-				s.send(("IR_S"+str(len(stringData_ir))).ljust(16).encode())
+				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 				s.send(stringData_ir)
 				####### send flir image to server #########
 				s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
