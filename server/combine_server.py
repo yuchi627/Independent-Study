@@ -424,6 +424,7 @@ class AppWindow(QDialog):
             if(self.connection_num[i] == 0):
                 self.client_list[i].set_info(i,addr)
                 self.connection_num[i] = 1
+                self.client_list[i].time_in = time.time()
                 inti_flag = i
                 break
             i = i + 1
@@ -469,13 +470,13 @@ class AppWindow(QDialog):
                         #print("msg = ", recv_data_msg)
                         if("FLIR" in recv_data_msg):
                             #print("flir image size msg")
-                            print("IR-FLIR=",time.time() - self.client_list[client_host].t)
+                            #print("IR-FLIR=",time.time() - self.client_list[client_host].t)
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
                         elif("IR" in recv_data_msg):
                             #print("ir image size msg")
                             self.client_list[client_host].t = time.time()
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
-                            print("recv IR size = ",time.time() - self.client_list[client_host].t)
+                            #print("recv IR size = ",time.time() - self.client_list[client_host].t)
                         elif("TH70" in recv_data_msg):
                             #print("TH70 msg")
                             self.client_list[client_host].set_threshold(1, float(recv_data_msg[4:len(recv_data_msg)]))
@@ -522,7 +523,7 @@ class AppWindow(QDialog):
                     try:
                         t1 = time.time()
                         recv_data = sock.recv(self.client_list[client_host].get_package_size())
-                        print("recv img = ",time.time() - t1)
+                        #print("recv img = ",time.time() - t1)
                         ###### concatenate recv msg to image ######
                         #print(type(recv_data))
                         self.client_list[client_host].combine_recv_img(recv_data)
@@ -531,7 +532,7 @@ class AppWindow(QDialog):
                             ###### image recv complete ######
                             t = time.time()
                             send_flag = self.client_list[client_host].decode_img()
-                            print("decode_img time = ",time.time() - t)
+                            #print("decode_img time = ",time.time() - t)
                             if(send_flag):
                                 self.refresh_img = True
                                 send_flag = False
@@ -542,7 +543,7 @@ class AppWindow(QDialog):
                                     stringData = data_combine.tostring()
                                     sock.send(str(len(stringData)).ljust(16).encode())
                                     sock.send(stringData)
-                                    print("time = ",time.time() - self.client_list[client_host].t)
+                                    #print("time = ",time.time() - self.client_list[client_host].t)
                                 except Exception as e:
                                     print("error in send image to client : ",e.args)
                                     #pass
@@ -594,7 +595,7 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(left_spot_x,down_spot_y),(right_spot_x,down_spot_y),self.client_list[index].color_set,10,6)
         cv2.line(self.image_map,(left_spot_x,up_spot_y),(left_spot_x,down_spot_y),self.client_list[index].color_set,10,6)
         cv2.line(self.image_map,(right_spot_x,up_spot_y),(right_spot_x,down_spot_y),self.client_list[index].color_set,10,6)
- 
+
         if("No Turn" in data):
              #print("index:",index)
             self.client_list[index].addNewPosition("No Turn",0)
@@ -700,20 +701,13 @@ class AppWindow(QDialog):
             self.client_list[num].in_danger_flag = False
         else:
             self.replace_roi(self.hot_mask, num, y_offset, self.img_fireman.shape[0] + y_offset, x_offset, self.img_fireman.shape[1] + x_offset, (0,0,0))
-        
-        index_tuple = np.where(self.hot_mask[:,:,0]==1)
-        row = index_tuple[0]
-        col = index_tuple[1]
-        for c in range(0,2):     
-            self.image_map[row,col,c] = self.image_map[row, col, c]*0.5
-        self.image_map[row, col, 2] = self.image_map[row, col, 0]*0.5 + 122
-        ###### refresh explosion mask ######
-        index_tuple = np.where(self.explosion_mask[:,:,0]==1)
-        row = index_tuple[0]
-        col = index_tuple[1]
-        self.image_map[row, col, 2] = self.image_map[row, col, 2]*0.5
-        self.image_map[row, col, 1] = self.image_map[row, col, 1]*0.5
-        self.image_map[row, col, 0] = self.image_map[row, col, 0]*0.5 + 122
+        ###### draw danger area ######
+        tmp = self.image_map.copy()
+        np.place(tmp, (self.hot_mask > 0), (0,0,255))
+        np.place(tmp, (self.explosion_mask > 0), (255,0,0))
+        self.image_map = cv2.addWeighted(self.image_map, 0.5, tmp, 0.5, 0)
+    
+        ###### draw fireman ######
         for i in range(4):
             ###### avoid img_fireman out of bounds ######
             if(self.client_list[i].position_x > self.client_list[i].fireman_bound_right):
