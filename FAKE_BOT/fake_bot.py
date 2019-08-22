@@ -368,7 +368,7 @@ def move7():
 		if ran == 10:
 			not_help()
 
-	s.send((("DRAAWLeft").encode()).ljust(16))
+	s.send((("DRAWLeft").encode()).ljust(16))
 	send_image()
 	time.sleep(0.2)
 	count = 0
@@ -421,7 +421,7 @@ def move7():
 	s.send((("DRAWLeft").encode()).ljust(16))
 	send_image()
 	time.sleep(0.2)
-	s.send((("DRAw1.5").encode()).ljust(16))
+	s.send((("DRAW1.5").encode()).ljust(16))
 	send_image()
 	time.sleep(0.2)
 	s.send((("DRAW1.5").encode()).ljust(16))
