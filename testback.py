@@ -58,7 +58,6 @@ def read_bes_z():
 	bes_z_ska = bes_z / 16384.0 * 9.8
 	return bes_z_ska
 
-        #self.image_map = cv2.line(self.image_map,(self.middle_x*2,5),(self.middle_x*2,self.middle_y*2),(0,139,0),10,6)
 def get_bes(mutex, distance, dis_flag):
 	global real_bes
 	global stop_key
@@ -162,13 +161,94 @@ turn = mp.Value("d", 0)
 turn_flag = mp.Value("i", 0)
 dis_flag = mp.Value("i", 0)
 
-p = mp.Process(target=get_bes, args=(mutex, distance, dis_flag))
-p1 = mp.Process(target=check_turning, args=(mutex, turn, turn_flag))
-p.start()
-p1.start()
-
 turn_wait_time = 0
 help_wait_time = 0
+
+
+fstop = open("./stop_arr.txt","w")
+print("Start Calibrating...")
+time.sleep(1)
+print("Start Stop....")
+time.sleep(3)
+start_time = time.time()
+while time.time()-start_time < 1:
+	bes_arr = []
+	while(len(bes_arr) <= 100):
+		bes_arr.append(read_bes_z())
+	fstop.write(str(np.std(bes_arr)))
+	fstop.write("\n")
+
+
+fwalk = open("./walk_arr.txt","w")
+print("Start Walking...")
+time.sleep(3)
+start_time = time.time()
+walk_arr = []
+while time.time() - start_time < 1:
+	bes_arr = []
+	while(len(bes_arr) <= 100):
+		bes_arr.append(read_bes_z())
+	fwalk.write(str(np.std(bes_arr)))
+	fwalk.write('\n')
+
+print("Walk Finished")
+time.sleep(2)
+
+frun = open('./run_arr.txt','w')
+print("Start Running...")
+time.sleep(3)
+start_time = time.time()
+run_arr = []
+while time.time() - start_time < 1:
+	bes_arr = []
+	while(len(bes_arr)<=100):
+		bes_arr.append(read_bes_z())
+	frun.write(str(np.std(bes_arr)))
+	frun.write('\n')
+
+print("Run Finished")
+time.sleep(2)
+
+fright = open('./right_arr.txt','w')
+print("Start Turn Right...")
+time.sleep(3)
+start_time = time.time()
+right_arr = []
+while time.time() - start_time < 1:
+	fright.write(str(read_gyro()))
+	fright.write('\n')
+
+print("Finish Right")
+time.sleep(2)
+
+fleft = open('./left_arr.txt','w')
+print("Start Turn Left...")
+time.sleep(3)
+start_time = time.time()
+left_arr = []
+while time.time() - start_time < 1:
+	fleft.write(str(read_gyro()))
+	fleft.write('\n')
+
+print("Finish Left")
+time.sleep(2)
+
+ffall = open('./fall_arr.txt','w')
+print("Start Falling...")
+time.sleep(3)
+start_time = time.time()
+fall_arr = []
+while time.time() - start_time < 1:
+	ffall.write(str(read_bes_x()))
+	ffall.write('\n')
+
+print("Back to stop")
+time.sleep(3)
+
+p = mp.Process(target=get_bes,args=(mutex,distance,dis_flag))
+p1 = mp.Process(target = check_turning,args=(mutex,turn,turn_flag))
+p.start()
+p1.start()
 
 try:	
 	delay_times = 0
