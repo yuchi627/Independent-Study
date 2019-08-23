@@ -82,8 +82,10 @@ class client:
     right_thickness = 10
     up_thickness = 10
     down_thickness = 10
+    #number = -1
 #------------------------------------------------#
     def __init__(self, num):
+        self.number = num
         self.visible_flag = True
         self.first_flag = True
         self.namespace_img = img_white_namespace
@@ -95,6 +97,7 @@ class client:
         self.line_right_spot_x = self.right_spot_x
         self.line_up_spot_y = self.up_spot_y
         self.line_down_spot_y = self.down_spot_y
+        self.color_set = (0,139,0)
         if(num == 0):
             self.line_right_spot_x = self.line_right_spot_x - 5
             self.line_down_spot_y = self.line_down_spot_y - 5
@@ -106,26 +109,16 @@ class client:
             self.explosion_bound_left = line_W
             self.explosion_bound_right = bound_w - line_W
             
-            self.fireman_bound_top = 25 
-            self.fireman_bound_bottom = bound_h-30
-            self.fireman_bound_left = 25
-            self.fireman_bound_right = bound_w-25
-            
         elif(num == 1):
             self.line_left_spot_x = self.line_left_spot_x + 5
             self.line_down_spot_y = self.line_down_spot_y - 5
             self.left_thickness = 5
             self.down_thickness = 5
-            
+
             self.explosion_bound_top = line_W
             self.explosion_bound_bottom = bound_h - line_W
             self.explosion_bound_left = bound_w 
             self.explosion_bound_right = bound_w * 2 - int(line_W * 1.5)
-            
-            self.fireman_bound_top = 25
-            self.fireman_bound_bottom = bound_h-30
-            self.fireman_bound_left = bound_w+25
-            self.fireman_bound_right = bound_w * 2 -25
 
             self.position_x = right_x
             
@@ -140,11 +133,6 @@ class client:
             self.explosion_bound_left = line_W
             self.explosion_bound_right = bound_w - line_W
 
-            self.fireman_bound_top = bound_h + 25
-            self.fireman_bound_bottom = bound_h * 2 -25
-            self.fireman_bound_left = 25
-            self.fireman_bound_right = bound_w-25
-
             self.position_y = bottom_y
             
         elif(num == 3):
@@ -158,14 +146,13 @@ class client:
             self.explosion_bound_left = bound_w
             self.explosion_bound_right = bound_w *2 - int(line_W * 1.5)
 
-            self.fireman_bound_top = bound_h + 25
-            self.fireman_bound_bottom = bound_h * 2 -25
-            self.fireman_bound_left = bound_w + 25
-            self.fireman_bound_right = bound_w * 2 -25
-
             self.position_x = right_x
             self.position_y = bottom_y
             
+        self.fireman_bound_top = self.line_up_spot_y 
+        self.fireman_bound_bottom = self.line_down_spot_y - 50
+        self.fireman_bound_left = self.line_left_spot_x
+        self.fireman_bound_right = self.line_right_spot_x - 50
 
     def except_for_img(self):
         img_binary = b''
@@ -261,7 +248,8 @@ class client:
                 data = struct.unpack("4800I", self.img_binary)
                 self.img_binary = b''
                 data = (np.asarray(data)).astype(np.float32)
-                if(np.sum((data> self.th_100)) >= (data.size / 3)):
+                #print("np.sum((data> self.th_100)) = ",np.sum((data> self.th_100)),"  data.size / 30 = ",(data.size / 30))
+                if(np.sum((data> self.th_100)) >= (data.size / 31)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
                 data = np.reshape(data, (60,80,1))
