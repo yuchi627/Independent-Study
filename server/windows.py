@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'test.ui'
+# Form implementation generated from reading ui file 'setWindows.ui'
 #
 # Created by: PyQt5 UI code generator 5.12.1
 #
@@ -28,14 +28,17 @@ class Ui_Form(object):
         self.btn_info.setGeometry(QtCore.QRect(350, 920, 121, 61))
         self.btn_info.setObjectName("btn_info")
         self.btn_choose = QtWidgets.QPushButton(Form)
-        self.btn_choose.setGeometry(QtCore.QRect(1360, 920, 121, 61))
+        self.btn_choose.setGeometry(QtCore.QRect(1400, 930, 85, 51))
         self.btn_choose.setObjectName("btn_choose")
         self.btn_ok = QtWidgets.QPushButton(Form)
-        self.btn_ok.setGeometry(QtCore.QRect(1670, 920, 121, 61))
+        self.btn_ok.setGeometry(QtCore.QRect(1620, 930, 85, 51))
         self.btn_ok.setObjectName("btn_ok")
         self.btn_remove = QtWidgets.QPushButton(Form)
-        self.btn_remove.setGeometry(QtCore.QRect(1520, 920, 121, 61))
-        self.btn_remove.setObjectName("btn_cancel")
+        self.btn_remove.setGeometry(QtCore.QRect(1510, 930, 85, 51))
+        self.btn_remove.setObjectName("btn_remove")
+        self.btn_reset = QtWidgets.QPushButton(Form)
+        self.btn_reset.setGeometry(QtCore.QRect(1510, 930, 85, 51))
+        self.btn_reset.setObjectName("btn_reset")
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -49,5 +52,6 @@ class Ui_Form(object):
         self.btn_choose.setText(_translate("Form", "Choose"))
         self.btn_ok.setText(_translate("Form", "OK"))
         self.btn_remove.setText(_translate("Form", "Remove"))
+        self.btn_reset.setText(_translate("Form", "Reset Time"))
 
 
