@@ -58,6 +58,7 @@ def read_bes_z():
 	bes_z_ska = bes_z / 16384.0 * 9.8
 	return bes_z_ska
 
+        #self.image_map = cv2.line(self.image_map,(self.middle_x*2,5),(self.middle_x*2,self.middle_y*2),(0,139,0),10,6)
 def get_bes(mutex, distance, dis_flag):
 	global real_bes
 	global stop_key
