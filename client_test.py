@@ -8,10 +8,10 @@ import select
 import picamera.array
 import time
 #HOST = '172.20.10.3'
-HOST = '192.168.43.118'
+HOST = '192.168.43.9'
 #HOST = '192.168.43.84'
 #HOST= "127.0.0.1"
-PORT = 6666
+PORT = 8888
 
 def img_processing(ir_img,flir_val):
 	tmp = ir_img.copy()
