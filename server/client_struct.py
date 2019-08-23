@@ -25,7 +25,7 @@ M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
-    t= 0
+    #t= 0
     remain_package_size = 0
     img_binary = b''
     img_ir = img_white
@@ -41,6 +41,8 @@ class client:
     closing_danger_flag = False     ###### close to the danger area
     in_danger_flag = False      ###### the red area more than one third of pic
     in_explosion_flag = False
+    send_save_msg_flag = False
+    send_over_time_flag = False
     set_start = False
     fireman_bound_top = 0
     fireman_bound_bottom = 0
@@ -50,6 +52,7 @@ class client:
     explosion_bound_bottom = 0
     explosion_bound_left = 0
     explosion_bound_right = 0
+    draw_count = 0
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -233,12 +236,22 @@ class client:
                 rotate_img = cv2.warpAffine(before_rotate_img, M, (weight,height))
                 self.img_combine = rotate_img
                 ###### put the warning message on pic ######
+                print("save=",self.send_save_msg_flag,"in= ",(self.in_explosion_flag),"close=",self.closing_danger_flag)
                 if(self.in_danger_flag | self.in_explosion_flag):
                     cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                     self.in_explosion_flag = False
+                    self.draw_count += 1
                 elif(self.closing_danger_flag):
                     cv2.putText(self.img_combine, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
                     self.closing_danger_flag = False
+                    self.draw_count += 1
+                if(self.send_over_time_flag):
+                    cv2.putText(self.img_combine, "You should come out !", (20,(40 + self.draw_count*30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+                    self.draw_count += 1
+                if(self.send_save_msg_flag):
+                    cv2.putText(self.img_combine, "You will be saved !", (20,(40 + self.draw_count*30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
+                    
+                self.draw_count = 0
                 ###### concatenate the img_combine and namespace ######
                 self.img_show = np.concatenate((self.namespace_img, self.img_combine), axis=0)
                 return True
