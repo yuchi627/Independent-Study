@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import struct
 import time
-
+from queue import Queue
 height = 480
 weight = 640
 name_space_height = 50
@@ -45,6 +45,7 @@ class client:
     in_explosion_flag = False
     send_save_msg_flag = False
     send_over_time_flag = False
+    disconnect_flag = False
     yellow_flag = False
     set_start = False
     fireman_bound_top = 0
@@ -56,6 +57,7 @@ class client:
     explosion_bound_left = 0
     explosion_bound_right = 0
     draw_count = 0
+    img_q = Queue(maxsize = 100)  
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -150,9 +152,9 @@ class client:
             self.position_y = bottom_y
             
         self.fireman_bound_top = self.line_up_spot_y 
-        self.fireman_bound_bottom = self.line_down_spot_y - 50
+        self.fireman_bound_bottom = self.line_down_spot_y - 25
         self.fireman_bound_left = self.line_left_spot_x
-        self.fireman_bound_right = self.line_right_spot_x - 50
+        self.fireman_bound_right = self.line_right_spot_x - 25
 
     def except_for_img(self):
         img_binary = b''
@@ -224,7 +226,11 @@ class client:
     
     def read_img(self):
         if(self.visible_flag):
-            return_img = self.img_show
+            if(self.disconnect_flag):
+                return_img = self.img_q.get()
+                self.img_q.put(return_img.copy())
+            else:
+                return_img = self.img_show
         else:
             return_img = img_white
         return return_img
@@ -280,10 +286,12 @@ class client:
                     self.draw_count += 1
                 if(self.send_save_msg_flag):
                     cv2.putText(self.img_combine, "You will be saved !", (20,(40 + self.draw_count*30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
-                    
                 self.draw_count = 0
                 ###### concatenate the img_combine and namespace ######
                 self.img_show = np.concatenate((self.namespace_img, self.img_combine), axis=0)
+                if(self.img_q.full()):
+                    self.img_q.get()
+                self.img_q.put(self.img_show.copy())
                 return True
             return False
 
