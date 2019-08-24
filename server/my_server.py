@@ -37,7 +37,6 @@ class AppWindow(QDialog):
         self.ui.btn_ok.clicked.connect(self.on_click_btn_ok)
         self.ui.btn_remove.clicked.connect(self.on_click_btn_remove)
         self.ui.btn_reset.clicked.connect(self.on_click_btn_reset)
-        self.ui.btn_back.clicked.connect(self.on_click_btn_back)
         self.ui.btn_choose.setEnabled(True)
         self.ui.btn_remove.setEnabled(True)
         self.ui.btn_ok.setEnabled(True)
@@ -48,14 +47,14 @@ class AppWindow(QDialog):
         self.ui.btn_reset.setVisible(False)
         self.ui.btn_back.setEnabled(False)
         self.ui.btn_back.setVisible(False)
-        
+
         self.ui.label.setScaledContents(True)
         self.offset_x = self.ui.label.geometry().width()
         self.offset_y = self.ui.label.geometry().height()
 
         self.img_map_loading()
         self.socket_initialize()
-        #self.showMaximized()
+        self.showMaximized()
         self.show()
 
     def initVar(self):
@@ -78,8 +77,6 @@ class AppWindow(QDialog):
         self.release_mouse = False
         self.choose_flag = False 
         self.remove_flag = False 
-        self.back_flag = False
-        self.count_back_img = 100
         self.choose_fireman = -1 
         self.middle_x = 1170    ##### middle of map image
         self.middle_y = 700
@@ -87,7 +84,7 @@ class AppWindow(QDialog):
         self.disconnect_number = 0
         self.connect_number = 0
         #self.host = '172.20.10.2'
-        self.host = '192.168.68.196'
+        self.host = '192.168.68.100'
         #self.host = '192.168.208.102'
         #self.host = '192.168.43.149'
         #self.host = '127.0.0.1'
@@ -123,8 +120,6 @@ class AppWindow(QDialog):
         self.image_image_flag = False
         self.image_map_flag = False
         self.image_info_flag = True
-        self.back_flag = False
-        self.count_back_img = 100
         self.ui.btn_choose.setEnabled(False)
         self.ui.btn_ok.setEnabled(False)
         self.ui.btn_remove.setEnabled(False)
@@ -133,15 +128,13 @@ class AppWindow(QDialog):
         self.ui.btn_remove.setVisible(False)
         self.ui.btn_reset.setEnabled(True)
         self.ui.btn_reset.setVisible(True)
-        self.ui.btn_back.setEnabled(False)
-        self.ui.btn_back.setVisible(False)
+        self.ui.btn_back.setEnabled(False) 
+        self.ui.btn_back.setVisible(False) 
 
     def on_click_btn_map(self):
         self.image_image_flag = False
         self.image_map_flag = True
         self.image_info_flag = False
-        self.back_flag = False
-        self.count_back_img = 100
         self.ui.btn_choose.setEnabled(True)
         self.ui.btn_ok.setEnabled(True)
         self.ui.btn_remove.setEnabled(True)
@@ -150,8 +143,8 @@ class AppWindow(QDialog):
         self.ui.btn_remove.setVisible(True)
         self.ui.btn_reset.setEnabled(False)
         self.ui.btn_reset.setVisible(False)
-        self.ui.btn_back.setEnabled(False)
-        self.ui.btn_back.setVisible(False)
+        self.ui.btn_back.setEnabled(False) 
+        self.ui.btn_back.setVisible(False) 
 
     def on_click_btn_image(self):
         self.image_image_flag = True
@@ -165,17 +158,8 @@ class AppWindow(QDialog):
         self.ui.btn_remove.setVisible(False)
         self.ui.btn_reset.setEnabled(False)
         self.ui.btn_reset.setVisible(False)
-        self.ui.btn_back.setEnabled(True)
-        self.ui.btn_back.setVisible(True)
-
-    def on_click_btn_back(self):
-        self.image_image_flag = True
-        self.image_map_flag = False
-        self.image_info_flag = False
-        self.choose_flag = False
-        self.remove_flag = False
-        self.ok_flag = False
-        self.back_flag = True
+        self.ui.btn_back.setEnabled(True) 
+        self.ui.btn_back.setVisible(True) 
 
     def on_click_btn_choose(self):
         self.image_image_flag = False
@@ -235,16 +219,11 @@ class AppWindow(QDialog):
     def update_image(self):
         if(self.image_image_flag):
             if((self.connect_number == 0 )and (self.disconnect_number >0)):
-                if(self.back_flag):
-                    self.count_back_img -= 1
                 ###### concatenate and plot image ######
-                img_concate_Hori=np.concatenate((self.client_list[0].read_img(self.back_flag),self.client_list[1].read_img(self.back_flag)),axis=1)
-                img_concate_Verti=np.concatenate((self.client_list[2].read_img(self.back_flag),self.client_list[3].read_img(self.back_flag)),axis=1)
+                img_concate_Hori=np.concatenate((self.client_list[0].read_img(),self.client_list[1].read_img()),axis=1)
+                img_concate_Verti=np.concatenate((self.client_list[2].read_img(),self.client_list[3].read_img()),axis=1)
                 img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
                 self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
-                if(self.count_back_img == 0):
-                    self.count_back_img = 100
-                    self.back_flag = False
             image = self.image_image.copy()
         elif(self.image_map_flag):
             image = self.image_map.copy()
@@ -370,6 +349,8 @@ class AppWindow(QDialog):
             self.time_press = time.time()
             self.info_flag = (self.info_flag != 3)*4 - 1
         else:  
+            pass
+            '''
             if(event.key() == Qt.Key_Up):
                 for i in self.client_list:
                     i.position_y-=100
@@ -386,14 +367,14 @@ class AppWindow(QDialog):
                 for i in self.client_list:
                     i.position_x+=100
                 self.draw_layer(0)
-
+            '''
     def img_map_loading(self):
         fireman_img_map_path = "../IMAGE/fireman.png"
         map_img_map_path = "../IMAGE/1f.png"
-        wifi_img_path = "./images.png"                                
-         
+        wifi_img_path = "./images.png"
+
         if(os.path.isfile(wifi_img_path)):
-            self.no_wifi_image = cv2.imread(wifi_img_path,-1)
+            self.no_wifi_image = cv2.imread(wifi_img_path,-1)    
         if(os.path.isfile(fireman_img_map_path)):
             print("Reading FireFighter Image...")
             while(len(self.img_fireman) == 0):
@@ -463,8 +444,8 @@ class AppWindow(QDialog):
                     if(self.refresh_img):
                         self.refresh_img = False
                         ###### concatenate and plot image ######
-                        img_concate_Hori=np.concatenate((self.client_list[0].read_img(self.back_flag),self.client_list[1].read_img(self.back_flag)),axis=1)
-                        img_concate_Verti=np.concatenate((self.client_list[2].read_img(self.back_flag),self.client_list[3].read_img(self.back_flag)),axis=1)
+                        img_concate_Hori=np.concatenate((self.client_list[0].read_img(),self.client_list[1].read_img()),axis=1)
+                        img_concate_Verti=np.concatenate((self.client_list[2].read_img(),self.client_list[3].read_img()),axis=1)
                         img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
                         self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
                         #self.image_image = img_toshow.copy()
@@ -655,9 +636,9 @@ class AppWindow(QDialog):
                 for i in self.client_list:
                     if(i.ip_addr == data.addr):
                         self.connection_num[i.id_num] = 1
-                        i.disconnect_time = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
-                        i.disconnect = True
-                        self.add_no_wifi(i.id_num)
+                        self.client_list[i.id_num].disconnect_time = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
+                        self.client_list[i.id_num].disconnect = True
+                        self.add_no_wifi(i.id_num) 
                         #self.client_list[i.id_num] = client(i.id_num)
                 #self.image_map = self.keep_fire.copy()
                 self.drawNewSpot('0.0',0)
@@ -670,7 +651,6 @@ class AppWindow(QDialog):
                 self.refresh_img = True
                 #self.subplot_count.append(self.client_dict[str(data.addr[1])])
                 #del self.client_dict[str(data.addr[1])]
-                self.client_list[self.client_dict[str(data.addr[1])]].set_back_img_num()
                 self.client_list[self.client_dict[str(data.addr[1])]].disconnect_flag = True
                 self.sel.unregister(sock)
                 sock.close()
@@ -713,7 +693,7 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(line_left_spot_x,line_down_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,down_thickness,6)
         cv2.line(self.image_map,(line_left_spot_x,line_up_spot_y),(line_left_spot_x,line_down_spot_y),self.client_list[index].color_set,left_thickness,6)
         cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
-        
+      
         #self.refresh_map = True
         #self.draw_layer(index) 
         #print("helpConditionExec= ",time.time()-t)
@@ -901,11 +881,13 @@ class AppWindow(QDialog):
         if(time_m_str > 0):
             time_str = time_str + str(time_m_str) + " mins, "
         time_str = time_str + str(int(time_s_str-3600*time_h_str-60*time_m_str))+" secs"
+       
         # set real time
-        if(self.client_list[self.info_flag].disconnect_flag == False):
+        if(self.client_list[self.info_flag].disconnect == False):
             real_time_str = str(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()))
         else:
             real_time_str = str(self.client_list[self.info_flag].disconnect_time)
+            
         # set info line
         info_line = "Name:"+str(self.client_list[self.info_flag].name.strip(' '))+", Number:"+str(self.client_list[self.info_flag].fire_num)
         info_line_img= np.zeros((100,width,3), np.uint8)
@@ -946,7 +928,7 @@ class AppWindow(QDialog):
             temp_img = self.keep[line_up_spot_y:line_down_spot_y,line_left_spot_x:line_right_spot_x]
             self.no_wifi_image = cv2.resize(self.no_wifi_image,(temp_img.shape[1],temp_img.shape[0]))
             self.keep[line_up_spot_y:line_down_spot_y,line_left_spot_x:line_right_spot_x] = cv2.addWeighted(temp_img,0.5,self.no_wifi_image,0.5,0)
-        else:  
+        else:
             pass
 
 
