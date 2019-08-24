@@ -97,6 +97,8 @@ class AppWindow(QDialog):
         self.middle_x = 1170    ##### middle of map image
         self.middle_y = 700
         self.keep_fire = []
+        self.disconnect_number = 0
+        self.connect_number = 0
         #self.host = '172.20.10.2'
         self.host = '192.168.68.196'
         #self.host = '192.168.208.102'
@@ -225,8 +227,13 @@ class AppWindow(QDialog):
             self.client_list[self.info_flag].time_in = time.time()
 
     def update_image(self):
-        image = self.image_map.copy()
         if(self.image_image_flag):
+            if((self.connect_number == 0 )and (self.disconnect_number >0)):
+                ###### concatenate and plot image ######
+                img_concate_Hori=np.concatenate((self.client_list[0].read_img(),self.client_list[1].read_img()),axis=1)
+                img_concate_Verti=np.concatenate((self.client_list[2].read_img(),self.client_list[3].read_img()),axis=1)
+                img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
+                self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
             image = self.image_image.copy()
         elif(self.image_map_flag):
             image = self.image_map.copy()
@@ -236,11 +243,8 @@ class AppWindow(QDialog):
         elif(self.image_info_flag):
             image = self.image_info.copy()
         else:
-            pass
+            image = self.image_map.copy()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-#        cv2.imshow("Image",image)
-#        cv2.waitKey(0)
         QIm = QImage(image.data, image.shape[1], image.shape[0],image.shape[1] *image.shape[2],QImage.Format_RGB888)
         self.ui.label.setPixmap(QPixmap.fromImage(QIm))
 
@@ -355,8 +359,8 @@ class AppWindow(QDialog):
             self.time_press = time.time()
             self.info_flag = (self.info_flag != 3)*4 - 1
         else:  
-           pass
-           '''
+            pass
+            '''
             if(event.key() == Qt.Key_Up):
                 for i in self.client_list:
                     i.position_y-=100
@@ -374,7 +378,6 @@ class AppWindow(QDialog):
                     i.position_x+=100
                 self.draw_layer(0)
             '''
-
     def img_map_loading(self):
         fireman_img_map_path = "../IMAGE/fireman.png"
         map_img_map_path = "../IMAGE/1f.png"
@@ -450,8 +453,8 @@ class AppWindow(QDialog):
                         img_concate_Hori=np.concatenate((self.client_list[0].read_img(),self.client_list[1].read_img()),axis=1)
                         img_concate_Verti=np.concatenate((self.client_list[2].read_img(),self.client_list[3].read_img()),axis=1)
                         img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
-                        img_toshow = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
-                        self.image_image = img_toshow.copy()
+                        self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
+                        #self.image_image = img_toshow.copy()
                     if(self.refresh_map):
                         self.refresh_map = False
                     if(self.info_flag >= 0):
@@ -479,7 +482,7 @@ class AppWindow(QDialog):
         self.client_dict[str(addr[1])] = min_num
         ###### number remove from list subplot_count ######
         self.subplot_count.remove(min_num)
-    
+        self.connect_number += 1
         #--------------------------------------------------------------#
         i = 0                                                             
         while(i<4):
@@ -638,16 +641,19 @@ class AppWindow(QDialog):
                 print(self.client_list[0].ip_addr)
                 for i in self.client_list:
                     if(i.ip_addr == data.addr):
-                        self.connection_num[i.id_num] = 0
-                        self.client_list[i.id_num] = client(i.id_num)
-                self.image_map = self.keep_fire.copy()
+                        self.connection_num[i.id_num] = 1
+                        #self.client_list[i.id_num] = client(i.id_num)
+                #self.image_map = self.keep_fire.copy()
                 self.refresh_map = True
                 # Close Connection 的時候取消 Object
                 #--------------------------------------------------------------------#
-                self.client_list[self.client_dict[str(data.addr[1])]].set_visible(False)
+                #self.client_list[self.client_dict[str(data.addr[1])]].set_visible(False)
+                self.connect_number -= 1
+                self.disconnect_number += 1
                 self.refresh_img = True
-                self.subplot_count.append(self.client_dict[str(data.addr[1])])
-                del self.client_dict[str(data.addr[1])]
+                #self.subplot_count.append(self.client_dict[str(data.addr[1])])
+                #del self.client_dict[str(data.addr[1])]
+                self.client_list[self.client_dict[str(data.addr[1])]].disconnect_flag = True
                 self.sel.unregister(sock)
                 sock.close()
 
@@ -747,17 +753,17 @@ class AppWindow(QDialog):
         alpha_l = 1.0 - alpha_s
         ###### avoid img_fireman out of bounds ######
         if(self.client_list[num].position_x > self.client_list[num].fireman_bound_right):
-            x_offset = self.client_list[num].fireman_bound_right
+            x_offset = self.client_list[num].fireman_bound_right - 50
         elif(self.client_list[num].position_x < self.client_list[num].fireman_bound_left):
             x_offset = self.client_list[num].fireman_bound_left
         else:
-            x_offset = self.client_list[num].position_x
+            x_offset = self.client_list[num].position_x-25
         if(self.client_list[num].position_y > self.client_list[num].fireman_bound_bottom):
-            y_offset = self.client_list[num].fireman_bound_bottom
+            y_offset = self.client_list[num].fireman_bound_bottom - 50
         elif(self.client_list[num].position_y < self.client_list[num].fireman_bound_top):
             y_offset = self.client_list[num].fireman_bound_top
         else:
-            y_offset = self.client_list[num].position_y
+            y_offset = self.client_list[num].position_y-25
 
         ###### refresh hot mask ######
         if(self.client_list[num].in_danger_flag):
@@ -782,17 +788,17 @@ class AppWindow(QDialog):
         for fireman in self.client_list:
             ###### avoid img_fireman out of bounds ######
             if(fireman.position_x > fireman.fireman_bound_right):
-                x_offset = fireman.fireman_bound_right
+                x_offset = fireman.fireman_bound_right - 50
             elif(fireman.position_x < fireman.fireman_bound_left):
                 x_offset = fireman.fireman_bound_left
             else:
-                x_offset = fireman.position_x
+                x_offset = fireman.position_x - 25
             if(fireman.position_y > fireman.fireman_bound_bottom):
-                y_offset = fireman.fireman_bound_bottom
+                y_offset = fireman.fireman_bound_bottom - 50
             elif(fireman.position_y < fireman.fireman_bound_top):
                 y_offset = fireman.fireman_bound_top
             else:
-                y_offset = fireman.position_y
+                y_offset = fireman.position_y - 25
             
             x2 = self.img_fireman.shape[1] + x_offset
             y2 = self.img_fireman.shape[0] + y_offset
