@@ -32,7 +32,7 @@ class client:
     img_binary = b''
     img_ir = img_white
     img_combine = img_white
-    img_show = img_white    
+    img_show = img_white   
     name = "name"
     recv_ir_flag = False
     recv_flir_flag = False
@@ -42,22 +42,24 @@ class client:
     twinkling_flag = False
     closing_danger_flag = False     ###### close to the danger area
     in_danger_flag = False      ###### the red area more than one third of pic
-    in_explosion_flag = False
-    send_save_msg_flag = False
+    in_explosion_flag = False   ###### in the area which commander select
+    send_save_msg_flag = False  
     send_over_time_flag = False
     disconnect_flag = False
-    yellow_flag = False
-    set_start = False
-    fireman_bound_top = 0
+    set_start = False       
+    fireman_bound_top = 0   ###### bound of drawing fireman picture on map
     fireman_bound_bottom = 0
     fireman_bound_left = 0
     fireman_bound_right = 0
-    explosion_bound_top = 0
+    explosion_bound_top = 0     ###### bound of selecting explosion area on map
     explosion_bound_bottom = 0
     explosion_bound_left = 0
     explosion_bound_right = 0
-    draw_count = 0
-    img_q = Queue(maxsize = 100)  
+    draw_count = 0      ###### count the emergency message number
+    max_back_img_number = 100
+    img_q = Queue(maxsize = max_back_img_number)  
+    back_img_count = 0
+    back_img_num = 100
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -84,6 +86,8 @@ class client:
     right_thickness = 10
     up_thickness = 10
     down_thickness = 10
+    yellow_flag = False
+    disconnect_time = 0
     #number = -1
 #------------------------------------------------#
     def __init__(self, num):
@@ -224,16 +228,28 @@ class client:
     def combine_recv_img(self,recv_str):
         self.img_binary += recv_str
     
-    def read_img(self):
+    def set_back_img_num(self):
+        self.back_img_num = self.img_q.qsize()
+
+    def read_img(self,back_flag):
         if(self.visible_flag):
             if(self.disconnect_flag):
-                return_img = self.img_q.get()
-                self.img_q.put(return_img.copy())
+                if(back_flag):
+                    if(self.back_img_count <= self.back_img_num):   
+                        return_img = self.img_q.get()
+                        self.img_q.put(return_img.copy())
+                        self.back_img_count += 1
+                        return return_img
+                    else:
+                        return self.img_show
+                else:
+                    self.back_img_count = 0
+                    return self.img_show
             else:
-                return_img = self.img_show
+                return self.img_show
         else:
-            return_img = img_white
-        return return_img
+            return img_white
+        return img_white
 
     def read_combine_img(self):
         return self.img_combine
