@@ -71,7 +71,7 @@ class AppWindow(QDialog):
 
         self.img_map_loading()
         self.socket_initialize()
-        self.showMaximized()
+        #self.showMaximized()
         self.show()
 
     def initVar(self):
@@ -97,8 +97,9 @@ class AppWindow(QDialog):
         self.middle_x = 1170    ##### middle of map image
         self.middle_y = 700
         self.keep_fire = []
-        self.host = '172.20.10.2'
+        #self.host = '172.20.10.2'
         self.host = '192.168.68.196'
+        #self.host = '192.168.208.102'
         #self.host = '192.168.43.149'
         #self.host = '127.0.0.1'
         self.port = 8888
@@ -355,6 +356,24 @@ class AppWindow(QDialog):
             self.info_flag = (self.info_flag != 3)*4 - 1
         else:  
            pass
+           '''
+            if(event.key() == Qt.Key_Up):
+                for i in self.client_list:
+                    i.position_y-=100
+                self.draw_layer(0)
+            elif(event.key() == Qt.Key_Down):
+                for i in self.client_list:
+                    i.position_y+=100
+                self.draw_layer(0)
+            elif(event.key() == Qt.Key_Left):
+                for i in self.client_list:
+                    i.position_x-=100
+                self.draw_layer(0)
+            elif(event.key() == Qt.Key_Right):
+                for i in self.client_list:
+                    i.position_x+=100
+                self.draw_layer(0)
+            '''
 
     def img_map_loading(self):
         fireman_img_map_path = "../IMAGE/fireman.png"
@@ -379,12 +398,21 @@ class AppWindow(QDialog):
         self.image_map = np.vstack((self.image_map,self.image_map))
  
         print("Drawing Security Line...")
-        self.image_map = cv2.line(self.image_map,(5,5),(self.middle_x*2,5),(0,139,0),10,6)
-        self.image_map = cv2.line(self.image_map,(5,self.middle_y),(self.middle_x*2,self.middle_y),(0,139,0),10,6)
-        self.image_map = cv2.line(self.image_map,(5,self.middle_y*2),(self.middle_x*2,self.middle_y*2),(0,139,0),10,6)
-        self.image_map = cv2.line(self.image_map,(5,5),(5,self.middle_y*2),(0,139,0),10,6)
-        self.image_map = cv2.line(self.image_map,(self.middle_x,5),(self.middle_x,self.middle_y*2),(0,139,0),10,6)
-        self.image_map = cv2.line(self.image_map,(self.middle_x*2,5),(self.middle_x*2,self.middle_y*2),(0,139,0),10,6)
+        index = 0
+        while index < 4:
+            line_left_spot_x = self.client_list[index].line_left_spot_x
+            line_right_spot_x = self.client_list[index].line_right_spot_x
+            line_up_spot_y = self.client_list[index].line_up_spot_y
+            line_down_spot_y = self.client_list[index].line_down_spot_y
+            left_thickness = self.client_list[index].left_thickness
+            right_thickness = self.client_list[index].right_thickness
+            up_thickness = self.client_list[index].up_thickness
+            down_thickness = self.client_list[index].down_thickness
+            cv2.line(self.image_map,(line_left_spot_x,line_up_spot_y),(line_right_spot_x,line_up_spot_y),self.client_list[index].color_set,up_thickness,6)
+            cv2.line(self.image_map,(line_left_spot_x,line_down_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,down_thickness,6)
+            cv2.line(self.image_map,(line_left_spot_x,line_up_spot_y),(line_left_spot_x,line_down_spot_y),self.client_list[index].color_set,left_thickness,6)
+            cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
+            index += 1
  
         print("Set Initialize Map")
         self.keep = self.image_map.copy()
@@ -723,13 +751,13 @@ class AppWindow(QDialog):
         elif(self.client_list[num].position_x < self.client_list[num].fireman_bound_left):
             x_offset = self.client_list[num].fireman_bound_left
         else:
-            x_offset = self.client_list[num].position_x-25
+            x_offset = self.client_list[num].position_x
         if(self.client_list[num].position_y > self.client_list[num].fireman_bound_bottom):
             y_offset = self.client_list[num].fireman_bound_bottom
         elif(self.client_list[num].position_y < self.client_list[num].fireman_bound_top):
             y_offset = self.client_list[num].fireman_bound_top
         else:
-            y_offset = self.client_list[num].position_y-25
+            y_offset = self.client_list[num].position_y
 
         ###### refresh hot mask ######
         if(self.client_list[num].in_danger_flag):
@@ -751,33 +779,34 @@ class AppWindow(QDialog):
         self.image_map[row, col, 2] = self.image_map[row, col, 2]*0.5
         self.image_map[row, col, 1] = self.image_map[row, col, 1]*0.5
         self.image_map[row, col, 0] = self.image_map[row, col, 0]*0.5 + 122
-        for i in range(4):
+        for fireman in self.client_list:
             ###### avoid img_fireman out of bounds ######
-            if(self.client_list[i].position_x > self.client_list[i].fireman_bound_right):
-                x_offset = self.client_list[i].fireman_bound_right
-            elif(self.client_list[i].position_x < self.client_list[i].fireman_bound_left):
-                x_offset = self.client_list[i].fireman_bound_left
+            if(fireman.position_x > fireman.fireman_bound_right):
+                x_offset = fireman.fireman_bound_right
+            elif(fireman.position_x < fireman.fireman_bound_left):
+                x_offset = fireman.fireman_bound_left
             else:
-                x_offset = self.client_list[i].position_x-25
-            if(self.client_list[i].position_y > self.client_list[i].fireman_bound_bottom):
-                y_offset = self.client_list[i].fireman_bound_bottom
-            elif(self.client_list[i].position_y < self.client_list[i].fireman_bound_top):
-                y_offset = self.client_list[i].fireman_bound_top
+                x_offset = fireman.position_x
+            if(fireman.position_y > fireman.fireman_bound_bottom):
+                y_offset = fireman.fireman_bound_bottom
+            elif(fireman.position_y < fireman.fireman_bound_top):
+                y_offset = fireman.fireman_bound_top
             else:
-                y_offset = self.client_list[i].position_y-25
+                y_offset = fireman.position_y
+            
             x2 = self.img_fireman.shape[1] + x_offset
             y2 = self.img_fireman.shape[0] + y_offset
             for c in range(3):
                 self.image_map[y_offset:y2 , x_offset:x2, c] = (alpha_s * self.img_fireman[:,:,c] + alpha_l * self.image_map[y_offset:y2 , x_offset:x2, c])
             ###### detect_danger ######
-            x1 = self.client_list[i].position_x-50
-            y1 = self.client_list[i].position_y-50
-            x2 = self.client_list[i].position_x+50
-            y2 = self.client_list[i].position_y+50
-            left_spot_x = self.client_list[i].left_spot_x
-            right_spot_x = self.client_list[i].right_spot_x
-            up_spot_y = self.client_list[i].up_spot_y
-            down_spot_y = self.client_list[i].down_spot_y
+            x1 = fireman.position_x-50
+            y1 = fireman.position_y-50
+            x2 = fireman.position_x+50
+            y2 = fireman.position_y+50
+            left_spot_x = fireman.left_spot_x
+            right_spot_x = fireman.right_spot_x
+            up_spot_y = fireman.up_spot_y
+            down_spot_y = fireman.down_spot_y
 
             if x1 < left_spot_x:
                 x1 = left_spot_x
@@ -815,15 +844,15 @@ class AppWindow(QDialog):
                 x3,x4 = x4,x3
             if (np.sum(self.explosion_mask[y3:y4, x3:x4]) > 0):
                 #print("in_danger_flag")
-                self.client_list[i].in_explosion_flag = True
-                self.client_list[i].closing_danger_flag = False
+                fireman.in_explosion_flag = True
+                fireman.closing_danger_flag = False
             elif ((np.sum(self.hot_mask[y1:y2, x1:x2]) > 0) or (np.sum(self.explosion_mask[y1:y2, x1:x2]) > 0)):
                 #print("closing_danger_flag")
-                self.client_list[i].in_danger_flag = False
-                self.client_list[i].closing_danger_flag = True
+                fireman.in_danger_flag = False
+                fireman.closing_danger_flag = True
             else:
-                self.client_list[i].in_danger_flag = False
-                self.client_list[i].closing_danger_flag = False
+                fireman.in_danger_flag = False
+                fireman.closing_danger_flag = False
             #print(i,client_list[i].in_danger_flag, client_list[i].closing_danger_flag)
 
     def set_image_info(self):
