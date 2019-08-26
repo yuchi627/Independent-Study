@@ -189,7 +189,9 @@ class AppWindow(QDialog):
         self.choose_flag = False
         self.remove_flag = False
         self.ok_flag = False
-        self.back_flag = True
+        if(self.disconnect_number > 0):
+            self.back_flag = True
+            self.ui.btn_back.setEnabled(False)
 
     def on_click_btn_choose(self):
         self.image_image_flag = False
@@ -245,7 +247,7 @@ class AppWindow(QDialog):
 
     def update_image(self):
         if(self.image_image_flag):
-            if((self.connect_number == 0 )and (self.disconnect_number >0)):
+            if((self.connect_number == 0 ) and (self.disconnect_number >0)):
                 if(self.back_flag):
                     self.count_back_img -= 1
                 ###### concatenate and plot image ######
@@ -256,6 +258,7 @@ class AppWindow(QDialog):
                 if(self.count_back_img == 0):
                     self.count_back_img = 100
                     self.back_flag = False
+                    self.ui.btn_back.setEnabled(True)
             image = self.image_image.copy()
         elif(self.image_map_flag):
             image = self.image_map.copy()
@@ -471,13 +474,16 @@ class AppWindow(QDialog):
                     if(self.refresh_img):
                         self.refresh_img = False
                         ###### concatenate and plot image ######
+                        if(self.back_flag):
+                            self.count_back_img -= 1
                         img_concate_Hori=np.concatenate((self.client_list[0].read_img(self.back_flag),self.client_list[1].read_img(self.back_flag)),axis=1)
                         img_concate_Verti=np.concatenate((self.client_list[2].read_img(self.back_flag),self.client_list[3].read_img(self.back_flag)),axis=1)
                         img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
                         self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
-                    if(self.refresh_map):
-                        self.refresh_map = False
-
+                        if(self.count_back_img == 0):
+                            self.count_back_img = 100
+                            self.back_flag = False
+                            self.ui.btn_back.setEnabled(True)
                     if(self.click_to_cancel):
                         self.set_namespace_color(self.click_client,(255,255,255),(0, 0, 0))
                         if(self.client_list[self.click_client].sos_flag):
@@ -588,7 +594,7 @@ class AppWindow(QDialog):
                                             self.client_list[client_host].yellow_flag = True
                                             self.draw_layer(client_host)
                                             #self.helpConditionExec("HELP",i.id_num)
-                                        elif("num" in recv_data_msg):
+                                        elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
                                             #print(i.fire_num)
                                         elif("DRAW" in recv_data_msg):
@@ -899,7 +905,6 @@ class AppWindow(QDialog):
             time_s_str = self.client_list[self.info_flag].disconnect_time
             real_time_str = str(self.client_list[self.info_flag].disconnect_real_time)
         else:
-            print("HI")
             real_time_str = str(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())) 
             # set time_pass
             time_s_str = time.time() - self.client_list[self.info_flag].time_in
