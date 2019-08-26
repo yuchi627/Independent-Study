@@ -99,7 +99,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.100'
+        self.host = '192.168.68.196'
         self.port = 8888
         self.client_list = [client(0),client(1),client(2),client(3)]
         self.connection_num = np.zeros(4)
@@ -497,6 +497,7 @@ class AppWindow(QDialog):
         min_num = min(self.subplot_count)
         ###### create an white image with client name ######
         self.client_list[min_num]=client(min_num)
+        self.client_list[min_num].set_visible(True)
         self.client_dict[str(addr[1])] = min_num
         ###### number remove from list subplot_count ######
         self.subplot_count.remove(min_num)
