@@ -443,7 +443,6 @@ class AppWindow(QDialog):
  
         print("Set Initialize Map")
         self.keep = self.image_map.copy()
-        print(self.image_map.shape)
         self.hot_mask = np .zeros(self.image_map.shape,np.uint8)
         self.explosion_mask = np .zeros(self.image_map.shape,np.uint8)
         self.draw_layer(0)
@@ -552,27 +551,18 @@ class AppWindow(QDialog):
                 print("The Name is: ",name)
                 self.init_time = time.time() 
             else:
-                #print("get_package_size: ",self.client_list[client_host].get_package_size() )
                 if(self.client_list[client_host].get_package_size() <= 0):
                     try:
                         ###### recv the image size ######
                         recv_data = sock.recv(16)
                         recv_data_msg = recv_data.decode().strip()
-                        #print("msg = ", recv_data_msg)
                         if("FLIR" in recv_data_msg):
-                            #print("flir image size msg")
-                            #print("IR-FLIR=",time.time() - self.client_list[client_host].t)
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
                         elif("IR" in recv_data_msg):
-                            #print("ir image size msg")
-                            #self.client_list[client_host].t = time.time()
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
-                            #print("recv IR size = ",time.time() - self.client_list[client_host].t)
                         elif("TH70" in recv_data_msg):
-                            #print("TH70 msg")
                             self.client_list[client_host].set_threshold(1, float(recv_data_msg[4:len(recv_data_msg)]))
                         elif("TH100" in recv_data_msg):
-                            #print("TH100 msg")
                             self.client_list[client_host].set_threshold(2, float(recv_data_msg[5:len(recv_data_msg)]))
                         elif(len(recv_data_msg) == 0):
                             pass
@@ -582,24 +572,18 @@ class AppWindow(QDialog):
                                 for i in self.client_list:
                                     if(i.ip_addr == data.addr):
                                         i.time_pass = time.time() - self.init_time
-                                        #print(i.time_pass)
                                         if("HELP2" in recv_data_msg):
-                                            #print("HELP2")
                                             #self.helpConditionExec("HELP2",i.id_num)
                                             self.client_list[client_host].set_sos_flag(True)
                                             self.client_list[client_host].yellow_flag = False
                                             self.draw_layer(client_host)
                                         elif("HELP" in recv_data_msg):
-                                            #print("HELP")
                                             self.client_list[client_host].yellow_flag = True
                                             self.draw_layer(client_host)
                                             #self.helpConditionExec("HELP",i.id_num)
                                         elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
-                                            #print(i.fire_num)
                                         elif("DRAW" in recv_data_msg):
-                                            #print("id: ",i.id_num)
-                                            #print(recv_data_msg)
                                             self.drawNewSpot(recv_data_msg[4:len(recv_data_msg)],i.id_num)     
                                             if(self.client_list[client_host].sos_flag):    
                                                 self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
@@ -618,18 +602,14 @@ class AppWindow(QDialog):
                     
                 else:
                     ###### recv the img ######
-                    #print("image msg")
                     try:
                         recv_data = sock.recv(self.client_list[client_host].get_package_size())
                         ###### concatenate recv msg to image ######
-                        #print(type(recv_data))
                         self.client_list[client_host].combine_recv_img(recv_data)
                         self.client_list[client_host].decrease_package_size(len(recv_data))
                         if(self.client_list[client_host].get_package_size() <= 0):
                             ###### image recv complete ######
-                            #t = time.time()
                             send_flag = self.client_list[client_host].decode_img()
-                            #print("decode_img time = ",time.time() - t)
                             if(send_flag):
                                 self.refresh_img = True
                                 send_flag = False
@@ -638,10 +618,8 @@ class AppWindow(QDialog):
                                     _,encode = cv2.imencode('.jpg', combine, self.encode_param)
                                     data_combine = np.array(encode)
                                     stringData = data_combine.tostring()
-                                    #print(self.sel.select(2))
                                     sock.send(str(len(stringData)).ljust(16).encode())
                                     sock.send(stringData)
-                                    #print("time = ",time.time() - self.client_list[client_host].t)
                                 except Exception as e:
                                     self.count += 1
                                     print("error in send image to client : ",e.args,self.count)
@@ -688,10 +666,7 @@ class AppWindow(QDialog):
                 sock.close()
 
     def drawNewSpot(self,data,index):
-        #print("drawNewSpot")
-        #self.image_map = self.keep.copy()
         if("No Turn" in data):
-             #print("index:",index)
             self.client_list[index].addNewPosition("No Turn",0)
         elif("Left" in data):
             self.client_list[index].addNewPosition("Left",0)
@@ -701,11 +676,8 @@ class AppWindow(QDialog):
             self.client_list[index].addNewPosition("No Turn",float(data))
         self.refresh_map = True
         self.draw_layer(index)     
-        #print("drawNewSpot= ",time.time()-t)
         
     def helpConditionExec(self,message,index):
-        #t=time.time()
-        #self.image_map = self.keep.copy()
         if("HELP2" in message):
             self.client_list[index].color_set = (0,0,255)
         elif("HELP" in message):
@@ -726,9 +698,6 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(line_left_spot_x,line_up_spot_y),(line_left_spot_x,line_down_spot_y),self.client_list[index].color_set,left_thickness,6)
         cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
         
-        #self.refresh_map = True
-        #self.draw_layer(index) 
-        #print("helpConditionExec= ",time.time()-t)
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
         if(y0 > y1):
             y0, y1 = y1, y0
@@ -740,7 +709,6 @@ class AppWindow(QDialog):
             next_y1 = y1 + self.map_height
             next_x0 = x0 + self.map_width
             next_x1 = x1 + self.map_width
-            #dst[y0 : y1 , x0 : x1] = roi
             dst[y0 : y1 , next_x0 : next_x1] = roi
             dst[next_y0 : next_y1 , x0 : x1] = roi
             dst[next_y0 : next_y1 , next_x0 : next_x1] = roi
@@ -749,7 +717,6 @@ class AppWindow(QDialog):
             last_x1 = x1 - self.map_width
             next_y0 = y0 + self.map_height
             next_y1 = y1 + self.map_height
-            #dst[y0 : y1 , x0 : x1] = roi
             dst[y0 : y1 , last_x0 : last_x1] = roi
             dst[next_y0 : next_y1 , x0 : x1] = roi
             dst[next_y0 : next_y1 , last_x0 : last_x1] = roi
@@ -758,7 +725,6 @@ class AppWindow(QDialog):
             next_x1 = x1 + self.map_width
             last_y0 = y0 - self.map_height
             last_y1 = y1 - self.map_height
-            #dst[y0 : y1 , x0 : x1] = roi
             dst[y0 : y1 , next_x0 : next_x1] = roi
             dst[last_y0 : last_y1 , x0 : x1] = roi
             dst[last_y0 : last_y1 , next_x0 : next_x1] = roi
@@ -767,7 +733,6 @@ class AppWindow(QDialog):
             last_y1 = y1 - self.map_height
             last_x0 = x0 - self.map_width
             last_x1 = x1 - self.map_width
-            #dst[y0 : y1 , x0 : x1] = roi
             dst[y0 : y1 , last_x0 : last_x1] = roi
             dst[last_y0 : last_y1 , x0 : x1] = roi
             dst[last_y0 : last_y1 , last_x0 : last_x1] = roi
@@ -879,17 +844,16 @@ class AppWindow(QDialog):
             if(x3 > x4):
                 x3,x4 = x4,x3
             if (np.sum(self.explosion_mask[y3:y4, x3:x4]) > 0):
-                #print("in_danger_flag")
                 fireman.in_explosion_flag = True
                 fireman.closing_danger_flag = False
             elif ((np.sum(self.hot_mask[y1:y2, x1:x2]) > 0) or (np.sum(self.explosion_mask[y1:y2, x1:x2]) > 0)):
-                #print("closing_danger_flag")
+                fireman.in_explosion_flag =False
                 fireman.in_danger_flag = False
                 fireman.closing_danger_flag = True
             else:
+                fireman.in_explosion_flag =False
                 fireman.in_danger_flag = False
                 fireman.closing_danger_flag = False
-            #print(i,client_list[i].in_danger_flag, client_list[i].closing_danger_flag)
 
     def set_image_info(self):
         # reset image_info
@@ -926,12 +890,9 @@ class AppWindow(QDialog):
         cv2.putText(info_line_img,"Time_Pass: "+time_str+"    Real_Time: "+real_time_str,(10,80),cv2.FONT_HERSHEY_TRIPLEX,1, (0, 0, 0), 1, cv2.LINE_AA)
         
         # --draw image_info-- #
-        #print(self.image_info.shape)
-        #print(info_line_img.shape)
         self.image_info = np.concatenate((info_line_img,self.image_info),axis=0)
 
     def check_time(self):
-        #print("HI")
         i = 0
         while i < 4:
             if(time.time() - self.client_list[i].time_in > self.time_to_come_out and self.connection_num[i]==1):
@@ -953,8 +914,6 @@ class AppWindow(QDialog):
         line_up_spot_y = self.client_list[index].line_up_spot_y
         line_down_spot_y = self.client_list[index].line_down_spot_y
         if(self.client_list[index].disconnect_flag):
-            #print("Add no Wifi")
-            #print(self.image_map.shape)
             temp_img = self.keep[line_up_spot_y:line_down_spot_y,line_left_spot_x:line_right_spot_x]
             self.no_wifi_image = cv2.resize(self.no_wifi_image,(temp_img.shape[1],temp_img.shape[0]))
             self.keep[line_up_spot_y:line_down_spot_y,line_left_spot_x:line_right_spot_x] = cv2.addWeighted(temp_img,0.5,self.no_wifi_image,0.5,0)
