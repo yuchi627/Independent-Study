@@ -9,7 +9,7 @@ import select
 #HOST = '172.20.10.2'
 #HOST = '172.20.10.2'
 #HOST = '192.168.43.149'
-HOST = '192.168.68.100'
+HOST = '192.168.68.196'
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
