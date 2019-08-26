@@ -390,7 +390,7 @@ class AppWindow(QDialog):
     def img_map_loading(self):
         fireman_img_map_path = "../IMAGE/fireman.png"
         map_img_map_path = "../IMAGE/1f.png"
-        wifi_img_path = "../wifi_images.png"                                
+        wifi_img_path = "../IMAGE/wifi_images.png"                                
          
         if(os.path.isfile(wifi_img_path)):
             self.no_wifi_image = cv2.imread(wifi_img_path,-1)
