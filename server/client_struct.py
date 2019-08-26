@@ -234,7 +234,6 @@ class client:
     def read_img(self,back_flag):
         if(self.visible_flag):
             if(self.disconnect_flag):
-                print(" num= ",self.number," disconnect_flag= ",self.disconnect_flag," back_flag = ",back_flag)
                 if(back_flag):
                     if(self.back_img_count <= self.back_img_num):   
                         return_img = self.img_q.get().copy()
@@ -271,7 +270,6 @@ class client:
                 data = struct.unpack("4800I", self.img_binary)
                 self.img_binary = b''
                 data = (np.asarray(data)).astype(np.float32)
-                #print("np.sum((data> self.th_100)) = ",np.sum((data> self.th_100)),"  data.size / 30 = ",(data.size / 30))
                 if(np.sum((data> self.th_100)) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
@@ -292,7 +290,6 @@ class client:
                 ###### put the warning message on pic ######
                 if(self.in_danger_flag | self.in_explosion_flag):
                     cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
-                    self.in_explosion_flag = False
                     self.draw_count += 1
                 elif(self.closing_danger_flag):
                     cv2.putText(self.img_combine, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
@@ -336,9 +333,7 @@ class client:
                 pass #no direction changes
             else:
                 pass
-                #print(direct)
 #change distance
-            #print(self.direction)
             dist = dist + self.dist_save # avoid error
             dist_cm = dist*100 # change meter to centimeter
             if dist_cm < 70:
@@ -347,7 +342,6 @@ class client:
                 self.dist_save = 0
                 map_cm = dist_cm/228.69 # change the billy ruler
                 pixel_num = int(map_cm*100/1.5) # change to pixel
-                #print("pixel_num: "+str(pixel_num))
                 if self.direction == 0:
                     self.position_y -= pixel_num
                 elif self.direction == 90:
