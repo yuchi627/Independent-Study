@@ -30,9 +30,9 @@ class client:
     #t= 0
     remain_package_size = 0
     img_binary = b''
-    img_ir = img_white
-    img_combine = img_white
-    img_show = img_white   
+    img_ir = img_white.copy()
+    img_combine = img_white.copy()
+    img_show = img_white.copy()
     name = "name"
     recv_ir_flag = False
     recv_flir_flag = False
@@ -233,11 +233,11 @@ class client:
 
     def read_img(self,back_flag):
         if(self.visible_flag):
-            print("visible",self.number)
             if(self.disconnect_flag):
+                print(" num= ",self.number," disconnect_flag= ",self.disconnect_flag," back_flag = ",back_flag)
                 if(back_flag):
                     if(self.back_img_count <= self.back_img_num):   
-                        return_img = self.img_q.get()
+                        return_img = self.img_q.get().copy()
                         self.img_q.put(return_img.copy())
                         self.back_img_count += 1
                         return return_img
@@ -249,7 +249,6 @@ class client:
             else:
                 return self.img_show
         else:
-            print("unvisible",self.number)
             return img_white
         return img_white
 
