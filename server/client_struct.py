@@ -57,7 +57,6 @@ class client:
     explosion_bound_right = 0
     draw_count = 0      ###### count the emergency message number
     max_back_img_number = 100
-    img_q = Queue(maxsize = max_back_img_number)  
     back_img_count = 0
     back_img_num = 100
 # ---------------------------------------------#
@@ -104,6 +103,7 @@ class client:
         self.line_up_spot_y = self.up_spot_y
         self.line_down_spot_y = self.down_spot_y
         self.color_set = (0,139,0)
+        self.img_q = Queue(maxsize = self.max_back_img_number)  
         if(num == 0):
             self.line_right_spot_x = self.line_right_spot_x - 5
             self.line_down_spot_y = self.line_down_spot_y - 5
