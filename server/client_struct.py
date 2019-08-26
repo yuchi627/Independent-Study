@@ -27,7 +27,6 @@ M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
-    #t= 0
     remain_package_size = 0
     img_binary = b''
     img_ir = img_white.copy()
@@ -86,7 +85,6 @@ class client:
     yellow_flag = False
     disconnect_time = 0
     disconnect_real_time = 0
-    #number = -1
 #------------------------------------------------#
     def __init__(self, num, queue_number):
         self.number = num
@@ -235,7 +233,7 @@ class client:
         if(self.visible_flag):
             if(self.disconnect_flag):
                 if(back_flag):
-                    if(self.back_img_count <= self.back_img_num):   
+                    if(self.back_img_count < self.back_img_num):   
                         return_img = self.img_q.get().copy()
                         self.img_q.put(return_img.copy())
                         self.back_img_count += 1
