@@ -93,7 +93,6 @@ class client:
 #------------------------------------------------#
     def __init__(self, num):
         self.number = num
-        self.visible_flag = True
         self.first_flag = True
         self.namespace_img = img_white_namespace
         self.left_spot_x = 5 + (middle_x-5)*(num%2)
@@ -234,6 +233,7 @@ class client:
 
     def read_img(self,back_flag):
         if(self.visible_flag):
+            print("visible",self.number)
             if(self.disconnect_flag):
                 if(back_flag):
                     if(self.back_img_count <= self.back_img_num):   
@@ -249,6 +249,7 @@ class client:
             else:
                 return self.img_show
         else:
+            print("unvisible",self.number)
             return img_white
         return img_white
 
