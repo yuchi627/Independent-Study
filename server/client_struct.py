@@ -56,9 +56,7 @@ class client:
     explosion_bound_left = 0
     explosion_bound_right = 0
     draw_count = 0      ###### count the emergency message number
-    max_back_img_number = 100
     back_img_count = 0
-    back_img_num = 100
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -90,7 +88,7 @@ class client:
     disconnect_real_time = 0
     #number = -1
 #------------------------------------------------#
-    def __init__(self, num):
+    def __init__(self, num, queue_number):
         self.number = num
         self.first_flag = True
         self.namespace_img = img_white_namespace
@@ -103,6 +101,8 @@ class client:
         self.line_up_spot_y = self.up_spot_y
         self.line_down_spot_y = self.down_spot_y
         self.color_set = (0,139,0)
+        self.max_back_img_number = queue_number
+        self.back_img_num = queue_number
         self.img_q = Queue(maxsize = self.max_back_img_number)  
         if(num == 0):
             self.line_right_spot_x = self.line_right_spot_x - 5
