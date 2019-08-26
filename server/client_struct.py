@@ -272,7 +272,7 @@ class client:
                 self.img_binary = b''
                 data = (np.asarray(data)).astype(np.float32)
                 #print("np.sum((data> self.th_100)) = ",np.sum((data> self.th_100)),"  data.size / 30 = ",(data.size / 30))
-                if(np.sum((data> self.th_100)) >= (data.size / 31)):
+                if(np.sum((data> self.th_100)) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
                 data = np.reshape(data, (60,80,1))
