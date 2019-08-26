@@ -9,9 +9,15 @@ import keyboard
 import os
 
 ##### use "ifconfig" to find your ip
+<<<<<<< HEAD
+#host = '127.0.0.1'
+host = '172.20.10.7'
+port = 8888
+=======
 host = '192.168.43.84'
 
 port = 6666
+>>>>>>> 2bc1dcf9ae7702a3d4fc7b2afdedf3c5f67df197
 
 window_name = 'Firefighter' # image_window_name
 ##### Default four element array
