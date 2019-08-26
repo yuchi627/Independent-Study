@@ -45,7 +45,7 @@ class client:
     in_explosion_flag = False   ###### in the area which commander select
     send_save_msg_flag = False  
     send_over_time_flag = False
-    disconnect_flag = False
+    disconnect_flag = True
     set_start = False       
     fireman_bound_top = 0   ###### bound of drawing fireman picture on map
     fireman_bound_bottom = 0
@@ -88,6 +88,7 @@ class client:
     down_thickness = 10
     yellow_flag = False
     disconnect_time = 0
+    disconnect_real_time = 0
     #number = -1
 #------------------------------------------------#
     def __init__(self, num):
