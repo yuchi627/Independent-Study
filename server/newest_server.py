@@ -76,7 +76,8 @@ class AppWindow(QDialog):
         self.keep = np.zeros((800,800,3),np.uint8)
         self.no_wifi_image = np.zeros((800,800,3),np.uint8)
         self.img_fireman = [ ]
-        self.keep_fire = []       
+        self.keep_fire = []     
+        self.img_queue_size = 300  
  
         ##### Offsets of mouse clicking
         self.offset_x = 1
@@ -101,7 +102,7 @@ class AppWindow(QDialog):
         self.connect_number = 0
         self.host = '192.168.68.196'
         self.port = 8888
-        self.client_list = [client(0),client(1),client(2),client(3)]
+        self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
         self.subplot_count = [0, 1, 2, 3]
         self.client_dict = {"client":1}
@@ -130,15 +131,15 @@ class AppWindow(QDialog):
         self.start_point = (0,0)    ##### for draw rectangle
         self.end_point = (0,0)
         self.release_mouse = False
-        self.count_back_img = 100
+        self.count_back_img = self.img_queue_size
         self.choose_fireman = -1 
-
+    
     def on_click_btn_info(self):
         self.image_image_flag = False
         self.image_map_flag = False
         self.image_info_flag = True
         self.back_flag = False
-        self.count_back_img = 100
+        self.count_back_img = self.img_queue_size
         self.ui.btn_choose.setEnabled(False)
         self.ui.btn_ok.setEnabled(False)
         self.ui.btn_remove.setEnabled(False)
@@ -155,7 +156,7 @@ class AppWindow(QDialog):
         self.image_map_flag = True
         self.image_info_flag = False
         self.back_flag = False
-        self.count_back_img = 100
+        self.count_back_img = self.img_queue_size
         self.ui.btn_choose.setEnabled(True)
         self.ui.btn_ok.setEnabled(True)
         self.ui.btn_remove.setEnabled(True)
@@ -248,6 +249,7 @@ class AppWindow(QDialog):
     def update_image(self):
         if(self.image_image_flag):
             if((self.connect_number == 0 ) and (self.disconnect_number >0)):
+                ###### no one connect ######
                 if(self.back_flag):
                     self.count_back_img -= 1
                 ###### concatenate and plot image ######
@@ -256,7 +258,7 @@ class AppWindow(QDialog):
                 img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
                 self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
                 if(self.count_back_img == 0):
-                    self.count_back_img = 100
+                    self.count_back_img = self.img_queue_size
                     self.back_flag = False
                     self.ui.btn_back.setEnabled(True)
             image = self.image_image.copy()
@@ -336,7 +338,6 @@ class AppWindow(QDialog):
                         self.client_list[fireman].position_x = press_x
                         self.client_list[fireman].position_y = press_y
                         self.client_list[fireman].set_start = True
-                        #self.image_map = self.keep.copy()
                         self.draw_layer(0)
                         self.refresh_map = True
                     elif(self.connection_num[fireman] == 1 and self.client_list[fireman].direction == -1):
@@ -480,7 +481,7 @@ class AppWindow(QDialog):
                         img_toshow = np.concatenate((img_concate_Hori,img_concate_Verti),axis=0)
                         self.image_image = cv2.resize(img_toshow,(self.resize_weight,self.resize_height),interpolation=cv2.INTER_CUBIC)
                         if(self.count_back_img == 0):
-                            self.count_back_img = 100
+                            self.count_back_img = self.img_queue_size
                             self.back_flag = False
                             self.ui.btn_back.setEnabled(True)
                     if(self.click_to_cancel):
@@ -492,16 +493,14 @@ class AppWindow(QDialog):
  
     def accept_wrapper(self,sock):
         conn, addr = sock.accept()  # Should be ready to read
-        print('accepted connection from', addr)
-    
-        #conn.setblocking(False)
+        print('accepted connection from', addr)    
         data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         self.sel.register(conn, events, data=data)
         ###### create an client object an put into dictionary with it's address ######
         min_num = min(self.subplot_count)
         ###### create an white image with client name ######
-        self.client_list[min_num]=client(min_num)
+        self.client_list[min_num]=client(min_num,self.img_queue_size)
         self.client_list[min_num].set_visible(True)
         self.client_dict[str(addr[1])] = min_num
         ###### number remove from list subplot_count ######
@@ -544,7 +543,6 @@ class AppWindow(QDialog):
                 print("Getting Name...")
                 recv_data = sock.recv(16)
                 name = recv_data.decode()
-                #name = (str)(client_list[client_host].get_num()) + "." + name
                 self.client_list[client_host].set_name(name)
                 ###### Default : white background black font ######
                 self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))   
@@ -573,14 +571,12 @@ class AppWindow(QDialog):
                                     if(i.ip_addr == data.addr):
                                         i.time_pass = time.time() - self.init_time
                                         if("HELP2" in recv_data_msg):
-                                            #self.helpConditionExec("HELP2",i.id_num)
                                             self.client_list[client_host].set_sos_flag(True)
                                             self.client_list[client_host].yellow_flag = False
                                             self.draw_layer(client_host)
                                         elif("HELP" in recv_data_msg):
                                             self.client_list[client_host].yellow_flag = True
                                             self.draw_layer(client_host)
-                                            #self.helpConditionExec("HELP",i.id_num)
                                         elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
                                         elif("DRAW" in recv_data_msg):
@@ -648,18 +644,13 @@ class AppWindow(QDialog):
                         i.disconnect_time = time.time() - i.time_in
                         i.disconnect_flag = True
                         self.add_no_wifi(i.id_num)
-                        #self.client_list[i.id_num] = client(i.id_num)
-                #self.image_map = self.keep_fire.copy()
                 self.drawNewSpot('0.0',0)
                 self.refresh_map = True
                 # Close Connection 的時候取消 Object
                 #--------------------------------------------------------------------#
-                #self.client_list[self.client_dict[str(data.addr[1])]].set_visible(False)
                 self.connect_number -= 1
                 self.disconnect_number += 1
                 self.refresh_img = True
-                #self.subplot_count.append(self.client_dict[str(data.addr[1])])
-                #del self.client_dict[str(data.addr[1])]
                 self.client_list[self.client_dict[str(data.addr[1])]].set_back_img_num()
                 self.client_list[self.client_dict[str(data.addr[1])]].disconnect_flag = True
                 self.sel.unregister(sock)
@@ -898,7 +889,6 @@ class AppWindow(QDialog):
             if(time.time() - self.client_list[i].time_in > self.time_to_come_out and self.connection_num[i]==1):
                 if(self.client_list[i].over_time_flag):
                     pass
-                    #self.client_list[i].send_over_time_flag = True
                 else:
                     self.client_list[i].send_over_time_flag = True
                     msg = QMessageBox.question(self, 'Danger!!!!',"The FireFighter "+self.client_list[i].name.strip(' ')+" needs to come out !!!", QMessageBox.Ok | QMessageBox.Cancel,QMessageBox.Ok )
