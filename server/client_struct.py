@@ -30,9 +30,9 @@ class client:
     #t= 0
     remain_package_size = 0
     img_binary = b''
-    img_ir = img_white
-    img_combine = img_white
-    img_show = img_white   
+    img_ir = img_white.copy()
+    img_combine = img_white.copy()
+    img_show = img_white.copy()
     name = "name"
     recv_ir_flag = False
     recv_flir_flag = False
@@ -45,7 +45,7 @@ class client:
     in_explosion_flag = False   ###### in the area which commander select
     send_save_msg_flag = False  
     send_over_time_flag = False
-    disconnect_flag = False
+    disconnect_flag = True
     set_start = False       
     fireman_bound_top = 0   ###### bound of drawing fireman picture on map
     fireman_bound_bottom = 0
@@ -57,7 +57,6 @@ class client:
     explosion_bound_right = 0
     draw_count = 0      ###### count the emergency message number
     max_back_img_number = 100
-    img_q = Queue(maxsize = max_back_img_number)  
     back_img_count = 0
     back_img_num = 100
 # ---------------------------------------------#
@@ -88,11 +87,11 @@ class client:
     down_thickness = 10
     yellow_flag = False
     disconnect_time = 0
+    disconnect_real_time = 0
     #number = -1
 #------------------------------------------------#
     def __init__(self, num):
         self.number = num
-        self.visible_flag = True
         self.first_flag = True
         self.namespace_img = img_white_namespace
         self.left_spot_x = 5 + (middle_x-5)*(num%2)
@@ -104,6 +103,7 @@ class client:
         self.line_up_spot_y = self.up_spot_y
         self.line_down_spot_y = self.down_spot_y
         self.color_set = (0,139,0)
+        self.img_q = Queue(maxsize = self.max_back_img_number)  
         if(num == 0):
             self.line_right_spot_x = self.line_right_spot_x - 5
             self.line_down_spot_y = self.line_down_spot_y - 5
@@ -234,9 +234,10 @@ class client:
     def read_img(self,back_flag):
         if(self.visible_flag):
             if(self.disconnect_flag):
+                print(" num= ",self.number," disconnect_flag= ",self.disconnect_flag," back_flag = ",back_flag)
                 if(back_flag):
                     if(self.back_img_count <= self.back_img_num):   
-                        return_img = self.img_q.get()
+                        return_img = self.img_q.get().copy()
                         self.img_q.put(return_img.copy())
                         self.back_img_count += 1
                         return return_img
@@ -271,7 +272,7 @@ class client:
                 self.img_binary = b''
                 data = (np.asarray(data)).astype(np.float32)
                 #print("np.sum((data> self.th_100)) = ",np.sum((data> self.th_100)),"  data.size / 30 = ",(data.size / 30))
-                if(np.sum((data> self.th_100)) >= (data.size / 31)):
+                if(np.sum((data> self.th_100)) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
                 data = np.reshape(data, (60,80,1))

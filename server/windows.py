@@ -39,6 +39,9 @@ class Ui_Form(object):
         self.btn_reset = QtWidgets.QPushButton(Form)
         self.btn_reset.setGeometry(QtCore.QRect(1510, 930, 85, 51))
         self.btn_reset.setObjectName("btn_reset")
+        self.btn_back = QtWidgets.QPushButton(Form)
+        self.btn_back.setGeometry(QtCore.QRect(1510, 930, 85, 51))
+        self.btn_back.setObjectName("btn_back")
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
@@ -53,5 +56,5 @@ class Ui_Form(object):
         self.btn_ok.setText(_translate("Form", "OK"))
         self.btn_remove.setText(_translate("Form", "Remove"))
         self.btn_reset.setText(_translate("Form", "Reset Time"))
-
+        self.btn_back.setText(_translate("Form","Back"))
 

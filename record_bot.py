@@ -9,13 +9,16 @@ from pylepton import Lepton
 import select
 import picamera.array
 import time
+import sys
 
-HOST = '172.20.10.7'
+HOST = '192.168.68.198'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
 power_mgmt_2 = 0x6c
 
+path = 'bot'+str(sys.argv[1])+'/'
+fp = open(path+'record.txt','w')
 def read_byte(reg):
 	return bus.read_byte_data(address, reg)
 
@@ -122,6 +125,8 @@ def img_processing(ir_img,flir_val):
 		cv2.putText(rotate,"In danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX,1, (255,255,255), 3)
 	return rotate
 
+t1 = time.time()
+img_count = 1
 # Variable
 start = 0  #for time interval
 start_warning_time = 0
@@ -141,6 +146,7 @@ data = b''
 matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 ###############################################
+t1 = time.time()
 #main
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
@@ -190,7 +196,12 @@ try:
 			flir_val = np.uint16(a)
 			######## ir capture ############
 			camera.capture(ir_img,'bgr',use_video_port = True)
-				
+			cv2.imwrite( (path+'ir/'+str(img_count)+'.jpg'), ir_img)
+			np.savetxt(path+'flir/'+str(img_count)+'.txt',flir_val.reshape(flir_val.shape[0],flir_val.shape[1]))
+
+			fp.write(str(time.time()-t1)+'\n')
+			print(time.time()-t1)
+			fp.write('image\n')
 			######## encode message ############
 			_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
 			data_ir = np.array(imgencode_ir)
@@ -198,6 +209,7 @@ try:
 			######### encode flir_val ###########
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
+			img_count += 1
 
 			######## encode message ############
 			try:
@@ -231,6 +243,7 @@ try:
 				except Exception as e:
 					img_combine = img_processing(ir_img,flir_val)
 					data = b''
+				t1 = time.time()
 				try:
 					#check if falling
 					bes_xout = read_bes_x()
@@ -243,11 +256,18 @@ try:
 							#time.sleep(1)
 						else:
 							if time.time() - start_warning_time >= 5 and time.time() - start_warning_time < 10:
+								fp.write(str(time.time()-t1)+'\n')
+								print(time.time()-t1)
 								s.send((("HELP").encode()).ljust(16))
+								t1 = time.time()
+								fp.write('HELP\n')
 								print("HELP")
 								help_flag = True
 							elif time.time() - start_warning_time >= 10:
+								fp.write(str(time.time()-t1)+'\n')
 								s.send((("HELP2").encode()).ljust(16))
+								t1 = time.time()
+								fp.write('HELP2\n')
 								print("HELP2")
 					else:
 						start_warning_time = 0
@@ -261,14 +281,22 @@ try:
 				
 						elif turn_flag.value == 1 and time.time() - help_wait_time > 2:
 							turning_flag = True
+							fp.write(str(time.time()-t1)+'\n')
+							print(time.time()-t1)
 							s.send((("DRAWLeft").encode()).ljust(16))
+							t1 = time.time()
+							fp.write('DRAWLeft\n')
 							print("Left")
 							#time.sleep(1)
 							turn_wait_time = time.time()
 							help_wait_time = 0
 						elif time.time() - help_wait_time > 2:
 							turning_flag = True
+							fp.write(str(time.time()-t1)+'\n')
+							print(time.time()-t1)
 							s.send((("DRAWRight").encode()).ljust(16))
+							t1 = time.time()
+							fp.write('DRAWRight\n')
 							print("Right")
 							#time.sleep(1)
 							turn_wait_time = time.time()
@@ -284,7 +312,11 @@ try:
 				
 					if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
 						temp_dis = str(distance.value)
+						fp.write(str(time.time()-t1)+'\n')
+						print(time.time()-t1)
 						s.send(('DRAW'+temp_dis).ljust(16).encode())
+						t1 = time.time()
+						fp.write('DRAW'+str(temp_dis)+'\n')
 						print(temp_dis)
 						distance.value = 0
 						#time.sleep(0.15)
@@ -294,20 +326,29 @@ try:
 						distance.value = 0
 				except Exception as e:
 					print(e.args)
-					
-					
+							
 			except:
 				print("reconnecting server")
 				img_combine = img_processing(ir_img,flir_val)
 				try:
 					####### reconnect server #########
+					fp.write(str(time.time()-t1)+'\n')
+					print(time.time()-t1)
 					s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					s.connect((HOST,PORT))
 					s.send(("Nadine").ljust(16).encode())
+					s.send(("num"+str(sys.argv[1])).ljust(16).encode())
 					s.send((("0.0").encode()).ljust(16))
 					s.send((("0.0").encode()).ljust(16))
 					s.send(("TH70"+str(th_70)).ljust(16).encode()) 
 					s.send(("TH100"+str(th_100)).ljust(16).encode())
+					t1 = time.time()
+					fp.write("Nadine\n")
+					fp.write("num"+str(sys.argv[1])+'\n')
+					fp.write("0.0\n")
+					fp.write("0.0\n")
+					fp.write("TH70"+str(th_70)+"\n")
+					fp.write("TH100"+str(th_100)+"\n")
 				except:
 					pass
 
