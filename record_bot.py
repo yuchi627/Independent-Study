@@ -11,7 +11,7 @@ import picamera.array
 import time
 import sys
 
-HOST = '192.168.68.198'
+HOST = '192.168.68.196'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
@@ -147,6 +147,7 @@ matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 ###############################################
 t1 = time.time()
+'''
 #main
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
@@ -164,7 +165,7 @@ p = mp.Process(target=get_bes, args=(mutex, distance, dis_flag))
 p1 = mp.Process(target=check_turning, args=(mutex, turn, turn_flag))
 p.start()
 p1.start()
-
+'''
 turn_wait_time = 0
 help_wait_time = 0
 
@@ -183,8 +184,27 @@ try:
 		val_min = np.min(flir_val)
 		diff = np.max(flir_val)-val_min
 		######## 70 & 10 degree threshold ########3
-		th_70 = diff * 0.6 + val_min
+		th_70 = diff * 0.7 + val_min
 		th_100 = diff * 0.8 + val_min
+		
+		fp.write(str(time.time()-t1)+'\n')
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect((HOST,PORT))
+		s.send(("Nadine").ljust(16).encode())
+		s.send(("num"+str(sys.argv[1])).ljust(16).encode())
+		s.send((("0.0").encode()).ljust(16))
+		s.send((("0.0").encode()).ljust(16))
+		s.send(("TH70"+str(th_70)).ljust(16).encode()) 
+		s.send(("TH100"+str(th_100)).ljust(16).encode())
+				
+		t1 = time.time()
+		fp.write("Nadine\n")
+		fp.write("num"+str(sys.argv[1])+'\n')
+		fp.write("0.0\n")
+		fp.write("0.0\n")
+		fp.write("TH70"+str(th_70)+"\n")
+		fp.write("TH100"+str(th_100)+"\n")
+
 		time_sett = 0
 		#count_img = 0
 		#while (count_img<80):
@@ -200,7 +220,7 @@ try:
 			np.savetxt(path+'flir/'+str(img_count)+'.txt',flir_val.reshape(flir_val.shape[0],flir_val.shape[1]))
 
 			fp.write(str(time.time()-t1)+'\n')
-			print(time.time()-t1)
+			#print(time.time()-t1)
 			fp.write('image\n')
 			######## encode message ############
 			_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
@@ -244,6 +264,7 @@ try:
 					img_combine = img_processing(ir_img,flir_val)
 					data = b''
 				t1 = time.time()
+
 				try:
 					#check if falling
 					bes_xout = read_bes_x()
@@ -330,10 +351,12 @@ try:
 			except:
 				print("reconnecting server")
 				img_combine = img_processing(ir_img,flir_val)
+				'''
 				try:
 					####### reconnect server #########
 					fp.write(str(time.time()-t1)+'\n')
 					print(time.time()-t1)
+					
 					s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					s.connect((HOST,PORT))
 					s.send(("Nadine").ljust(16).encode())
@@ -342,6 +365,7 @@ try:
 					s.send((("0.0").encode()).ljust(16))
 					s.send(("TH70"+str(th_70)).ljust(16).encode()) 
 					s.send(("TH100"+str(th_100)).ljust(16).encode())
+					
 					t1 = time.time()
 					fp.write("Nadine\n")
 					fp.write("num"+str(sys.argv[1])+'\n')
@@ -351,7 +375,7 @@ try:
 					fp.write("TH100"+str(th_100)+"\n")
 				except:
 					pass
-
+				'''
 			cv2.imshow("combine",img_combine)
 			cv2.waitKey(1)
 			

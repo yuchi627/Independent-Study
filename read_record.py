@@ -6,7 +6,7 @@ import struct
 import cv2
 import select
 
-HOST = '192.168.68.198'
+HOST = '192.168.68.196'
 PORT = 8888
 
 def img_processing(ir_img,flir_val):
@@ -48,12 +48,12 @@ img_count = 1
 time.sleep(float(fp.readline()))
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
-fp.readline()
-fp.readline()
 for i in range(4):
 	s.send( (fp.readline()).ljust(16).encode() )
 th_70 = float(fp.readline()[4:].strip())
 th_100 = float(fp.readline()[5:].strip())
+s.send(('TH70'+str(th_70)).ljust(16).encode())
+s.send(('TH100'+str(th_100)).ljust(16).encode())
 print(th_70,th_100)
 for line in fp:
 	print(read_count)
@@ -67,6 +67,7 @@ for line in fp:
 			stringData_ir = data_ir.tostring()
 			
 			flir_val = np.loadtxt(path+'flir/'+str(img_count)+'.txt')
+			flir_val = flir_val.astype(np.uint16)
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel), *flir_val_ravel)
 			s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
