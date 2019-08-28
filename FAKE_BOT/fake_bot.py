@@ -527,7 +527,7 @@ M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 th_70 = 7700
 th_100 = 7800
 count_img = 0
-
+size = 0
 def send_image():
 	global count_img,data,img_combine
 	count_img += 1
