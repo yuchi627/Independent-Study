@@ -9,11 +9,12 @@ import select
 #HOST = '172.20.10.2'
 #HOST = '172.20.10.2'
 #HOST = '192.168.43.149'
-HOST = '192.168.68.100'
+HOST = '172.20.10.7'
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
+#s.setblocking(False)
 
 def move1():
 	print("enter function_1")
@@ -544,40 +545,47 @@ def send_image():
 		flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
 
 		try:
-			global s
+			global s,data,img_combine
 			####### send ir image ###############
+			print(count_img)
+			print("before send")
 			s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 			s.send(stringData_ir)
 			####### send flir image to server #########
 			s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
 			s.send(flir_val_pack)
+			print("after send")
 			t4 = time.time()
 			try:
+				print("before recv")
 				####### recv the combine image from server #############
 				ready = select.select([s],[],[],0.1)
 				if(ready[0]):
-		    			data = s.recv(16)
-				size_data = data[0:16]
-				if(len(data) == len(size_data)):
-					data = b''
-				else:
-					data = data[len(size_data):len(data)]
-				size = int((size_data.decode()).strip())
-				while(size > len(data)):
-			    		data += s.recv(size)
-				data_img = data[0:size]
-				if(len(data_img) == len(data)):
-			    		data = b''
-				else:
-			    		data = data[len(data_img):len(data)]
-				data_img = np.fromstring(data_img,dtype = 'uint8')
-				data_img = cv2.imdecode(data_img,1)
-				img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+						print("in if")
+						data = s.recv(16)
+						print("recv")
+						size_data = data[0:16]
+						if(len(data) == len(size_data)):
+							data = b''
+						else:
+							data = data[len(size_data):len(data)]
+						size = int((size_data.decode()).strip())
+						while(size > len(data)):
+			    				data += s.recv(size)
+						data_img = data[0:size]
+						if(len(data_img) == len(data)):
+			    				data = b''
+						else:
+			    				data = data[len(data_img):len(data)]
+						data_img = np.fromstring(data_img,dtype = 'uint8')
+						data_img = cv2.imdecode(data_img,1)
+						img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
 				cv2.imshow('image',img_combine)
 				cv2.waitKey(1)
 			except Exception as e:
 				img_combine = img_processing(ir_img,flir_val)
 				data = b''
+				print(e.args)
 					
 		except Exception as e:
 			print(e)

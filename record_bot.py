@@ -11,7 +11,7 @@ import picamera.array
 import time
 import sys
 
-HOST = '192.168.68.196'
+HOST = '172.20.10.7'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
@@ -73,8 +73,10 @@ def get_bes(mutex, distance, dis_flag):
 				mutex.acquire()
 				if (real_bes <= 0.3 and real_bes > 0):
 					distance.value += 0.0
+				elif (real_bes <= 2.0 and real_bes > 0.3):
+					distance.value += 0.3
 				else:
-					distance.value = distance.value + 1.3
+					distance.value += 0.8
 				mutex.release()
 				bes_arr = []
 				#print(distance.value)
@@ -135,6 +137,7 @@ real_bes = 0
 real_gyro = 0
 stop_key = False
 turning_flag = False
+recv_size_flag = True
 ##############################
 ir_height = 480 #tmp1.shape[0]
 ir_weight = 640 #tmp1.shape[1]
@@ -147,7 +150,7 @@ matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 ###############################################
 t1 = time.time()
-'''
+
 #main
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
@@ -165,7 +168,7 @@ p = mp.Process(target=get_bes, args=(mutex, distance, dis_flag))
 p1 = mp.Process(target=check_turning, args=(mutex, turn, turn_flag))
 p.start()
 p1.start()
-'''
+
 turn_wait_time = 0
 help_wait_time = 0
 
@@ -241,35 +244,41 @@ try:
 				s.send(flir_val_pack)
 				try:
 					####### recv the combine image from server #############
-					ready = select.select([s],[],[],0.01)
+					ready = select.select([s],[],[],0.1)
 					if(ready[0]):
-						data = s.recv(16)
-						size_data = data[0:16]
-						if(len(data) == len(size_data)):
-							data = b''
-						else:
-							data = data[len(size_data):len(data)]
-						size = int((size_data.decode()).strip())
+						if(recv_size_flag):
+							data = s.recv(16)
+							size_data = data[0:16]
+							if(len(data) == len(size_data)):
+								data = b''
+							else:
+								data = data[len(size_data):len(data)]
+							size = int((size_data.decode()).strip())
+							recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
-						data_img = data[0:size]
-						if(len(data_img) == len(data)):
-							data = b''
-						else:
-							data = data[len(data_img):len(data)]
-						data_img = np.fromstring(data_img,dtype = 'uint8')
-						data_img = cv2.imdecode(data_img,1)
-						img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+						if(size <= len(data)):
+							data_img = data[0:size]
+							if(len(data_img) == len(data)):
+								data = b''
+							else:
+								data = data[len(data_img):len(data)]
+							data_img = np.fromstring(data_img,dtype = 'uint8')
+							data_img = cv2.imdecode(data_img,1)
+							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							recv_size_flag = True
 				except Exception as e:
 					img_combine = img_processing(ir_img,flir_val)
+					print(e.args)
 					data = b''
+					recv_size_flag = True
 				t1 = time.time()
 
 				try:
 					#check if falling
 					bes_xout = read_bes_x()
 					#print("help: ", bes_xout)
-					if bes_xout > -4.0:
+					if bes_xout > -3.0:
 						help_wait_time = time.time()
 						if start_warning_time == 0:
 							start_warning_time = time.time()
@@ -300,7 +309,7 @@ try:
 							#print("No Turn")
 							turning_flag = False
 				
-						elif turn_flag.value == 1 and time.time() - help_wait_time > 2:
+						elif turn_flag.value == 1 and time.time() - help_wait_time > 2.0 and time.time() - turn_wait_time > 2.0:
 							turning_flag = True
 							fp.write(str(time.time()-t1)+'\n')
 							print(time.time()-t1)
@@ -311,7 +320,7 @@ try:
 							#time.sleep(1)
 							turn_wait_time = time.time()
 							help_wait_time = 0
-						elif time.time() - help_wait_time > 2:
+						elif time.time() - help_wait_time > 2 and time.time() - turn_wait_time > 2.0:
 							turning_flag = True
 							fp.write(str(time.time()-t1)+'\n')
 							print(time.time()-t1)
