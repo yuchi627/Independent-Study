@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.100'
+        self.host = '172.20.10.2'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -457,7 +457,7 @@ class AppWindow(QDialog):
         lsock.bind((self.host,self.port))
         lsock.listen()
         print('listening on', (self.host, self.port))
-        #lsock.setblocking(False)
+        lsock.setblocking(False)
         self.sel.register(lsock, selectors.EVENT_READ, data=None)
         print("Waiting For Connection...")
 
@@ -493,6 +493,7 @@ class AppWindow(QDialog):
  
     def accept_wrapper(self,sock):
         conn, addr = sock.accept()  # Should be ready to read
+        conn.setblocking(False)
         print('accepted connection from', addr)    
         data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
@@ -536,9 +537,11 @@ class AppWindow(QDialog):
     def service_connection(self,key, mask):
         sock = key.fileobj
         data = key.data
+        send_flag = False
+        client_host = self.client_dict[str(data.addr[1])]
+        #print("addr[1]= ",str(data.addr[1])," mask= ",mask)
         if mask & selectors.EVENT_READ:
             recv_data = None
-            client_host = self.client_dict[str(data.addr[1])]
             if(self.client_list[client_host].first_time_recv()):
                 print("Getting Name...")
                 recv_data = sock.recv(16)
@@ -595,7 +598,6 @@ class AppWindow(QDialog):
                     except Exception as e:
                         print ("error in get msg: ",e.args)
                         #pass
-                    
                 else:
                     ###### recv the img ######
                     try:
@@ -606,32 +608,14 @@ class AppWindow(QDialog):
                         if(self.client_list[client_host].get_package_size() <= 0):
                             ###### image recv complete ######
                             send_flag = self.client_list[client_host].decode_img()
+                            print("get image : send flag",send_flag)
+                            self.client_list[client_host].set_package(-1,0)
                             if(send_flag):
                                 self.refresh_img = True
-                                send_flag = False
-                                try:
-                                    combine = self.client_list[client_host].read_combine_img()
-                                    _,encode = cv2.imencode('.jpg', combine, self.encode_param)
-                                    data_combine = np.array(encode)
-                                    stringData = data_combine.tostring()
-                                    sock.send(str(len(stringData)).ljust(16).encode())
-                                    sock.send(stringData)
-                                except Exception as e:
-                                    self.count += 1
-                                    print("error in send image to client : ",e.args,self.count)
-                                ###### decide which background color to brush ######
-                                brush_background_ornot = self.client_list[client_host].brush_namespace_background()
-                                if(brush_background_ornot == 1):
-                                    ###### Red background with white font ######
-                                    self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
-                                elif (brush_background_ornot == 2):
-                                    ###### White background with black font ######
-                                    self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
-                            self.client_list[client_host].set_package(-1,0)
                     except Exception as e:
                         print ("error in get image msg: ",e.args)
                         self.client_list[client_host].except_for_img()
- 
+            
             if not recv_data:
                 print('closing connection to', data.addr)
                 #-------------------------------------------------------------------#
@@ -655,6 +639,33 @@ class AppWindow(QDialog):
                 self.client_list[self.client_dict[str(data.addr[1])]].disconnect_flag = True
                 self.sel.unregister(sock)
                 sock.close()
+        if mask & selectors.EVENT_WRITE:
+            print("send",send_flag)
+            if(self.client_list[client_host].send_img_flag):
+                print("in EVENT_WRITE")
+                send_flag = False
+                try:
+                    combine = self.client_list[client_host].read_combine_img()
+                    _,encode = cv2.imencode('.jpg', combine, self.encode_param)
+                    data_combine = np.array(encode)
+                    stringData = data_combine.tostring()
+                    sock.send(str(len(stringData)).ljust(16).encode())
+                    sock.send(stringData)
+                    self.client_list[client_host].send_img_flag = False
+                except Exception as e:
+                    self.count += 1
+                    print("error in send image to client : ",e.args,self.count)
+                ###### decide which background color to brush ######
+                brush_background_ornot = self.client_list[client_host].brush_namespace_background()
+                if(brush_background_ornot == 1):
+                    ###### Red background with white font ######
+                    self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
+                elif (brush_background_ornot == 2):
+                    ###### White background with black font ######
+                    self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
+
+
+
 
     def drawNewSpot(self,data,index):
         if("No Turn" in data):

@@ -7,9 +7,13 @@ import numpy as np
 import select
 
 #HOST = '172.20.10.2'
-#HOST = '172.20.10.2'
+HOST = '172.20.10.2'
 #HOST = '192.168.43.149'
+<<<<<<< HEAD
 HOST = '172.20.10.7'
+=======
+#HOST = '192.168.68.100'
+>>>>>>> 78216d9443c01abd0521723bdbad34b7a3672c97
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -527,7 +531,7 @@ th_100 = 7800
 count_img = 0
 
 def send_image():
-	global count_img
+	global count_img,data,img_combine
 	count_img += 1
 	if(count_img == 81):
 		count_img = 1
@@ -559,7 +563,7 @@ def send_image():
 			try:
 				print("before recv")
 				####### recv the combine image from server #############
-				ready = select.select([s],[],[],0.1)
+				ready = select.select([s],[],[],0.01)
 				if(ready[0]):
 						print("in if")
 						data = s.recv(16)
@@ -603,7 +607,7 @@ def send_image():
 	except Exception as e:
 		print(e.args)	
 def recv_msg():
-	ready = select.select([s],[],[],0.05)
+	ready = select.select([s],[],[],0.01)
 	if(ready[0]):
 		recv_data = s.recv(20)
 		if('I will save you' in recv_data.decode()):
