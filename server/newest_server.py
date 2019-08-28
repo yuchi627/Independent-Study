@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.196'
+        self.host = '192.168.68.100'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -463,7 +463,7 @@ class AppWindow(QDialog):
 
 
     def get_socket_data(self):
-        events = self.sel.select(timeout=0.01)
+        events = self.sel.select(timeout=-1)
         for key, mask in events:
             if key.data is None:
                 self.accept_wrapper(key.fileobj)

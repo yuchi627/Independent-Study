@@ -7,9 +7,9 @@ import numpy as np
 import select
 
 #HOST = '172.20.10.2'
-#HOST = '172.20.10.2'
+HOST = '172.20.10.2'
 #HOST = '192.168.43.149'
-HOST = '192.168.68.100'
+#HOST = '192.168.68.100'
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -526,7 +526,7 @@ th_100 = 7800
 count_img = 0
 
 def send_image():
-	global count_img
+	global count_img,data,img_combine
 	count_img += 1
 	if(count_img == 81):
 		count_img = 1
@@ -554,30 +554,31 @@ def send_image():
 			t4 = time.time()
 			try:
 				####### recv the combine image from server #############
-				ready = select.select([s],[],[],0.1)
+				ready = select.select([s],[],[],0.01)
 				if(ready[0]):
-		    			data = s.recv(16)
-				size_data = data[0:16]
-				if(len(data) == len(size_data)):
-					data = b''
-				else:
-					data = data[len(size_data):len(data)]
-				size = int((size_data.decode()).strip())
-				while(size > len(data)):
-			    		data += s.recv(size)
-				data_img = data[0:size]
-				if(len(data_img) == len(data)):
-			    		data = b''
-				else:
-			    		data = data[len(data_img):len(data)]
-				data_img = np.fromstring(data_img,dtype = 'uint8')
-				data_img = cv2.imdecode(data_img,1)
-				img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+					data = s.recv(16)
+					size_data = data[0:16]
+					if(len(data) == len(size_data)):
+						data = b''
+					else:
+						data = data[len(size_data):len(data)]
+					size = int((size_data.decode()).strip())
+					while(size > len(data)):
+				    		data += s.recv(size)
+					data_img = data[0:size]
+					if(len(data_img) == len(data)):
+				    		data = b''
+					else:
+				    		data = data[len(data_img):len(data)]
+					data_img = np.fromstring(data_img,dtype = 'uint8')
+					data_img = cv2.imdecode(data_img,1)
+					img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
 				cv2.imshow('image',img_combine)
 				cv2.waitKey(1)
 			except Exception as e:
 				img_combine = img_processing(ir_img,flir_val)
 				data = b''
+				print(e.args)
 					
 		except Exception as e:
 			print(e)
@@ -595,7 +596,7 @@ def send_image():
 	except Exception as e:
 		print(e.args)	
 def recv_msg():
-	ready = select.select([s],[],[],0.05)
+	ready = select.select([s],[],[],0.01)
 	if(ready[0]):
 		recv_data = s.recv(20)
 		if('I will save you' in recv_data.decode()):
