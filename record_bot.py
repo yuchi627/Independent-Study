@@ -250,18 +250,11 @@ try:
 							data += s.recv(16)
 							if(len(data) >= 16):
 								size_data = data[0:16]
-								print("size:  ",data)
 								if(len(data) == len(size_data)):
 									data = b''
 								else:
 									data = data[len(size_data):len(data)]
-								try:
-									#print(size_data)
-									size = int((size_data.decode()).strip())
-								except Exception as e:
-									recv_size_flag = True
-									size = 0
-									print("error = ",e.args)
+								size = int((size_data.decode()).strip())
 								recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
@@ -273,7 +266,6 @@ try:
 							else:
 								data = data[len(data_img):len(data)]
 							data_img = np.fromstring(data_img,dtype = 'uint8')
-							print("decode image")
 
 							data_img = cv2.imdecode(data_img,1)
 							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))	
