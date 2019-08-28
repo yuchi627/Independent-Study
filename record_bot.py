@@ -11,7 +11,7 @@ import picamera.array
 import time
 import sys
 
-HOST = '172.20.10.7'
+HOST = '192.168.43.9'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
@@ -129,7 +129,7 @@ def img_processing(ir_img,flir_val):
 
 t1 = time.time()
 img_count = 1
-# Variable
+size = 0# Variable
 start = 0  #for time interval
 start_warning_time = 0
 help_flag = False
@@ -168,7 +168,6 @@ p = mp.Process(target=get_bes, args=(mutex, distance, dis_flag))
 p1 = mp.Process(target=check_turning, args=(mutex, turn, turn_flag))
 p.start()
 p1.start()
-
 turn_wait_time = 0
 help_wait_time = 0
 
@@ -246,30 +245,45 @@ try:
 					####### recv the combine image from server #############
 					ready = select.select([s],[],[],0.1)
 					if(ready[0]):
+						#print("ready",recv_size_flag)
 						if(recv_size_flag):
-							data = s.recv(16)
-							size_data = data[0:16]
-							if(len(data) == len(size_data)):
-								data = b''
-							else:
-								data = data[len(size_data):len(data)]
-							size = int((size_data.decode()).strip())
-							recv_size_flag = False
+							data += s.recv(16)
+							if(len(data) >= 16):
+								size_data = data[0:16]
+								print("size:  ",data)
+								if(len(data) == len(size_data)):
+									data = b''
+								else:
+									data = data[len(size_data):len(data)]
+								try:
+									#print(size_data)
+									size = int((size_data.decode()).strip())
+								except Exception as e:
+									recv_size_flag = True
+									size = 0
+									print("error = ",e.args)
+								recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
-						if(size <= len(data)):
+						if((size !=0 ) & (size <= len(data))):
+							#print(recv_size_flag)
 							data_img = data[0:size]
 							if(len(data_img) == len(data)):
 								data = b''
 							else:
 								data = data[len(data_img):len(data)]
 							data_img = np.fromstring(data_img,dtype = 'uint8')
+							print("decode image")
+
 							data_img = cv2.imdecode(data_img,1)
-							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))	
+							cv2.imwrite("debug.jpg",img_combine)
 							recv_size_flag = True
 				except Exception as e:
 					img_combine = img_processing(ir_img,flir_val)
 					print(e.args)
+					print("reshape = ",data_img)
+					size =  0
 					data = b''
 					recv_size_flag = True
 				t1 = time.time()
