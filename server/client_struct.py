@@ -21,7 +21,7 @@ line_W = 10
 
 middle_x = 1170
 middle_y = 700
-matrix = np.loadtxt("matrix6.txt", delimiter=',')
+matrix = np.loadtxt("matrix7.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 
 class client:
@@ -29,6 +29,9 @@ class client:
     th_100 = 0  ###### threshold for 100 degree flir value
     remain_package_size = 0
     img_binary = b''
+    msg_binary = b''
+    msg_size = 16
+    remain_msg_size = msg_size
     img_ir = img_white.copy()
     img_combine = img_white.copy()
     img_show = img_white.copy()
@@ -44,6 +47,7 @@ class client:
     in_explosion_flag = False   ###### in the area which commander select
     send_save_msg_flag = False  
     send_over_time_flag = False
+    send_img_flag = False
     disconnect_flag = True
     set_start = False       
     fireman_bound_top = 0   ###### bound of drawing fireman picture on map
@@ -226,6 +230,20 @@ class client:
     def combine_recv_img(self,recv_str):
         self.img_binary += recv_str
     
+    def combine_recv_msg(self,recv_str):
+        msg = ""
+        self.msg_binary += recv_str
+        self.remain_msg_size -= len(recv_str)
+        if(self.remain_msg_size == 0):
+            try:
+                msg = self.msg_binary.decode().strip()
+            except Exception as e:
+                print("error in decode msg",e.args)
+            self.msg_binary = b''
+            self.remain_msg_size = self.msg_size
+        return msg
+
+
     def set_back_img_num(self):
         self.back_img_num = self.img_q.qsize()
 
@@ -304,11 +322,12 @@ class client:
                 if(self.img_q.full()):
                     self.img_q.get()
                 self.img_q.put(self.img_show.copy())
+                self.send_img_flag = True
                 return True
             return False
 
         except Exception as e:
-            print(e.args)
+            print("error in decode image",e.args)
             ###### if decode image fail, show the white image ######
             self.img_show = img_white
             return False
