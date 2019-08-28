@@ -465,7 +465,6 @@ class AppWindow(QDialog):
     def get_socket_data(self):
         events = self.sel.select(timeout=-1)
         for key, mask in events:
-            print("key = ",key)
             if key.data is None:
                 self.accept_wrapper(key.fileobj)
             else:
@@ -540,7 +539,7 @@ class AppWindow(QDialog):
         data = key.data
         send_flag = False
         client_host = self.client_dict[str(data.addr[1])]
-        print("addr[1]= ",str(data.addr[1])," mask= ",mask)
+        #print("addr[1]= ",str(data.addr[1])," mask= ",mask)
         if mask & selectors.EVENT_READ:
             recv_data = None
             if(self.client_list[client_host].first_time_recv()):
