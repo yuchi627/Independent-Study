@@ -514,6 +514,8 @@ def img_processing(ir_img,flir_val):
 	add = cv2.addWeighted(ir_img,0.5,tmp,0.5,0)
 	######## rotate image 180 #################
 	return cv2.warpAffine(add, M, (ir_weight,ir_height))
+
+recv_size_flag = True
 ir_height = 480 #tmp1.shape[0]
 ir_weight = 640 #tmp1.shape[1]
 flir_height = 380   #flir_tmp.shape[0]
@@ -565,28 +567,31 @@ def send_image():
 				####### recv the combine image from server #############
 				ready = select.select([s],[],[],0.01)
 				if(ready[0]):
-						print("in if")
-						data = s.recv(16)
-						print("recv")
-						size_data = data[0:16]
-						if(len(data) == len(size_data)):
-							data = b''
-						else:
-							data = data[len(size_data):len(data)]
-						size = int((size_data.decode()).strip())
+					if(recv_size_flag):
+							data = s.recv(16)
+							size_data = data[0:16]
+							if(len(data) == len(size_data)):
+								data = b''
+							else:
+								data = data[len(size_data):len(data)]
+							size = int((size_data.decode()).strip())
+							recv_size_flag = False
 						while(size > len(data)):
-			    				data += s.recv(size)
-						data_img = data[0:size]
-						if(len(data_img) == len(data)):
-			    				data = b''
-						else:
-			    				data = data[len(data_img):len(data)]
-						data_img = np.fromstring(data_img,dtype = 'uint8')
-						data_img = cv2.imdecode(data_img,1)
-						img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							data += s.recv(size)
+						if(size <= len(data)):
+							data_img = data[0:size]
+							if(len(data_img) == len(data)):
+								data = b''
+							else:
+								data = data[len(data_img):len(data)]
+							data_img = np.fromstring(data_img,dtype = 'uint8')
+							data_img = cv2.imdecode(data_img,1)
+							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							recv_size_flag = True
 				cv2.imshow('image',img_combine)
 				cv2.waitKey(1)
 			except Exception as e:
+				recv_size_flag = True
 				img_combine = img_processing(ir_img,flir_val)
 				data = b''
 				print(e.args)
