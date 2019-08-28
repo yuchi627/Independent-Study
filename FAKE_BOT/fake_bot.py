@@ -9,11 +9,7 @@ import select
 #HOST = '172.20.10.2'
 HOST = '172.20.10.2'
 #HOST = '192.168.43.149'
-<<<<<<< HEAD
 HOST = '172.20.10.7'
-=======
-#HOST = '192.168.68.100'
->>>>>>> 78216d9443c01abd0521723bdbad34b7a3672c97
 PORT = 8888
 num = 1
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -568,17 +564,18 @@ def send_image():
 				ready = select.select([s],[],[],0.01)
 				if(ready[0]):
 					if(recv_size_flag):
-							data = s.recv(16)
-							size_data = data[0:16]
-							if(len(data) == len(size_data)):
-								data = b''
-							else:
-								data = data[len(size_data):len(data)]
-							size = int((size_data.decode()).strip())
-							recv_size_flag = False
+							data += s.recv(16)
+							if(len(data) >= 16):
+								size_data = data[0:16]
+								if(len(data) == len(size_data)):
+									data = b''
+								else:
+									data = data[len(size_data):len(data)]
+								size = int((size_data.decode()).strip())
+								recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
-						if(size <= len(data)):
+						if((size > 0 ) & (size <= len(data))):
 							data_img = data[0:size]
 							if(len(data_img) == len(data)):
 								data = b''
@@ -587,6 +584,7 @@ def send_image():
 							data_img = np.fromstring(data_img,dtype = 'uint8')
 							data_img = cv2.imdecode(data_img,1)
 							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							size = 0
 							recv_size_flag = True
 				cv2.imshow('image',img_combine)
 				cv2.waitKey(1)
