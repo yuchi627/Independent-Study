@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '172.20.10.2'
+        self.host = '192.168.43.9'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -555,9 +555,13 @@ class AppWindow(QDialog):
                 if(self.client_list[client_host].get_package_size() <= 0):
                     try:
                         ###### recv the image size ######
-                        recv_data = sock.recv(16)
-                        recv_data_msg = recv_data.decode().strip()
-                        if("FLIR" in recv_data_msg):
+                        recv_data = sock.recv(self.client_list[client_host].remain_msg_size)
+                        ###### concatenate recv msg to image ######
+                        recv_data_msg = self.client_list[client_host].combine_recv_msg(recv_data)
+                        print("recv_data: ",recv_data_msg)
+                        if(len(recv_data_msg) == 0):
+                            pass
+                        elif("FLIR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
                         elif("IR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
@@ -565,8 +569,6 @@ class AppWindow(QDialog):
                             self.client_list[client_host].set_threshold(1, float(recv_data_msg[4:len(recv_data_msg)]))
                         elif("TH100" in recv_data_msg):
                             self.client_list[client_host].set_threshold(2, float(recv_data_msg[5:len(recv_data_msg)]))
-                        elif(len(recv_data_msg) == 0):
-                            pass
                         else:
                             try:
                                 #------------------------------------------------------------------#
@@ -640,9 +642,9 @@ class AppWindow(QDialog):
                 self.sel.unregister(sock)
                 sock.close()
         if mask & selectors.EVENT_WRITE:
-            print("send",send_flag)
+            #print("send",send_flag)
             if(self.client_list[client_host].send_img_flag):
-                print("in EVENT_WRITE")
+                #print("in EVENT_WRITE")
                 send_flag = False
                 try:
                     combine = self.client_list[client_host].read_combine_img()
@@ -650,7 +652,9 @@ class AppWindow(QDialog):
                     data_combine = np.array(encode)
                     stringData = data_combine.tostring()
                     sock.send(str(len(stringData)).ljust(16).encode())
+                    #print(len(stringData))
                     sock.send(stringData)
+                    #print('stringData',stringData[(len(stringData)-10) :])
                     self.client_list[client_host].send_img_flag = False
                 except Exception as e:
                     self.count += 1
