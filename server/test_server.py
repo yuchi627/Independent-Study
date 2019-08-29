@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.196'
+        self.host = '192.168.68.100'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -596,6 +596,7 @@ class AppWindow(QDialog):
                                             pos = recv_data_msg[3:len(recv_data_msg)]
                                             i.position_x = int(pos.split(' ')[0]) + (i.id_num % 2)*self.middle_x
                                             i.position_y = int(pos.split(' ')[1]) + (i.id_num >= 2)*self.middle_y
+                                            i.set_start = True
                                             print("POSX: ",i.position_x)
                                             print("POSY: ",i.position_y)
                                         elif("DRAW" in recv_data_msg):
