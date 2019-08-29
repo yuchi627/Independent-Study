@@ -46,14 +46,13 @@ img_combine = np.zeros((ir_height, ir_weight, 3),np.uint8)
 ir_img = np.empty((ir_height, ir_weight),np.uint8)
 flir_val = np.zeros((ir_height,ir_weight),np.uint16)
 data = b''
-size = 0
 recv_size_flag = True
 matrix = np.loadtxt('matrix6.txt',delimiter=',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180,1)
 read_count = 10
 img_count = 1
-
-
+remain_size = 16
+package_size = 16
 time.sleep(float(fp.readline()))
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
@@ -93,38 +92,67 @@ while line:
 			s.send(flir_val_pack)
 			try:
 				####### recv the combine image from server #############
-				ready = select.select([s],[],[],0.01)
+				ready = select.select([s],[],[],0.1)
 				if(ready[0]):
 					if(recv_size_flag):
-						data += s.recv(16)
-						if(len(data) >= 16):
-							size_data = data[0:16]
-							if(len(data) == len(size_data)):
+							while(remain_size > 0):
+								data += s.recv(remain_size)
+								remain_size = package_size - len(data)
+								print("recv size")
+							if(len(data) >= 16):
+								size_data = data[0:16]
+								if(len(data) == len(size_data)):
+									data = b''
+								else:
+									data = data[len(size_data):len(data)]
+								try:
+									package_size = int((size_data.decode()).strip())
+									print("deocde = ",package_size)
+									remain_size = package_size - len(data)
+									recv_size_flag = False
+								except Exception as e:
+									print("size decode error = ",e.args)
+									data = b''
+									package_size = 16
+									remain_size = 16
+									recv_size_flag = True
+					if not (recv_size_flag):
+						while(remain_size > 0):
+							data += s.recv(remain_size)
+							remain_size = package_size - len(data)
+							print("recv img")
+						if(package_size <= len(data)) :
+							data_img = data[0:package_size]
+							if(len(data_img) == len(data)):
 								data = b''
 							else:
-								data = data[len(size_data):len(data)]
-							size = int((size_data.decode()).strip())
-							recv_size_flag = False
-					while(size > len(data)):
-						data += s.recv(size)
-					if( (size != 0) & (size <= len(data))):
-						data_img = data[0:size]
-						if(len(data_img) == len(data)):
-							data = b''
-						else:
-							data = data[len(data_img):len(data)]
-						data_img = np.fromstring(data_img,dtype = 'uint8')
-						data_img = cv2.imdecode(data_img,1)
-						img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
-						recv_size_flag = True
+								data = data[len(data_img):len(data)]
+							print("img recv size = ",len(data_img))
+							img_array = np.fromstring(data_img,dtype = 'uint8')
+							print("len of img_array",len(img_array))
+							img_decode = cv2.imdecode(img_array,1)
+							print("shape of img_decode = ",img_decode.shape)
+							img_combine = np.reshape(img_decode,(ir_height,ir_weight,3))
+							recv_size_flag = True
+							package_size = 16
+							remain_size = package_size - len(data)
 			except Exception as e:
 				print(e.args)
+				print("data_img = ",data_img)
+				print("img_array= ",img_array)
+				print("img_decode = ",img_deocde)
 				img_combine = img_processing(ir_img,flir_val)
 				data = b''	
+				recv_size_flag = True
+				remain_size = 16
+				package_size = 16
 			img_count += 1
 		else:
 			s.send(line.ljust(16).encode())
-		cv2.imshow('combine',img_combine)
+		try:
+			cv2.imshow('combine',img_combine)
+		except Exception as e:
+			print("error in imshow= ",e.args)
 		cv2.waitKey(1)
 		
 	read_count += 1
