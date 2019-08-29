@@ -138,6 +138,7 @@ real_bes = 0
 real_gyro = 0
 stop_key = False
 turning_flag = False
+recv_size_flag = True
 ##############################
 ir_height = 480 #tmp1.shape[0]
 ir_weight = 640 #tmp1.shape[1]
@@ -148,6 +149,7 @@ encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
 data = b''
 matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
+size = 0
 ###############################################
 #main
 bus = smbus.SMBus(1) 
@@ -229,25 +231,32 @@ try:
 					####### recv the combine image from server #############
 					ready = select.select([s],[],[],0.01)
 					if(ready[0]):
-						data = s.recv(16)
-						size_data = data[0:16]
-						if(len(data) == len(size_data)):
-							data = b''
-						else:
-							data = data[len(size_data):len(data)]
-						size = int((size_data.decode()).strip())
+						if(recv_size_flag):
+							data += s.recv(16)
+							if(len(data) >= 16):
+								size_data = data[0:16]
+								if(len(data) == len(size_data)):
+									data = b''
+								else:
+									data = data[len(size_data):len(data)]
+								size = int((size_data.decode()).strip())
+								recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
-						data_img = data[0:size]
-						if(len(data_img) == len(data)):
-							data = b''
-						else:
-							data = data[len(data_img):len(data)]
-						data_img = np.fromstring(data_img,dtype = 'uint8')
-						data_img = cv2.imdecode(data_img,1)
-						img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+						if((size > 0 ) & (size <= len(data))):
+							data_img = data[0:size]
+							if(len(data_img) == len(data)):
+								data = b''
+							else:
+								data = data[len(data_img):len(data)]
+							data_img = np.fromstring(data_img,dtype = 'uint8')
+							data_img = cv2.imdecode(data_img,1)
+							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							size = 0
+							recv_size_flag = True
 				except Exception as e:
 					#img_combine = img_processing(ir_img,flir_val)
+					recv_size_flag = True
 					data = b''
 				try:
 					#check if falling

@@ -21,18 +21,20 @@ line_W = 10
 
 middle_x = 1170
 middle_y = 700
-matrix = np.loadtxt("matrix6.txt", delimiter=',')
+matrix = np.loadtxt("matrix7.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 
 class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
-    #t= 0
     remain_package_size = 0
     img_binary = b''
-    img_ir = img_white
-    img_combine = img_white
-    img_show = img_white   
+    msg_binary = b''
+    msg_size = 16
+    remain_msg_size = msg_size
+    img_ir = img_white.copy()
+    img_combine = img_white.copy()
+    img_show = img_white.copy()
     name = "name"
     recv_ir_flag = False
     recv_flir_flag = False
@@ -45,7 +47,8 @@ class client:
     in_explosion_flag = False   ###### in the area which commander select
     send_save_msg_flag = False  
     send_over_time_flag = False
-    disconnect_flag = False
+    send_img_flag = False
+    disconnect_flag = True
     set_start = False       
     fireman_bound_top = 0   ###### bound of drawing fireman picture on map
     fireman_bound_bottom = 0
@@ -56,10 +59,7 @@ class client:
     explosion_bound_left = 0
     explosion_bound_right = 0
     draw_count = 0      ###### count the emergency message number
-    max_back_img_number = 100
-    img_q = Queue(maxsize = max_back_img_number)  
     back_img_count = 0
-    back_img_num = 100
 # ---------------------------------------------#
     color_set = (0,0,0) # 紅綠燈的燈號
     fire_num = ""
@@ -88,11 +88,10 @@ class client:
     down_thickness = 10
     yellow_flag = False
     disconnect_time = 0
-    #number = -1
+    disconnect_real_time = 0
 #------------------------------------------------#
-    def __init__(self, num):
+    def __init__(self, num, queue_number):
         self.number = num
-        self.visible_flag = True
         self.first_flag = True
         self.namespace_img = img_white_namespace
         self.left_spot_x = 5 + (middle_x-5)*(num%2)
@@ -104,6 +103,9 @@ class client:
         self.line_up_spot_y = self.up_spot_y
         self.line_down_spot_y = self.down_spot_y
         self.color_set = (0,139,0)
+        self.max_back_img_number = queue_number
+        self.back_img_num = queue_number
+        self.img_q = Queue(maxsize = self.max_back_img_number)  
         if(num == 0):
             self.line_right_spot_x = self.line_right_spot_x - 5
             self.line_down_spot_y = self.line_down_spot_y - 5
@@ -228,6 +230,20 @@ class client:
     def combine_recv_img(self,recv_str):
         self.img_binary += recv_str
     
+    def combine_recv_msg(self,recv_str):
+        msg = ""
+        self.msg_binary += recv_str
+        self.remain_msg_size -= len(recv_str)
+        if(self.remain_msg_size == 0):
+            try:
+                msg = self.msg_binary.decode().strip()
+            except Exception as e:
+                print("error in decode msg",e.args)
+            self.msg_binary = b''
+            self.remain_msg_size = self.msg_size
+        return msg
+
+
     def set_back_img_num(self):
         self.back_img_num = self.img_q.qsize()
 
@@ -235,8 +251,8 @@ class client:
         if(self.visible_flag):
             if(self.disconnect_flag):
                 if(back_flag):
-                    if(self.back_img_count <= self.back_img_num):   
-                        return_img = self.img_q.get()
+                    if(self.back_img_count < self.back_img_num):   
+                        return_img = self.img_q.get().copy()
                         self.img_q.put(return_img.copy())
                         self.back_img_count += 1
                         return return_img
@@ -270,8 +286,7 @@ class client:
                 data = struct.unpack("4800I", self.img_binary)
                 self.img_binary = b''
                 data = (np.asarray(data)).astype(np.float32)
-                #print("np.sum((data> self.th_100)) = ",np.sum((data> self.th_100)),"  data.size / 30 = ",(data.size / 30))
-                if(np.sum((data> self.th_100)) >= (data.size / 31)):
+                if(np.sum((data> self.th_100)) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
                     self.in_danger_flag = True
                 data = np.reshape(data, (60,80,1))
@@ -291,11 +306,9 @@ class client:
                 ###### put the warning message on pic ######
                 if(self.in_danger_flag | self.in_explosion_flag):
                     cv2.putText(self.img_combine, "In danger area !", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
-                    self.in_explosion_flag = False
                     self.draw_count += 1
                 elif(self.closing_danger_flag):
                     cv2.putText(self.img_combine, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
-                    self.closing_danger_flag = False
                     self.draw_count += 1
                 if(self.send_over_time_flag):
                     cv2.putText(self.img_combine, "You should come out !", (20,(40 + self.draw_count*30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
@@ -308,11 +321,12 @@ class client:
                 if(self.img_q.full()):
                     self.img_q.get()
                 self.img_q.put(self.img_show.copy())
+                self.send_img_flag = True
                 return True
             return False
 
         except Exception as e:
-            print(e.args)
+            print("error in decode image",e.args)
             ###### if decode image fail, show the white image ######
             self.img_show = img_white
             return False
@@ -335,9 +349,7 @@ class client:
                 pass #no direction changes
             else:
                 pass
-                #print(direct)
 #change distance
-            #print(self.direction)
             dist = dist + self.dist_save # avoid error
             dist_cm = dist*100 # change meter to centimeter
             if dist_cm < 70:
@@ -346,7 +358,6 @@ class client:
                 self.dist_save = 0
                 map_cm = dist_cm/228.69 # change the billy ruler
                 pixel_num = int(map_cm*100/1.5) # change to pixel
-                #print("pixel_num: "+str(pixel_num))
                 if self.direction == 0:
                     self.position_y -= pixel_num
                 elif self.direction == 90:
