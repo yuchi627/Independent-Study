@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.100'
+        self.host = '192.168.68.196'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -539,7 +539,6 @@ class AppWindow(QDialog):
     def service_connection(self,key, mask):
         sock = key.fileobj
         data = key.data
-        send_flag = False
         client_host = self.client_dict[str(data.addr[1])]
         #print("addr[1]= ",str(data.addr[1])," mask= ",mask)
         if mask & selectors.EVENT_READ:
@@ -622,15 +621,14 @@ class AppWindow(QDialog):
                     try:
                         recv_data = sock.recv(self.client_list[client_host].get_package_size())
                         ###### concatenate recv msg to image ######
-                        self.client_list[client_host].combine_recv_img(recv_data)
-                        self.client_list[client_host].decrease_package_size(len(recv_data))
-                        if(self.client_list[client_host].get_package_size() <= 0):
+                        send_flag = self.client_list[client_host].combine_recv_img(recv_data)
+                        #if(self.client_list[client_host].get_package_size() <= 0):
                             ###### image recv complete ######
-                            send_flag = self.client_list[client_host].decode_img()
+                            #send_flag = self.client_list[client_host].decode_img()
                             #print("get image : send flag",send_flag)
-                            self.client_list[client_host].set_package(-1,0)
-                            if(send_flag):
-                                self.refresh_img = True
+                            #elf.client_list[client_host].set_package(-1,0)
+                        if(send_flag):
+                            self.refresh_img = True
                     except Exception as e:
                         print ("error in get image msg: ",e.args)
                         self.client_list[client_host].except_for_img()
@@ -659,10 +657,7 @@ class AppWindow(QDialog):
                 self.sel.unregister(sock)
                 sock.close()
         if mask & selectors.EVENT_WRITE:
-            #print("send",send_flag)
             if(self.client_list[client_host].send_img_flag):
-                #print("in EVENT_WRITE")
-                send_flag = False
                 try:
                     combine = self.client_list[client_host].read_combine_img()
                     _,encode = cv2.imencode('.jpg', combine, self.encode_param)
