@@ -28,6 +28,7 @@ class client:
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
     remain_package_size = 0
+    img_package_size = 0
     img_binary = b''
     msg_binary = b''
     msg_size = 16
@@ -215,6 +216,7 @@ class client:
         return self.remain_package_size
 
     def set_package(self, package_num, ir_or_flir):
+        self.img_package_size = package_num
         self.remain_package_size = package_num
         if(ir_or_flir == 1):
             self.recv_ir_flag = True
@@ -224,21 +226,30 @@ class client:
             self.recv_ir_flag = False
             self.recv_flir_flag = False
 
-    def decrease_package_size(self, num):
-        self.remain_package_size -= num
 
     def combine_recv_img(self,recv_str):
+        flag = False
         self.img_binary += recv_str
+        self.remain_package_size = self.img_package_size - len(self.img_binary)
+        if(self.remain_package_size <= 0):
+            flag = self.decode_img(self.img_binary[0:self.img_package_size])
+            if(len(self.img_binary) > self.img_package_size):
+                self.msg_binary = self.img_binary[self.img_package_size:len(self.img_binary)]
+            self.set_package(-1,0)
+            self.img_binary = b''
+        return flag
     
     def combine_recv_msg(self,recv_str):
         msg = ""
         self.msg_binary += recv_str
         self.remain_msg_size -= len(recv_str)
-        if(self.remain_msg_size == 0):
+        if(len(self.msg_binary) >= self.msg_size):
             try:
-                msg = self.msg_binary.decode().strip()
+                msg = self.msg_binary[0:self.msg_size].decode().strip()
             except Exception as e:
                 print("error in decode msg",e.args)
+            if(len(self.msg_binary) > self.msg_size):
+                self.img_binary = self.msg_binary[self.msg_size:len(self.msg_binary)]
             self.msg_binary = b''
             self.remain_msg_size = self.msg_size
         return msg
@@ -270,21 +281,19 @@ class client:
     def read_combine_img(self):
         return self.img_combine
 
-    def decode_img(self):
+    def decode_img(self, binary):
         try:
             if(self.recv_ir_flag):
                 ###### decode ir image ######
                 self.recv_ir_flag = False
-                data = np.fromstring(self.img_binary, dtype = 'uint8')
+                data = np.fromstring(binary, dtype = 'uint8')
                 data = cv2.imdecode(data, 1)
-                self.img_binary = b''
                 self.img_ir = np.reshape(data, (height, weight, 3))
                 return False
             elif(self.recv_flir_flag):
                 ###### decode flir value ######
                 self.recv_flir_flag = False
-                data = struct.unpack("4800I", self.img_binary)
-                self.img_binary = b''
+                data = struct.unpack("4800I",binary)
                 data = (np.asarray(data)).astype(np.float32)
                 if(np.sum((data> self.th_100)) >= (data.size / 3)):
                     ###### if the red area more one third of pic, rise the in_danger_flag ######
@@ -329,6 +338,7 @@ class client:
             print("error in decode image",e.args)
             ###### if decode image fail, show the white image ######
             self.img_show = img_white
+            self.img_binary = b''
             return False
         return False
 
