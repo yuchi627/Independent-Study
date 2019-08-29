@@ -565,15 +565,15 @@ def send_image():
 				ready = select.select([s],[],[],0.01)
 				if(ready[0]):
 					if(recv_size_flag):
-							data += s.recv(16)
-							if(len(data) >= 16):
-								size_data = data[0:16]
-								if(len(data) == len(size_data)):
-									data = b''
-								else:
-									data = data[len(size_data):len(data)]
-								size = int((size_data.decode()).strip())
-								recv_size_flag = False
+						data += s.recv(16)
+						if(len(data) >= 16):
+							size_data = data[0:16]
+							if(len(data) == len(size_data)):
+								data = b''
+							else:
+								data = data[len(size_data):len(data)]
+							size = int((size_data.decode()).strip())
+							recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
 						if((size > 0 ) & (size <= len(data))):
