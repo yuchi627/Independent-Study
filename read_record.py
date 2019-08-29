@@ -6,7 +6,7 @@ import struct
 import cv2
 import select
 
-HOST = '192.168.68.196'
+HOST = '192.168.43.9'
 PORT = 8888
 
 def img_processing(ir_img,flir_val):
@@ -31,7 +31,7 @@ def img_processing(ir_img,flir_val):
 
 
 path = 'bot'+sys.argv[1]+'/'
-fp = open(path+'record.txt')
+fp = open(path+'record_dont_delete.txt')
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 ir_height = 480
 ir_weight = 640
@@ -49,7 +49,10 @@ time.sleep(float(fp.readline()))
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST,PORT))
 for i in range(4):
-	s.send( (fp.readline()).ljust(16).encode() )
+	msg = fp.readline()
+	print(msg)
+	s.send( (msg).ljust(16).encode())
+#s.send(("Nadine".ljust(16).encode()))
 th_70 = float(fp.readline()[4:].strip())
 th_100 = float(fp.readline()[5:].strip())
 s.send(('TH70'+str(th_70)).ljust(16).encode())
@@ -61,12 +64,12 @@ for line in fp:
 		time.sleep(float(line))
 	else:
 		if 'image' in line:
-			ir_img = cv2.imread(path+'ir/'+str(img_count)+'.jpg')
+			ir_img = cv2.imread(path+'ir_dont_delete/'+str(img_count)+'.jpg')
 			_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
 			data_ir = np.array(imgencode_ir)
 			stringData_ir = data_ir.tostring()
 			
-			flir_val = np.loadtxt(path+'flir/'+str(img_count)+'.txt')
+			flir_val = np.loadtxt(path+'flir_dont_delete/'+str(img_count)+'.txt')
 			flir_val = flir_val.astype(np.uint16)
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel), *flir_val_ravel)

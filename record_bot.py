@@ -170,10 +170,13 @@ p.start()
 p1.start()
 turn_wait_time = 0
 help_wait_time = 0
-
+count = 0
+last_flag = False
+this_flag = False
 try:	
 	delay_times = 0
 	cv2.namedWindow("combine",cv2.WND_PROP_FULLSCREEN)
+	cv2.setWindowProperty("combine",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 	####### set ir camera ##########
 	camera = picamera.PiCamera()
 	camera.resolution = (640,480)
@@ -186,8 +189,8 @@ try:
 		val_min = np.min(flir_val)
 		diff = np.max(flir_val)-val_min
 		######## 70 & 10 degree threshold ########3
-		th_70 = diff * 0.7 + val_min
-		th_100 = diff * 0.8 + val_min
+		th_70 = diff * 0.5 + val_min
+		th_100 = diff * 0.6 + val_min
 		
 		fp.write(str(time.time()-t1)+'\n')
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -236,6 +239,10 @@ try:
 			######## encode message ############
 			try:
 				######## send ir image ###############
+				count += 1
+				if(count == 100):
+					count = 0
+				print("send",count)
 				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 				s.send(stringData_ir)
 				####### send flir image to server #########
@@ -248,6 +255,7 @@ try:
 						#print("ready",recv_size_flag)
 						if(recv_size_flag):
 							data += s.recv(16)
+							print("recv")
 							if(len(data) >= 16):
 								size_data = data[0:16]
 								if(len(data) == len(size_data)):
@@ -258,6 +266,7 @@ try:
 								recv_size_flag = False
 						while(size > len(data)):
 							data += s.recv(size)
+							print("recv")
 						if((size !=0 ) & (size <= len(data))):
 							#print(recv_size_flag)
 							data_img = data[0:size]
@@ -292,6 +301,7 @@ try:
 							#time.sleep(1)
 						else:
 							if time.time() - start_warning_time >= 5 and time.time() - start_warning_time < 10:
+								this_flag = True
 								fp.write(str(time.time()-t1)+'\n')
 								print(time.time()-t1)
 								s.send((("HELP").encode()).ljust(16))
@@ -300,6 +310,7 @@ try:
 								print("HELP")
 								help_flag = True
 							elif time.time() - start_warning_time >= 10:
+								this_flag = True
 								fp.write(str(time.time()-t1)+'\n')
 								s.send((("HELP2").encode()).ljust(16))
 								t1 = time.time()
@@ -308,8 +319,16 @@ try:
 					else:
 						start_warning_time = 0
 						help_flag = False
+						this_flag = False
 
+					if(this_flag == False and last_flag == True):
+						turn.value = 0
+						distance.value = 0
+						turn_flag.value = 0
+						time.sleep(1)
 					#send turning
+					last_flag = this_flag
+
 					if help_flag == False:
 						if turn_flag.value == 0:
 							#print("No Turn")
