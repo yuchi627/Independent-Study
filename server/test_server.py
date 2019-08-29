@@ -593,11 +593,11 @@ class AppWindow(QDialog):
                                             self.draw_layer(client_host)
                                         elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
-                                        elif("POSX" in recv_data_msg):
-                                            i.position_x = float(recv_data_msg[4:len(recv_data_msg)]) + (i.id_num % 2)*self.middle_x
+                                        elif("POS" in recv_data_msg):
+                                            pos = recv_data_msg[3:len(recv_data_msg)]
+                                            i.position_x = int(pos.split(' ')[0]) + (i.id_num % 2)*self.middle_x
+                                            i.position_y = int(pos.split(' ')[1]) + (i.id_num >= 2)*self.middle_y
                                             print("POSX: ",i.position_x)
-                                        elif("POSY" in recv_data_msg):
-                                            i.position_y = float(recv_data_msg[4:len(recv_data_msg)]) + (i.id_num >= 2)*self.middle_y
                                             print("POSY: ",i.position_y)
                                         elif("DRAW" in recv_data_msg):
                                             print("recv: ",repr(recv_data_msg))
@@ -698,6 +698,7 @@ class AppWindow(QDialog):
         else:
             self.client_list[index].addNewPosition("No Turn",float(data))
         self.refresh_map = True
+        print("index: ",repr(index))
         self.draw_layer(index)     
         
     def helpConditionExec(self,message,index):
@@ -722,6 +723,7 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
         
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
+        print("x0,x1,y0,y1: ",repr(x0),repr(x1),repr(y0),repr(y1))
         if(y0 > y1):
             y0, y1 = y1, y0
         if(x0 > x1):
