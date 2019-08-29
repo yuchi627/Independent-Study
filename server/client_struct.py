@@ -21,7 +21,7 @@ line_W = 10
 
 middle_x = 1170
 middle_y = 700
-matrix = np.loadtxt("matrix7.txt", delimiter=',')
+matrix = np.loadtxt("matrix6.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 
 class client:
@@ -309,7 +309,6 @@ class client:
                     self.draw_count += 1
                 elif(self.closing_danger_flag):
                     cv2.putText(self.img_combine, "Close to danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)
-                    self.closing_danger_flag = False
                     self.draw_count += 1
                 if(self.send_over_time_flag):
                     cv2.putText(self.img_combine, "You should come out !", (20,(40 + self.draw_count*30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 3)

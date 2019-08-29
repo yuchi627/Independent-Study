@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.43.9'
+        self.host = '192.168.68.100'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -241,7 +241,7 @@ class AppWindow(QDialog):
             self.end_point = (0,0)
 
     def on_click_btn_reset(self):
-        if(self.info_flag == 1):
+        if(self.info_flag == 0):
             self.client_list[self.info_flag].time_in = time.time() - self.time_to_come_out + 5
         else:
             self.client_list[self.info_flag].time_in = time.time()
@@ -297,6 +297,8 @@ class AppWindow(QDialog):
         press_x = int(event.pos().x()*self.offset_x)
         press_y = int(event.pos().y()*self.offset_y)
         fireman = -1
+        #print("x: ",press_x)
+        #print("y: ",press_y)
         if(event.button() == Qt.LeftButton):
             if(self.image_map_flag):
                 if(press_x < self.middle_x and press_y < self.middle_y):
@@ -553,16 +555,22 @@ class AppWindow(QDialog):
                 self.init_time = time.time() 
             else:
                 if(self.client_list[client_host].get_package_size() <= 0):
-                    try:
+                    #try:
+                    if(True):
                         ###### recv the image size ######
                         recv_data = sock.recv(self.client_list[client_host].remain_msg_size)
                         ###### concatenate recv msg to image ######
                         recv_data_msg = self.client_list[client_host].combine_recv_msg(recv_data)
-                        print("recv_data: ",recv_data_msg)
+                        #print("recv_data: ",recv_data_msg)
                         if(len(recv_data_msg) == 0):
                             pass
                         elif("FLIR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
+                        elif("DIR" in recv_data_msg):
+                            for i in self.client_list:
+                                if(i.ip_addr == data.addr):           
+                                    i.direction = int(recv_data_msg[3:len(recv_data_msg)])
+                                    print("DIR: ",i.direction)
                         elif("IR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
                         elif("TH70" in recv_data_msg):
@@ -570,7 +578,8 @@ class AppWindow(QDialog):
                         elif("TH100" in recv_data_msg):
                             self.client_list[client_host].set_threshold(2, float(recv_data_msg[5:len(recv_data_msg)]))
                         else:
-                            try:
+                            #try:
+                            if(True):
                                 #------------------------------------------------------------------#
                                 for i in self.client_list:
                                     if(i.ip_addr == data.addr):
@@ -584,7 +593,15 @@ class AppWindow(QDialog):
                                             self.draw_layer(client_host)
                                         elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
+                                        elif("POSX" in recv_data_msg):
+                                            i.position_x = float(recv_data_msg[4:len(recv_data_msg)]) + (i.id_num % 2)*self.middle_x
+                                            print("POSX: ",i.position_x)
+                                        elif("POSY" in recv_data_msg):
+                                            i.position_y = float(recv_data_msg[4:len(recv_data_msg)]) + (i.id_num >= 2)*self.middle_y
+                                            print("POSY: ",i.position_y)
                                         elif("DRAW" in recv_data_msg):
+                                            print("recv: ",repr(recv_data_msg))
+                                            print("recv_cut: ",repr(recv_data_msg[4:len(recv_data_msg)]))                    
                                             self.drawNewSpot(recv_data_msg[4:len(recv_data_msg)],i.id_num)     
                                             if(self.client_list[client_host].sos_flag):    
                                                 self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
@@ -595,10 +612,10 @@ class AppWindow(QDialog):
                                             break
                                     # Device 傳輸資料時, call 對應function
                                 #--------------------------------------------------------------------#
-                            except Exception as e:
-                                print ("error in other msg: ",e.args)
-                    except Exception as e:
-                        print ("error in get msg: ",e.args)
+                            #except Exception as e:
+                            #    print ("error in other msg: ",e.args)
+                    #except Exception as e:
+                    #    print ("error in get msg: ",e.args)
                         #pass
                 else:
                     ###### recv the img ######
@@ -610,7 +627,7 @@ class AppWindow(QDialog):
                         if(self.client_list[client_host].get_package_size() <= 0):
                             ###### image recv complete ######
                             send_flag = self.client_list[client_host].decode_img()
-                            print("get image : send flag",send_flag)
+                            #print("get image : send flag",send_flag)
                             self.client_list[client_host].set_package(-1,0)
                             if(send_flag):
                                 self.refresh_img = True
