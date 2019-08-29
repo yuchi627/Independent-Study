@@ -554,8 +554,7 @@ class AppWindow(QDialog):
                 self.init_time = time.time() 
             else:
                 if(self.client_list[client_host].get_package_size() <= 0):
-                    #try:
-                    if(True):
+                    try:
                         ###### recv the image size ######
                         recv_data = sock.recv(self.client_list[client_host].remain_msg_size)
                         ###### concatenate recv msg to image ######
@@ -577,8 +576,7 @@ class AppWindow(QDialog):
                         elif("TH100" in recv_data_msg):
                             self.client_list[client_host].set_threshold(2, float(recv_data_msg[5:len(recv_data_msg)]))
                         else:
-                            #try:
-                            if(True):
+                            try:
                                 #------------------------------------------------------------------#
                                 for i in self.client_list:
                                     if(i.ip_addr == data.addr):
@@ -597,6 +595,7 @@ class AppWindow(QDialog):
                                             i.position_x = int(pos.split(' ')[0]) + (i.id_num % 2)*self.middle_x
                                             i.position_y = int(pos.split(' ')[1]) + (i.id_num >= 2)*self.middle_y
                                             i.set_start = True
+                                            i.dist_save = 0
                                             print("POSX: ",i.position_x)
                                             print("POSY: ",i.position_y)
                                         elif("DRAW" in recv_data_msg):
@@ -612,10 +611,10 @@ class AppWindow(QDialog):
                                             break
                                     # Device 傳輸資料時, call 對應function
                                 #--------------------------------------------------------------------#
-                            #except Exception as e:
-                            #    print ("error in other msg: ",e.args)
-                    #except Exception as e:
-                    #    print ("error in get msg: ",e.args)
+                            except Exception as e:
+                                print ("error in other msg: ",e.args)
+                    except Exception as e:
+                        print ("error in get msg: ",e.args)
                         #pass
                 else:
                     ###### recv the img ######
