@@ -32,7 +32,7 @@ def img_processing(ir_img,flir_val):
 
 path = 'bot'+sys.argv[1]+'/'
 fp = open(path+'record_dont_delete.txt')
-debug = open("debug"+str(sys.argv[1])+".txt","a")
+#debug = open("debug"+str(sys.argv[1])+".txt","a")
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 ir_height = 480
 ir_weight = 640
@@ -92,16 +92,20 @@ while line:
 					if(recv_size_flag):
 							data += s.recv(16)
 							find_size = data.find(b'SIZE')
+							'''
 							if(flag_of_debug & (first > 0)):
 								debug.write("size:"+str(data))
 								debug.write("\n")
+							'''
 							while(find_size == -1):
 								data = data[len(data)-16:]
 								data += s.recv(8000)
 								find_size = data.find(b'SIZE')
+								'''
 								if(flag_of_debug & (first>0)):
 									debug.write("size:"+str(data))
 									debug.write("\n")
+								'''
 
 								#remain_size = package_size - len(data)
 								print("recv remain size")
@@ -157,6 +161,7 @@ while line:
 									if(count_send == 1000):
 										count_send = 0
 								except Exception as e:
+									'''
 									if(first > 0):
 										flag_of_debug = True
 										debug.write("img"+str(count_send)+":"+str(package_size)+"lenOFdata"+len(data_img))
@@ -170,6 +175,7 @@ while line:
 									count_send += 1
 									if(count_send == 1000):
 										count_send = 0
+									'''
 									print("img_array=",img_array,"len=",len(img_array))
 									print("error in img reshape=",e.args)
 									print("img_decode=",img_decode)
