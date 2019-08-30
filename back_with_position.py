@@ -12,7 +12,7 @@ import time
 #HOST = '172.20.10.3'
 #HOST = '192.168.43.118'
 #HOST = '192.168.43.84'
-HOST = '192.168.68.196'
+HOST = '192.168.43.9'
 #HOST = '192.168.43.9'
 #HOST= "127.0.0.1"
 PORT = 8888
@@ -233,27 +233,101 @@ try:
 					if(ready[0]):
 						if(recv_size_flag):
 							data += s.recv(16)
-							if(len(data) >= 16):
-								size_data = data[0:16]
-								if(len(data) == len(size_data)):
+							find_size = data.find(b'SIZE')
+							'''
+							if(flag_of_debug & (first > 0)):
+								debug.write("size:"+str(data))
+								debug.write("\n")
+							'''
+							while(find_size == -1):
+								data = data[len(data)-16:]
+								data += s.recv(8000)
+								find_size = data.find(b'SIZE')
+								'''
+								if(flag_of_debug & (first>0)):
+									debug.write("size:"+str(data))
+									debug.write("\n")
+								'''
+
+								#remain_size = package_size - len(data)
+								print("recv remain size")
+							if(find_size != -1):
+								size_data = data[find_size:find_size+16]
+								
+								while(len(size_data) < 16):
+									print("recv 16 size","find_size = ",find_size,",data len=",len(data))
+									data += s.recv(16)
+										
+									find_size = data.find(b'SIZE')
+									size_data = data[find_size:find_size+16]
+									print(data[find_size:find_size+16])
+								try:
+										package_size = int((size_data[4:].decode()).strip())
+										if(len(data) == len(size_data)):
+											data = b''
+										else:
+											data = data[find_size+16:]
+										remain_size = package_size - len(data)
+										recv_size_flag = False
+
+										find_size = -1
+								except Exception as e:
+									find_size = -1
+									data = data[find_size:]
+									data = b''
+									package_size = 0
+									remain_size = 0
+									recv_size_flag = True
+					if not (recv_size_flag):
+						if(package_size == 0):
+							data = b''
+							package_size = 0
+							remain_size = 0
+							recv_size_flag = True
+						else:
+							while(remain_size > 0):
+								data += s.recv(remain_size)
+								remain_size = package_size - len(data)
+							if(package_size <= len(data)) :
+								
+								data_img = data[0:package_size]
+								img_array = np.fromstring(data_img,dtype = 'uint8')
+								try:
+									img_decode = cv2.imdecode(img_array,1)
+
+								except Exception as e:
+									print("error in img decode=",e.args)
+								try:
+									img_combine = np.reshape(img_decode,(ir_height,ir_weight,3))
+									count_send += 1
+									if(count_send == 1000):
+										count_send = 0
+								except Exception as e:
+									'''
+									if(first > 0):
+										flag_of_debug = True
+										debug.write("img"+str(count_send)+":"+str(package_size)+"lenOFdata"+len(data_img))
+										print("img"+str(count_send)+":"+str(package_size))
+										debug.write(str(data_img))
+										print(str(data_img))
+										debug.write("\n")
+										first -= 1
+									if(first == 0):
+										debug.close()
+									count_send += 1
+									if(count_send == 1000):
+										count_send = 0
+									'''
+									print("img_array=",img_array,"len=",len(img_array))
+									print("error in img reshape=",e.args)
+									print("img_decode=",img_decode)
+								if(len(data_img) == len(data)):
 									data = b''
 								else:
-									data = data[len(size_data):len(data)]
-								size = int((size_data.decode()).strip())
-								recv_size_flag = False
-						while(size > len(data)):
-							data += s.recv(size)
-						if((size > 0 ) & (size <= len(data))):
-							data_img = data[0:size]
-							if(len(data_img) == len(data)):
-								data = b''
-							else:
-								data = data[len(data_img):len(data)]
-							data_img = np.fromstring(data_img,dtype = 'uint8')
-							data_img = cv2.imdecode(data_img,1)
-							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
-							size = 0
-							recv_size_flag = True
+									data = data[len(data_img):]
+								recv_size_flag = True
+								package_size = 16
+								remain_size = package_size - len(data)
 				except Exception as e:
 					#img_combine = img_processing(ir_img,flir_val)
 					recv_size_flag = True

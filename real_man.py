@@ -11,7 +11,7 @@ import picamera.array
 import time
 import sys
 
-HOST = '192.168.43.9'
+HOST = '192.168.209.70'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
@@ -72,9 +72,9 @@ def get_bes(mutex, distance, dis_flag):
 				if (real_bes <= 0.3 and real_bes > 0):
 					distance.value += 0.0
 				elif (real_bes <= 2.0 and real_bes > 0.3):
-					distance.value += 0.3
+					distance.value += 0.7
 				else:
-					distance.value += 0.8
+					distance.value += 1.5
 				mutex.release()
 				bes_arr = []
 				#print(distance.value)
@@ -125,8 +125,6 @@ def img_processing(ir_img,flir_val):
 		cv2.putText(rotate,"In danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX,1, (255,255,255), 3)
 	return rotate
 
-t1 = time.time()
-img_count = 1
 size = 0# Variable
 start = 0  #for time interval
 start_warning_time = 0
@@ -147,8 +145,6 @@ data = b''
 matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 ###############################################
-t1 = time.time()
-
 #main
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
@@ -168,13 +164,12 @@ p.start()
 p1.start()
 turn_wait_time = 0
 help_wait_time = 0
-count = 0
 last_flag = False
 this_flag = False
 try:	
 	delay_times = 0
-	cv2.namedWindow("combine",cv2.WND_PROP_FULLSCREEN)
-	cv2.setWindowProperty("combine",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+	#cv2.namedWindow("combine",cv2.WND_PROP_FULLSCREEN)
+	#cv2.setWindowProperty("combine",cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 	####### set ir camera ##########
 	camera = picamera.PiCamera()
 	camera.resolution = (640,480)
@@ -193,28 +188,20 @@ try:
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((HOST,PORT))
 		s.send(("Nadine").ljust(16).encode())
-		s.send(("num"+str(sys.argv[1])).ljust(16).encode())
+		s.send(("NUM16").ljust(16).encode())
 		s.send((("0.0").encode()).ljust(16))
 		s.send((("0.0").encode()).ljust(16))
 		s.send(("TH70"+str(th_70)).ljust(16).encode()) 
 		s.send(("TH100"+str(th_100)).ljust(16).encode())
 				
-		t1 = time.time()
 		time_sett = 0
-		#count_img = 0
-		#while (count_img<80):
-		#	count_img += 1
 		while True:
-			#count_img += 1
            	######## flir capture ########
 			a,_ = l.capture()
 			flir_val = np.uint16(a)
 			######## ir capture ############
 			camera.capture(ir_img,'bgr',use_video_port = True)
-			cv2.imwrite( (path+'ir/'+str(img_count)+'.jpg'), ir_img)
-			np.savetxt(path+'flir/'+str(img_count)+'.txt',flir_val.reshape(flir_val.shape[0],flir_val.shape[1]))
 
-			#print(time.time()-t1)
 			######## encode message ############
 			_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
 			data_ir = np.array(imgencode_ir)
@@ -222,21 +209,19 @@ try:
 			######### encode flir_val ###########
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
-			img_count += 1
 
 			######## encode message ############
-			try:
+			if True:
+			#try:
 				######## send ir image ###############
-				count += 1
-				if(count == 100):
-					count = 0
-				print("send",count)
 				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 				s.send(stringData_ir)
 				####### send flir image to server #########
 				s.send(("FLIR"+str(len(flir_val_pack))).ljust(16).encode())
 				s.send(flir_val_pack)
-				try:
+				
+				if True:
+				#try:
 					####### recv the combine image from server #############
 					ready = select.select([s],[],[],0.1)
 					if(ready[0]):
@@ -268,6 +253,7 @@ try:
 							img_combine = np.reshape(data_img,(ir_height,ir_weight,3))	
 							cv2.imwrite("debug.jpg",img_combine)
 							recv_size_flag = True
+				'''
 				except Exception as e:
 					img_combine = img_processing(ir_img,flir_val)
 					print(e.args)
@@ -276,7 +262,7 @@ try:
 					data = b''
 					recv_size_flag = True
 				t1 = time.time()
-
+				'''
 				try:
 					#check if falling
 					bes_xout = read_bes_x()
@@ -290,7 +276,6 @@ try:
 						else:
 							if time.time() - start_warning_time >= 5 and time.time() - start_warning_time < 10:
 								this_flag = True
-								print(time.time()-t1)
 								s.send((("HELP").encode()).ljust(16))
 								t1 = time.time()
 								print("HELP")
@@ -320,18 +305,14 @@ try:
 				
 						elif turn_flag.value == 1 and time.time() - help_wait_time > 2.0 and time.time() - turn_wait_time > 2.0:
 							turning_flag = True
-							print(time.time()-t1)
 							s.send((("DRAWLeft").encode()).ljust(16))
-							t1 = time.time()
 							print("Left")
 							#time.sleep(1)
 							turn_wait_time = time.time()
 							help_wait_time = 0
 						elif time.time() - help_wait_time > 2 and time.time() - turn_wait_time > 2.0:
 							turning_flag = True
-							print(time.time()-t1)
 							s.send((("DRAWRight").encode()).ljust(16))
-							t1 = time.time()
 							print("Right")
 							#time.sleep(1)
 							turn_wait_time = time.time()
@@ -347,9 +328,7 @@ try:
 				
 					if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
 						temp_dis = str(distance.value)
-						print(time.time()-t1)
 						s.send(('DRAW'+temp_dis).ljust(16).encode())
-						t1 = time.time()
 						print(temp_dis)
 						distance.value = 0
 						#time.sleep(0.15)
@@ -360,9 +339,9 @@ try:
 				except Exception as e:
 					print(e.args)
 							
-			except:
-				print("reconnecting server")
-				img_combine = img_processing(ir_img,flir_val)
+			#except:
+				#print("reconnecting server")
+				#img_combine = img_processing(ir_img,flir_val)
 				'''
 				try:
 					####### reconnect server #########
