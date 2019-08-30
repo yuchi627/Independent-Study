@@ -6,7 +6,7 @@ import struct
 import cv2
 import select
 
-HOST = '192.168.68.196'
+HOST = '192.168.209.70'
 PORT = 8888
 img_limit = 0
 if sys.argv[1] == 1:
