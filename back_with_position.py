@@ -12,7 +12,7 @@ import time
 #HOST = '172.20.10.3'
 #HOST = '192.168.43.118'
 #HOST = '192.168.43.84'
-HOST = '192.168.43.9'
+HOST = '192.168.209.70'
 #HOST = '192.168.43.9'
 #HOST= "127.0.0.1"
 PORT = 8888
@@ -155,7 +155,9 @@ size = 0
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
 bus.write_byte_data(address, power_mgmt_1, 0)
-
+find_size = -1
+package_size = 0
+remain_size = 0
 mutex = mp.Lock()
 
 distance = mp.Value("d", 0)
@@ -260,7 +262,6 @@ try:
 										
 									find_size = data.find(b'SIZE')
 									size_data = data[find_size:find_size+16]
-									print(data[find_size:find_size+16])
 								try:
 										package_size = int((size_data[4:].decode()).strip())
 										if(len(data) == len(size_data)):
@@ -299,9 +300,6 @@ try:
 									print("error in img decode=",e.args)
 								try:
 									img_combine = np.reshape(img_decode,(ir_height,ir_weight,3))
-									count_send += 1
-									if(count_send == 1000):
-										count_send = 0
 								except Exception as e:
 									'''
 									if(first > 0):
@@ -386,7 +384,7 @@ try:
 					if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
 						temp_dis = str(distance.value)
 						s.send(('DRAW'+temp_dis).ljust(16).encode())
-						print(temp_dis)
+						#print(temp_dis)
 						distance.value = 0
 						#time.sleep(0.15)
 						turn_wait_time = 0
