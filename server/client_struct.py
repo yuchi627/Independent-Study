@@ -100,7 +100,7 @@ class client:
     def __init__(self, num, queue_number):
         self.number = num
         self.first_flag = True
-        self.file = open(str(num)+".txt","w")
+        #self.file = open(str(num)+".txt","w")
         self.namespace_img = img_white_namespace
         self.left_spot_x = 5 + (middle_x-5)*(num%2)
         self.right_spot_x = middle_x + middle_x*(num%2)
