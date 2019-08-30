@@ -11,7 +11,7 @@ import picamera.array
 import time
 import sys
 
-HOST = '192.168.43.9'
+HOST = '192.168.68.100'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
@@ -125,8 +125,6 @@ def img_processing(ir_img,flir_val):
 		cv2.putText(rotate,"In danger area", (20,40), cv2.FONT_HERSHEY_SIMPLEX,1, (255,255,255), 3)
 	return rotate
 
-t1 = time.time()
-img_count = 1
 size = 0# Variable
 start = 0  #for time interval
 start_warning_time = 0
@@ -147,8 +145,6 @@ data = b''
 matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
 ###############################################
-t1 = time.time()
-
 #main
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
@@ -168,7 +164,6 @@ p.start()
 p1.start()
 turn_wait_time = 0
 help_wait_time = 0
-count = 0
 last_flag = False
 this_flag = False
 try:	
@@ -199,22 +194,14 @@ try:
 		s.send(("TH70"+str(th_70)).ljust(16).encode()) 
 		s.send(("TH100"+str(th_100)).ljust(16).encode())
 				
-		t1 = time.time()
 		time_sett = 0
-		#count_img = 0
-		#while (count_img<80):
-		#	count_img += 1
 		while True:
-			#count_img += 1
            	######## flir capture ########
 			a,_ = l.capture()
 			flir_val = np.uint16(a)
 			######## ir capture ############
 			camera.capture(ir_img,'bgr',use_video_port = True)
-			cv2.imwrite( (path+'ir/'+str(img_count)+'.jpg'), ir_img)
-			np.savetxt(path+'flir/'+str(img_count)+'.txt',flir_val.reshape(flir_val.shape[0],flir_val.shape[1]))
 
-			#print(time.time()-t1)
 			######## encode message ############
 			_, imgencode_ir = cv2.imencode('.jpg', ir_img, encode_param)
 			data_ir = np.array(imgencode_ir)
@@ -222,15 +209,10 @@ try:
 			######### encode flir_val ###########
 			flir_val_ravel = flir_val.ravel()
 			flir_val_pack = struct.pack("I"*len(flir_val_ravel),*flir_val_ravel)
-			img_count += 1
 
 			######## encode message ############
 			try:
 				######## send ir image ###############
-				count += 1
-				if(count == 100):
-					count = 0
-				print("send",count)
 				s.send(("IR"+str(len(stringData_ir))).ljust(16).encode())
 				s.send(stringData_ir)
 				####### send flir image to server #########
@@ -320,9 +302,7 @@ try:
 				
 						elif turn_flag.value == 1 and time.time() - help_wait_time > 2.0 and time.time() - turn_wait_time > 2.0:
 							turning_flag = True
-							print(time.time()-t1)
 							s.send((("DRAWLeft").encode()).ljust(16))
-							t1 = time.time()
 							print("Left")
 							#time.sleep(1)
 							turn_wait_time = time.time()
@@ -331,7 +311,6 @@ try:
 							turning_flag = True
 							print(time.time()-t1)
 							s.send((("DRAWRight").encode()).ljust(16))
-							t1 = time.time()
 							print("Right")
 							#time.sleep(1)
 							turn_wait_time = time.time()
@@ -347,9 +326,7 @@ try:
 				
 					if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
 						temp_dis = str(distance.value)
-						print(time.time()-t1)
 						s.send(('DRAW'+temp_dis).ljust(16).encode())
-						t1 = time.time()
 						print(temp_dis)
 						distance.value = 0
 						#time.sleep(0.15)
