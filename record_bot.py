@@ -382,8 +382,8 @@ try:
 				except Exception as e:
 					print(e.args)
 							
-			except:
-				print("reconnecting server")
+			except Exception as e:
+				print("reconnecting server",e.args)
 				img_combine = img_processing(ir_img,flir_val)
 				'''
 				try:

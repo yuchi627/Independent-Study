@@ -1,0 +1,5 @@
+fp = open("debug3.txt","r")
+k = fp.read().strip()
+print(k.find("SIZE"))
+print(k)
+print(len(k))
