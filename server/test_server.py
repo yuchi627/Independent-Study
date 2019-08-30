@@ -653,7 +653,7 @@ class AppWindow(QDialog):
                     _,encode = cv2.imencode('.jpg', combine, self.encode_param)
                     data_combine = np.array(encode)
                     stringData = data_combine.tostring()
-                    self.client_list[client_host].write_file(len(stringData),stringData)
+                    #self.client_list[client_host].write_file(len(stringData),stringData)
                     sock.send(("SIZE"+str(len(stringData))).ljust(16).encode())
                     #sock.send(("SIZE"+str(len(encode))).ljust(16).encode())
                     self.client_list[client_host].set_send_package(len(stringData))
