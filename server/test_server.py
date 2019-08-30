@@ -100,7 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.100'
+        self.host = '192.168.209.29'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -297,8 +297,6 @@ class AppWindow(QDialog):
         press_x = int(event.pos().x()*self.offset_x)
         press_y = int(event.pos().y()*self.offset_y)
         fireman = -1
-        #print("x: ",press_x)
-        #print("y: ",press_y)
         if(event.button() == Qt.LeftButton):
             if(self.image_map_flag):
                 if(press_x < self.middle_x and press_y < self.middle_y):
@@ -523,11 +521,10 @@ class AppWindow(QDialog):
             # add new connection
             # 創造一個新的Object給Device
         #--------------------------------------------------------------------#
-    
         print("Client: ")
         print("\tnum: ",self.client_list[i].id_num)
         print("\tip_addr: ",self.client_list[i].ip_addr)
-    
+
  
     def set_namespace_color(self,client_index,background_color,font_color):
         namespace_whiteimg = np.zeros((self.name_space_height,self.weight,3), np.uint8)
@@ -559,7 +556,6 @@ class AppWindow(QDialog):
                         recv_data = sock.recv(self.client_list[client_host].remain_msg_size)
                         ###### concatenate recv msg to image ######
                         recv_data_msg = self.client_list[client_host].combine_recv_msg(recv_data)
-                        #print("recv_data: ",recv_data_msg)
                         if(len(recv_data_msg) == 0):
                             pass
                         elif("FLIR" in recv_data_msg):
@@ -568,7 +564,6 @@ class AppWindow(QDialog):
                             for i in self.client_list:
                                 if(i.ip_addr == data.addr):           
                                     i.direction = int(recv_data_msg[3:len(recv_data_msg)])
-                                    print("DIR: ",i.direction)
                         elif("IR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
                         elif("TH70" in recv_data_msg):
@@ -596,11 +591,7 @@ class AppWindow(QDialog):
                                             i.position_y = int(pos.split(' ')[1]) + (i.id_num >= 2)*self.middle_y
                                             i.set_start = True
                                             i.dist_save = 0
-                                            print("POSX: ",i.position_x)
-                                            print("POSY: ",i.position_y)
-                                        elif("DRAW" in recv_data_msg):
-                                            print("recv: ",repr(recv_data_msg))
-                                            print("recv_cut: ",repr(recv_data_msg[4:len(recv_data_msg)]))                    
+                                        elif("DRAW" in recv_data_msg):                   
                                             self.drawNewSpot(recv_data_msg[4:len(recv_data_msg)],i.id_num)     
                                             if(self.client_list[client_host].sos_flag):    
                                                 self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
@@ -625,7 +616,6 @@ class AppWindow(QDialog):
                         #if(self.client_list[client_host].get_package_size() <= 0):
                             ###### image recv complete ######
                             #send_flag = self.client_list[client_host].decode_img()
-                            #print("get image : send flag",send_flag)
                             #elf.client_list[client_host].set_package(-1,0)
                         if(send_flag):
                             self.refresh_img = True
@@ -663,11 +653,17 @@ class AppWindow(QDialog):
                     _,encode = cv2.imencode('.jpg', combine, self.encode_param)
                     data_combine = np.array(encode)
                     stringData = data_combine.tostring()
-                    sock.send(str(len(stringData)).ljust(16).encode())
-                    #print(len(stringData))
-                    sock.send(stringData)
-                    #print('stringData',stringData[(len(stringData)-10) :])
-                    self.client_list[client_host].send_img_flag = False
+                    #self.client_list[client_host].write_file(len(stringData),stringData)
+                    sock.send(("SIZE"+str(len(stringData))).ljust(16).encode())
+                    #sock.send(("SIZE"+str(len(encode))).ljust(16).encode())
+                    self.client_list[client_host].set_send_package(len(stringData))
+                    while(self.client_list[client_host].send_img_flag):
+                        self.client_list[client_host].sended_size += sock.send(stringData[self.client_list[client_host].sended_size:])
+                        if(self.client_list[client_host].sended_size != len(stringData)):
+                            print("sended",self.client_list[client_host].sended_size,"len of stringData",len(stringData),"len of encode",len(encode))
+                            self.client_list[client_host].record_flag = True
+                        self.client_list[client_host].decrease_remain_send_package()
+                    #self.client_list[client_host].send_img_flag = False
                 except Exception as e:
                     self.count += 1
                     print("error in send image to client : ",e.args,self.count)
@@ -693,7 +689,6 @@ class AppWindow(QDialog):
         else:
             self.client_list[index].addNewPosition("No Turn",float(data))
         self.refresh_map = True
-        print("index: ",repr(index))
         self.draw_layer(index)     
         
     def helpConditionExec(self,message,index):
@@ -718,7 +713,6 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
         
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
-        print("x0,x1,y0,y1: ",repr(x0),repr(x1),repr(y0),repr(y1))
         if(y0 > y1):
             y0, y1 = y1, y0
         if(x0 > x1):

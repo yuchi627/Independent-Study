@@ -25,10 +25,16 @@ matrix = np.loadtxt("matrix6.txt", delimiter=',')
 M = cv2.getRotationMatrix2D((weight/2,height/2), 180, 1)
 
 class client:
+    count_data = 0
+    record_flag = False
+    img_count = 0
     th_70 = 0   ###### threshold for 70 degree flir value
     th_100 = 0  ###### threshold for 100 degree flir value
     remain_package_size = 0
     img_package_size = 0
+    send_package_size = 0
+    sended_size = 0
+    remain_send_size = 0
     img_binary = b''
     msg_binary = b''
     msg_size = 16
@@ -94,6 +100,7 @@ class client:
     def __init__(self, num, queue_number):
         self.number = num
         self.first_flag = True
+        #self.file = open(str(num)+".txt","w")
         self.namespace_img = img_white_namespace
         self.left_spot_x = 5 + (middle_x-5)*(num%2)
         self.right_spot_x = middle_x + middle_x*(num%2)
@@ -163,6 +170,19 @@ class client:
         self.fireman_bound_left = self.line_left_spot_x
         self.fireman_bound_right = self.line_right_spot_x - 25
 
+    def write_file(self,length,data):
+        self.img_count += 1
+        if(self.img_count == 1000):
+            self.img_count = 0
+        if(self.record_flag):
+            self.file.write("img"+str(self.img_count)+":"+str(length))
+            self.file.write(str(data))
+            self.file.write("\n")
+            self.count_data += 1
+            if(self.count_data == 10):
+                self.file.close()
+
+
     def except_for_img(self):
         img_binary = b''
         self.remain_package_size = 0
@@ -226,6 +246,15 @@ class client:
             self.recv_ir_flag = False
             self.recv_flir_flag = False
 
+    def set_send_package(self,num):
+        self.send_package_size = num
+
+    def decrease_remain_send_package(self):
+        self.remain_send_size = self.send_package_size - self.sended_size
+        if(self.remain_send_size <= 0):
+            self.send_img_flag = False
+            self.sended_size = 0
+            self.send_package_size = 0
 
     def combine_recv_img(self,recv_str):
         flag = False
