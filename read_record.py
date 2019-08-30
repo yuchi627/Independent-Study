@@ -120,7 +120,7 @@ while line:
 										if(len(data) == len(size_data)):
 											data = b''
 										else:
-											data = data[find_size:]
+											data = data[find_size+16:]
 										remain_size = package_size - len(data)
 										recv_size_flag = False
 
