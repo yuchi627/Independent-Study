@@ -6,15 +6,8 @@ import struct
 import cv2
 import select
 
-HOST = '192.168.68.196'
+HOST = '192.168.68.198'
 PORT = 8888
-img_limit = 0
-if sys.argv[1] == 1:
-	img_limit = 1795
-elif sys.argv[1] == 2:
-	img_limit = 320
-elif sys.argv[1] == 3:
-	img_limit = 205
 
 def img_processing(ir_img,flir_val):
 	flag = False
