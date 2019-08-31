@@ -266,7 +266,7 @@ class AppWindow(QDialog):
         elif(self.image_map_flag):
             for fireman in self.client_list:
                 ###### draw the frame ######
-                if(fireman.sos_flag):
+                if(fireman.help2_flag):
                     if(fireman.blink_for_line()):
                         self.helpConditionExec("HELP2",fireman.id_num)
                         print("SOS HELP2")
@@ -523,7 +523,7 @@ class AppWindow(QDialog):
                         self.set_namespace_color(self.click_client,(255,255,255),(0, 0, 0))
                         if(self.client_list[self.click_client].sos_flag):
                             self.client_list[self.click_client].send_save_msg_flag = True
-                        self.client_list[self.click_client].set_sos_flag(False)
+                        self.client_list[self.click_client].sos_flag = False
                         self.click_to_cancel = False
  
     def accept_wrapper(self,sock):
@@ -571,7 +571,6 @@ class AppWindow(QDialog):
         sock = key.fileobj
         data = key.data
         client_host = self.client_dict[str(data.addr[1])]
-        #print("addr[1]= ",str(data.addr[1])," mask= ",mask)
         if mask & selectors.EVENT_READ:
             recv_data = None
             if(self.client_list[client_host].first_time_recv()):
@@ -644,17 +643,12 @@ class AppWindow(QDialog):
                                 print ("error in other msg: ",e.args)
                     except Exception as e:
                         print ("error in get msg: ",e.args)
-                        #pass
                 else:
                     ###### recv the img ######
                     try:
                         recv_data = sock.recv(self.client_list[client_host].get_package_size())
                         ###### concatenate recv msg to image ######
                         send_flag = self.client_list[client_host].combine_recv_img(recv_data)
-                        #if(self.client_list[client_host].get_package_size() <= 0):
-                            ###### image recv complete ######
-                            #send_flag = self.client_list[client_host].decode_img()
-                            #elf.client_list[client_host].set_package(-1,0)
                         if(send_flag):
                             self.refresh_img = True
                     except Exception as e:
@@ -687,21 +681,19 @@ class AppWindow(QDialog):
         if mask & selectors.EVENT_WRITE:
             if(self.client_list[client_host].send_img_flag):
                 try:
+                    ###### enccode image ###### 
                     combine = self.client_list[client_host].read_combine_img()
                     _,encode = cv2.imencode('.jpg', combine, self.encode_param)
                     data_combine = np.array(encode)
                     stringData = data_combine.tostring()
-                    #self.client_list[client_host].write_file(len(stringData),stringData)
                     sock.send(("SIZE"+str(len(stringData))).ljust(16).encode())
-                    #sock.send(("SIZE"+str(len(encode))).ljust(16).encode())
                     self.client_list[client_host].set_send_package(len(stringData))
+                    ###### send image until send all msg ###### 
                     while(self.client_list[client_host].send_img_flag):
                         self.client_list[client_host].sended_size += sock.send(stringData[self.client_list[client_host].sended_size:])
                         if(self.client_list[client_host].sended_size != len(stringData)):
                             print("sended",self.client_list[client_host].sended_size,"len of stringData",len(stringData),"len of encode",len(encode))
-                            self.client_list[client_host].record_flag = True
                         self.client_list[client_host].decrease_remain_send_package()
-                    #self.client_list[client_host].send_img_flag = False
                 except Exception as e:
                     self.count += 1
                     print("error in send image to client : ",e.args,self.count)
@@ -952,4 +944,3 @@ app = QApplication(sys.argv)
 w = AppWindow()
 w.show()
 sys.exit(app.exec_())
-
