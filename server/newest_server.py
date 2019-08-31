@@ -265,6 +265,7 @@ class AppWindow(QDialog):
             image = self.image_image.copy()
         elif(self.image_map_flag):
             for fireman in self.client_list:
+                ###### draw the frame ######
                 if(fireman.sos_flag):
                     if(fireman.blink_for_line()):
                         self.helpConditionExec("HELP2",fireman.id_num)
@@ -275,7 +276,7 @@ class AppWindow(QDialog):
                 elif(fireman.yellow_flag):
                     self.helpConditionExec("HELP",fireman.id_num)
                     print("HELP")
-                            ###### draw fireman ######
+                ###### draw fireman ######
                 ###### avoid img_fireman out of bounds ######
                 if(fireman.position_x > fireman.fireman_bound_right):
                     x_offset = fireman.fireman_bound_right - 50
@@ -295,6 +296,7 @@ class AppWindow(QDialog):
                 for c in range(3):
                     self.image_map[y_offset:y2 , x_offset:x2, c] = (self.alpha_s * self.img_fireman[:,:,c] + self.alpha_l * self.image_map[y_offset:y2 , x_offset:x2, c])
             image = self.image_map.copy()
+            ###### draw the rectangle if user choosing ######
             if(self.choose_flag or self.remove_flag):
                 if(self.release_mouse):
                     cv2.rectangle(image, self.start_point, self.end_point, (0, 255, 0), 2)
