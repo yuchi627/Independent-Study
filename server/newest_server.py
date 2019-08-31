@@ -78,7 +78,9 @@ class AppWindow(QDialog):
         self.img_fireman = [ ]
         self.keep_fire = []     
         self.img_queue_size = 300  
- 
+        self.alpha_s = 0
+        self.alpha_l = 0
+        
         ##### Offsets of mouse clicking
         self.offset_x = 1
         self.offset_y = 1
@@ -95,12 +97,11 @@ class AppWindow(QDialog):
         self.refresh_map = False                                      
         self.refresh_img = False
         self.click_to_cancel = False
-        self.inti_flag = -1
         
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.100'
+        self.host = '192.168.68.196'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -241,7 +242,7 @@ class AppWindow(QDialog):
             self.end_point = (0,0)
 
     def on_click_btn_reset(self):
-        if(self.info_flag == 1):
+        if(self.info_flag == 0):
             self.client_list[self.info_flag].time_in = time.time() - self.time_to_come_out + 5
         else:
             self.client_list[self.info_flag].time_in = time.time()
@@ -263,6 +264,36 @@ class AppWindow(QDialog):
                     self.ui.btn_back.setEnabled(True)
             image = self.image_image.copy()
         elif(self.image_map_flag):
+            for fireman in self.client_list:
+                if(fireman.sos_flag):
+                    if(fireman.blink_for_line()):
+                        self.helpConditionExec("HELP2",fireman.id_num)
+                        print("SOS HELP2")
+                    else:
+                        self.helpConditionExec("HELP",fireman.id_num)
+                        print("SOS HELP")
+                elif(fireman.yellow_flag):
+                    self.helpConditionExec("HELP",fireman.id_num)
+                    print("HELP")
+                            ###### draw fireman ######
+                ###### avoid img_fireman out of bounds ######
+                if(fireman.position_x > fireman.fireman_bound_right):
+                    x_offset = fireman.fireman_bound_right - 50
+                elif(fireman.position_x < fireman.fireman_bound_left):
+                    x_offset = fireman.fireman_bound_left
+                else:
+                    x_offset = fireman.position_x - 25
+                if(fireman.position_y > fireman.fireman_bound_bottom):
+                    y_offset = fireman.fireman_bound_bottom - 50
+                elif(fireman.position_y < fireman.fireman_bound_top):
+                    y_offset = fireman.fireman_bound_top
+                else:
+                    y_offset = fireman.position_y - 25
+                
+                x2 = self.img_fireman.shape[1] + x_offset
+                y2 = self.img_fireman.shape[0] + y_offset
+                for c in range(3):
+                    self.image_map[y_offset:y2 , x_offset:x2, c] = (self.alpha_s * self.img_fireman[:,:,c] + self.alpha_l * self.image_map[y_offset:y2 , x_offset:x2, c])
             image = self.image_map.copy()
             if(self.choose_flag or self.remove_flag):
                 if(self.release_mouse):
@@ -413,6 +444,8 @@ class AppWindow(QDialog):
             while(len(self.img_fireman) == 0):
                 self.img_fireman = cv2.imread(fireman_img_map_path,-1)
             self.img_fireman = cv2.resize(self.img_fireman,(50,50))
+            self.alpha_s = self.img_fireman[:,:,3] / 255.0
+            self.alpha_l = 1.0 - self.alpha_s
         else:
             print("There is no FireFighter Image")
 
@@ -457,7 +490,7 @@ class AppWindow(QDialog):
         lsock.bind((self.host,self.port))
         lsock.listen()
         print('listening on', (self.host, self.port))
-        #lsock.setblocking(False)
+        lsock.setblocking(False)
         self.sel.register(lsock, selectors.EVENT_READ, data=None)
         print("Waiting For Connection...")
 
@@ -493,6 +526,7 @@ class AppWindow(QDialog):
  
     def accept_wrapper(self,sock):
         conn, addr = sock.accept()  # Should be ready to read
+        conn.setblocking(False)
         print('accepted connection from', addr)    
         data = types.SimpleNamespace(addr=addr, inb=b'', outb=b'')
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
@@ -512,7 +546,6 @@ class AppWindow(QDialog):
             if(self.connection_num[i] == 0):
                 self.client_list[i].set_info(i,addr)
                 self.connection_num[i] = 1
-                inti_flag = i
                 self.client_list[i].time_in = time.time()
                 self.client_list[i].disconnect_flag = False
                 break
@@ -520,11 +553,10 @@ class AppWindow(QDialog):
             # add new connection
             # 創造一個新的Object給Device
         #--------------------------------------------------------------------#
-    
         print("Client: ")
         print("\tnum: ",self.client_list[i].id_num)
         print("\tip_addr: ",self.client_list[i].ip_addr)
-    
+
  
     def set_namespace_color(self,client_index,background_color,font_color):
         namespace_whiteimg = np.zeros((self.name_space_height,self.weight,3), np.uint8)
@@ -536,9 +568,10 @@ class AppWindow(QDialog):
     def service_connection(self,key, mask):
         sock = key.fileobj
         data = key.data
+        client_host = self.client_dict[str(data.addr[1])]
+        #print("addr[1]= ",str(data.addr[1])," mask= ",mask)
         if mask & selectors.EVENT_READ:
             recv_data = None
-            client_host = self.client_dict[str(data.addr[1])]
             if(self.client_list[client_host].first_time_recv()):
                 print("Getting Name...")
                 recv_data = sock.recv(16)
@@ -552,18 +585,23 @@ class AppWindow(QDialog):
                 if(self.client_list[client_host].get_package_size() <= 0):
                     try:
                         ###### recv the image size ######
-                        recv_data = sock.recv(16)
-                        recv_data_msg = recv_data.decode().strip()
-                        if("FLIR" in recv_data_msg):
+                        recv_data = sock.recv(self.client_list[client_host].remain_msg_size)
+                        ###### concatenate recv msg to image ######
+                        recv_data_msg = self.client_list[client_host].combine_recv_msg(recv_data)
+                        if(len(recv_data_msg) == 0):
+                            pass
+                        elif("FLIR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[4:len(recv_data_msg)]),2)
+                        elif("DIR" in recv_data_msg):
+                            for i in self.client_list:
+                                if(i.ip_addr == data.addr):           
+                                    i.direction = int(recv_data_msg[3:len(recv_data_msg)])
                         elif("IR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
                         elif("TH70" in recv_data_msg):
                             self.client_list[client_host].set_threshold(1, float(recv_data_msg[4:len(recv_data_msg)]))
                         elif("TH100" in recv_data_msg):
                             self.client_list[client_host].set_threshold(2, float(recv_data_msg[5:len(recv_data_msg)]))
-                        elif(len(recv_data_msg) == 0):
-                            pass
                         else:
                             try:
                                 #------------------------------------------------------------------#
@@ -572,20 +610,30 @@ class AppWindow(QDialog):
                                         i.time_pass = time.time() - self.init_time
                                         if("HELP2" in recv_data_msg):
                                             self.client_list[client_host].set_sos_flag(True)
-                                            self.client_list[client_host].yellow_flag = False
+                                            self.client_list[client_host].yellow_flag = False        
+                                            self.client_list[client_host].set_help2(True)                                        
                                             self.draw_layer(client_host)
                                         elif("HELP" in recv_data_msg):
                                             self.client_list[client_host].yellow_flag = True
+                                            self.client_list[client_host].set_help2(False)   
                                             self.draw_layer(client_host)
                                         elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
-                                        elif("DRAW" in recv_data_msg):
+                                        elif("POS" in recv_data_msg):
+                                            pos = recv_data_msg[3:len(recv_data_msg)]
+                                            i.position_x = int(pos.split(' ')[0]) + (i.id_num % 2)*self.middle_x
+                                            i.position_y = int(pos.split(' ')[1]) + (i.id_num >= 2)*self.middle_y
+                                            i.set_start = True
+                                            i.dist_save = 0
+                                            self.client_list[client_host].set_help2(False)   
+                                        elif("DRAW" in recv_data_msg):                   
                                             self.drawNewSpot(recv_data_msg[4:len(recv_data_msg)],i.id_num)     
                                             if(self.client_list[client_host].sos_flag):    
                                                 self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
                                                 self.client_list[client_host].set_sos_flag(False)
                                             self.client_list[client_host].yellow_flag = False
                                             self.client_list[client_host].send_save_msg_flag = False
+                                            self.client_list[client_host].set_help2(False)   
                                         else:
                                             break
                                     # Device 傳輸資料時, call 對應function
@@ -595,43 +643,22 @@ class AppWindow(QDialog):
                     except Exception as e:
                         print ("error in get msg: ",e.args)
                         #pass
-                    
                 else:
                     ###### recv the img ######
                     try:
                         recv_data = sock.recv(self.client_list[client_host].get_package_size())
                         ###### concatenate recv msg to image ######
-                        self.client_list[client_host].combine_recv_img(recv_data)
-                        self.client_list[client_host].decrease_package_size(len(recv_data))
-                        if(self.client_list[client_host].get_package_size() <= 0):
+                        send_flag = self.client_list[client_host].combine_recv_img(recv_data)
+                        #if(self.client_list[client_host].get_package_size() <= 0):
                             ###### image recv complete ######
-                            send_flag = self.client_list[client_host].decode_img()
-                            if(send_flag):
-                                self.refresh_img = True
-                                send_flag = False
-                                try:
-                                    combine = self.client_list[client_host].read_combine_img()
-                                    _,encode = cv2.imencode('.jpg', combine, self.encode_param)
-                                    data_combine = np.array(encode)
-                                    stringData = data_combine.tostring()
-                                    sock.send(str(len(stringData)).ljust(16).encode())
-                                    sock.send(stringData)
-                                except Exception as e:
-                                    self.count += 1
-                                    print("error in send image to client : ",e.args,self.count)
-                                ###### decide which background color to brush ######
-                                brush_background_ornot = self.client_list[client_host].brush_namespace_background()
-                                if(brush_background_ornot == 1):
-                                    ###### Red background with white font ######
-                                    self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
-                                elif (brush_background_ornot == 2):
-                                    ###### White background with black font ######
-                                    self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
-                            self.client_list[client_host].set_package(-1,0)
+                            #send_flag = self.client_list[client_host].decode_img()
+                            #elf.client_list[client_host].set_package(-1,0)
+                        if(send_flag):
+                            self.refresh_img = True
                     except Exception as e:
                         print ("error in get image msg: ",e.args)
                         self.client_list[client_host].except_for_img()
- 
+            
             if not recv_data:
                 print('closing connection to', data.addr)
                 #-------------------------------------------------------------------#
@@ -655,6 +682,38 @@ class AppWindow(QDialog):
                 self.client_list[self.client_dict[str(data.addr[1])]].disconnect_flag = True
                 self.sel.unregister(sock)
                 sock.close()
+        if mask & selectors.EVENT_WRITE:
+            if(self.client_list[client_host].send_img_flag):
+                try:
+                    combine = self.client_list[client_host].read_combine_img()
+                    _,encode = cv2.imencode('.jpg', combine, self.encode_param)
+                    data_combine = np.array(encode)
+                    stringData = data_combine.tostring()
+                    #self.client_list[client_host].write_file(len(stringData),stringData)
+                    sock.send(("SIZE"+str(len(stringData))).ljust(16).encode())
+                    #sock.send(("SIZE"+str(len(encode))).ljust(16).encode())
+                    self.client_list[client_host].set_send_package(len(stringData))
+                    while(self.client_list[client_host].send_img_flag):
+                        self.client_list[client_host].sended_size += sock.send(stringData[self.client_list[client_host].sended_size:])
+                        if(self.client_list[client_host].sended_size != len(stringData)):
+                            print("sended",self.client_list[client_host].sended_size,"len of stringData",len(stringData),"len of encode",len(encode))
+                            self.client_list[client_host].record_flag = True
+                        self.client_list[client_host].decrease_remain_send_package()
+                    #self.client_list[client_host].send_img_flag = False
+                except Exception as e:
+                    self.count += 1
+                    print("error in send image to client : ",e.args,self.count)
+                ###### decide which background color to brush ######
+                brush_background_ornot = self.client_list[client_host].brush_namespace_background()
+                if(brush_background_ornot == 1):
+                    ###### Red background with white font ######
+                    self.set_namespace_color(client_host,(0,0,255),(255, 255, 255))
+                elif (brush_background_ornot == 2):
+                    ###### White background with black font ######
+                    self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
+
+
+
 
     def drawNewSpot(self,data,index):
         if("No Turn" in data):
@@ -730,13 +789,6 @@ class AppWindow(QDialog):
 
     def draw_layer(self,num):
         self.image_map = self.keep.copy()
-        for draw_client in self.client_list:
-            if(draw_client.sos_flag):
-                self.helpConditionExec("HELP2",draw_client.id_num)
-            elif(draw_client.yellow_flag):
-                self.helpConditionExec("HELP",draw_client.id_num)
-        alpha_s = self.img_fireman[:,:,3] / 255.0
-        alpha_l = 1.0 - alpha_s
         ###### avoid img_fireman out of bounds ######
         if(self.client_list[num].position_x > self.client_list[num].fireman_bound_right):
             x_offset = self.client_list[num].fireman_bound_right - 50
@@ -771,25 +823,8 @@ class AppWindow(QDialog):
         self.image_map[row, col, 2] = self.image_map[row, col, 2]*0.5
         self.image_map[row, col, 1] = self.image_map[row, col, 1]*0.5
         self.image_map[row, col, 0] = self.image_map[row, col, 0]*0.5 + 122
+        
         for fireman in self.client_list:
-            ###### avoid img_fireman out of bounds ######
-            if(fireman.position_x > fireman.fireman_bound_right):
-                x_offset = fireman.fireman_bound_right - 50
-            elif(fireman.position_x < fireman.fireman_bound_left):
-                x_offset = fireman.fireman_bound_left
-            else:
-                x_offset = fireman.position_x - 25
-            if(fireman.position_y > fireman.fireman_bound_bottom):
-                y_offset = fireman.fireman_bound_bottom - 50
-            elif(fireman.position_y < fireman.fireman_bound_top):
-                y_offset = fireman.fireman_bound_top
-            else:
-                y_offset = fireman.position_y - 25
-            
-            x2 = self.img_fireman.shape[1] + x_offset
-            y2 = self.img_fireman.shape[0] + y_offset
-            for c in range(3):
-                self.image_map[y_offset:y2 , x_offset:x2, c] = (alpha_s * self.img_fireman[:,:,c] + alpha_l * self.image_map[y_offset:y2 , x_offset:x2, c])
             ###### detect_danger ######
             x1 = fireman.position_x-50
             y1 = fireman.position_y-50
@@ -849,10 +884,10 @@ class AppWindow(QDialog):
     def set_image_info(self):
         # reset image_info
         self.image_info = self.image_map.copy()
-        left_spot_x = 5 + (self.middle_x-5)*(self.info_flag%2) -5
-        right_spot_x = self.middle_x + self.middle_x*(self.info_flag%2) +5
-        up_spot_y = 5 + (self.middle_y-5)*(self.info_flag >= 2) - 5
-        down_spot_y = self.middle_y + (self.middle_y)*(self.info_flag >= 2) + 5
+        left_spot_x = self.client_list[self.info_flag].left_spot_x
+        right_spot_x = self.client_list[self.info_flag].right_spot_x
+        up_spot_y = self.client_list[self.info_flag].up_spot_y
+        down_spot_y = self.client_list[self.info_flag].down_spot_y
         self.image_info = self.image_info[up_spot_y:down_spot_y,left_spot_x:right_spot_x]
         width = self.image_info.shape[1]       
  
