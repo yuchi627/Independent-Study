@@ -264,18 +264,16 @@ class AppWindow(QDialog):
                     self.ui.btn_back.setEnabled(True)
             image = self.image_image.copy()
         elif(self.image_map_flag):
+            image = self.image_map.copy()
             for fireman in self.client_list:
                 ###### draw the frame ######
                 if(fireman.help2_flag):
                     if(fireman.blink_for_line()):
-                        self.helpConditionExec("HELP2",fireman.id_num)
-                        print("SOS HELP2")
+                        self.helpConditionExec("HELP2",fireman.id_num,image)
                     else:
-                        self.helpConditionExec("HELP",fireman.id_num)
-                        print("SOS HELP")
+                        self.helpConditionExec("HELP",fireman.id_num,image)
                 elif(fireman.yellow_flag):
-                    self.helpConditionExec("HELP",fireman.id_num)
-                    print("HELP")
+                    self.helpConditionExec("HELP",fireman.id_num,image)
                 ###### draw fireman ######
                 ###### avoid img_fireman out of bounds ######
                 if(fireman.position_x > fireman.fireman_bound_right):
@@ -294,8 +292,8 @@ class AppWindow(QDialog):
                 x2 = self.img_fireman.shape[1] + x_offset
                 y2 = self.img_fireman.shape[0] + y_offset
                 for c in range(3):
-                    self.image_map[y_offset:y2 , x_offset:x2, c] = (self.alpha_s * self.img_fireman[:,:,c] + self.alpha_l * self.image_map[y_offset:y2 , x_offset:x2, c])
-            image = self.image_map.copy()
+                    image[y_offset:y2 , x_offset:x2, c] = (self.alpha_s * self.img_fireman[:,:,c] + self.alpha_l * image[y_offset:y2 , x_offset:x2, c])
+            
             ###### draw the rectangle if user choosing ######
             if(self.choose_flag or self.remove_flag):
                 if(self.release_mouse):
@@ -616,7 +614,6 @@ class AppWindow(QDialog):
                                             self.draw_layer(client_host)
                                         elif("HELP" in recv_data_msg):
                                             self.client_list[client_host].yellow_flag = True
-                                            self.client_list[client_host].set_help2(False)   
                                             self.draw_layer(client_host)
                                         elif("NUM" in recv_data_msg):
                                             i.fire_num = recv_data_msg[3:len(recv_data_msg)]
@@ -721,7 +718,7 @@ class AppWindow(QDialog):
         self.refresh_map = True
         self.draw_layer(index)     
         
-    def helpConditionExec(self,message,index):
+    def helpConditionExec(self,message,index,img):
         if("HELP2" in message):
             self.client_list[index].color_set = (0,0,255)
         elif("HELP" in message):
@@ -737,10 +734,10 @@ class AppWindow(QDialog):
         right_thickness = self.client_list[index].right_thickness
         up_thickness = self.client_list[index].up_thickness
         down_thickness = self.client_list[index].down_thickness
-        cv2.line(self.image_map,(line_left_spot_x,line_up_spot_y),(line_right_spot_x,line_up_spot_y),self.client_list[index].color_set,up_thickness,6)
-        cv2.line(self.image_map,(line_left_spot_x,line_down_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,down_thickness,6)
-        cv2.line(self.image_map,(line_left_spot_x,line_up_spot_y),(line_left_spot_x,line_down_spot_y),self.client_list[index].color_set,left_thickness,6)
-        cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
+        cv2.line(img,(line_left_spot_x,line_up_spot_y),(line_right_spot_x,line_up_spot_y),self.client_list[index].color_set,up_thickness,6)
+        cv2.line(img,(line_left_spot_x,line_down_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,down_thickness,6)
+        cv2.line(img,(line_left_spot_x,line_up_spot_y),(line_left_spot_x,line_down_spot_y),self.client_list[index].color_set,left_thickness,6)
+        cv2.line(img,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
         
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
         if(y0 > y1):
