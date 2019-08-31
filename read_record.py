@@ -5,8 +5,7 @@ import numpy as np
 import struct
 import cv2
 import select
-
-HOST = '192.168.209.29'
+HOST = '192.168.68.196'
 PORT = 8888
 
 def img_processing(ir_img,flir_val):

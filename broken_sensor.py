@@ -57,7 +57,7 @@ def read_bes_z():
 	bes_z = read_word_2c(0x3f)
 
 	bes_z_ska = bes_z / 16384.0 * 9.8
-	return bes_z_ska
+	return -bes_z_ska
 
         #self.image_map = cv2.line(self.image_map,(self.middle_x*2,5),(self.middle_x*2,self.middle_y*2),(0,139,0),10,6)
 def get_bes(mutex, distance, dis_flag):
@@ -78,9 +78,9 @@ def get_bes(mutex, distance, dis_flag):
 				if (real_bes <= 0.3 and real_bes > 0):
 					distance.value += 0.0
 				elif (real_bes <= 2 and real_bes > 0.3):
-					distance.value = distance.value + 0.3
+					distance.value = distance.value + 0.5
 				else:
-					distance.value = distance.value + 0.8
+					distance.value = distance.value + 1.0
 				mutex.release()
 				bes_arr = []
 				#print(distance.value)
