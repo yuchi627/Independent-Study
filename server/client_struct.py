@@ -89,11 +89,17 @@ class client:
     line_right_spot_x = 0
     line_up_spot_y = 0
     line_down_spot_y = 0
-    left_thickness = 10
-    right_thickness = 10
-    up_thickness = 10
-    down_thickness = 10
+    line_offset = 6
+    thick = 15
+    thin = 10
+    left_thickness = thick
+    right_thickness = thick
+    up_thickness = thick
+    down_thickness = thick
     yellow_flag = False
+    first_recv_help2 = True
+    draw_line_blinking_flag = False
+    blink_count = 0
     disconnect_time = 0
     disconnect_real_time = 0
 #------------------------------------------------#
@@ -115,10 +121,10 @@ class client:
         self.back_img_num = queue_number
         self.img_q = Queue(maxsize = self.max_back_img_number)  
         if(num == 0):
-            self.line_right_spot_x = self.line_right_spot_x - 5
-            self.line_down_spot_y = self.line_down_spot_y - 5
-            self.right_thickness = 5
-            self.down_thickness = 5
+            self.line_right_spot_x = self.line_right_spot_x - self.line_offset
+            self.line_down_spot_y = self.line_down_spot_y - self.line_offset
+            self.right_thickness = self.thin
+            self.down_thickness = self.thin
 
             self.explosion_bound_top = line_W
             self.explosion_bound_bottom = bound_h - line_W
@@ -126,10 +132,10 @@ class client:
             self.explosion_bound_right = bound_w - line_W
             
         elif(num == 1):
-            self.line_left_spot_x = self.line_left_spot_x + 5
-            self.line_down_spot_y = self.line_down_spot_y - 5
-            self.left_thickness = 5
-            self.down_thickness = 5
+            self.line_left_spot_x = self.line_left_spot_x + self.line_offset
+            self.line_down_spot_y = self.line_down_spot_y - self.line_offset
+            self.left_thickness = self.thin
+            self.down_thickness = self.thin
 
             self.explosion_bound_top = line_W
             self.explosion_bound_bottom = bound_h - line_W
@@ -139,10 +145,10 @@ class client:
             self.position_x = right_x
             
         elif(num == 2):
-            self.line_right_spot_x = self.line_right_spot_x - 5
-            self.line_up_spot_y = self.line_up_spot_y + 5
-            self.right_thickness = 5
-            self.up_thickness = 5
+            self.line_right_spot_x = self.line_right_spot_x - self.line_offset
+            self.line_up_spot_y = self.line_up_spot_y + self.line_offset
+            self.right_thickness = self.thin
+            self.up_thickness = self.thin
 
             self.explosion_bound_top = bound_h
             self.explosion_bound_bottom = bound_h * 2 - int(line_W * 1.5)
@@ -152,10 +158,10 @@ class client:
             self.position_y = bottom_y
             
         elif(num == 3):
-            self.line_left_spot_x = self.line_left_spot_x + 5
-            self.line_up_spot_y = self.line_up_spot_y + 5
-            self.up_thickness = 5
-            self.left_thickness = 5
+            self.line_left_spot_x = self.line_left_spot_x + self.line_offset
+            self.line_up_spot_y = self.line_up_spot_y + self.line_offset
+            self.up_thickness = self.thin
+            self.left_thickness = self.thin
 
             self.explosion_bound_top = bound_h
             self.explosion_bound_bottom = bound_h * 2 - int(line_W * 1.5)
@@ -183,6 +189,30 @@ class client:
                 self.file.close()
 
 
+    def blink_for_line(self):
+        if(self.draw_line_blinking_flag):
+            self.blink_count += 1
+            if(self.blink_count >= 20):
+                self.draw_line_blinking_flag = False
+                self.blink_count = 0
+            else:
+                if(self.blink_count % 2 == 0):
+                    return True ##### red line
+                else:
+                    return False ##### yellow line
+        return True ##### red line
+
+    def set_help2(self,flag):
+        if(flag):
+            if(self.first_recv_help2):
+                self.first_recv_help2 = False
+                self.blink_count = 0
+                self.draw_line_blinking_flag = True
+        else:
+            self.draw_line_blinking_flag = False
+            self.first_recv_help2 = True
+
+
     def except_for_img(self):
         img_binary = b''
         self.remain_package_size = 0
@@ -192,7 +222,7 @@ class client:
     def set_info(self, num, ip_position):
         self.id_num = num
         self.ip_addr = ip_position
-        self.color_set = (0,255,0)
+        self.color_set = (0,139,0)
 
     def set_threshold(self, th70_or_100, num):
         if(th70_or_100 == 1):
