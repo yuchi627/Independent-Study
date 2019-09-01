@@ -5,12 +5,16 @@ import numpy as np
 import struct
 import cv2
 import select
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 HOST = '192.168.209.70'
 =======
 HOST = '192.168.209.29'
 >>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
+=======
+HOST = '192.168.68.196'
+>>>>>>> 2902b58489479b637a2c95d44b559aa132c33f99
 PORT = 8888
 
 def img_processing(ir_img,flir_val):

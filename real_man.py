@@ -11,7 +11,7 @@ import picamera.array
 import time
 import sys
 
-HOST = '192.168.209.70'
+HOST = '192.168.0.100'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
