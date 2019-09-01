@@ -101,7 +101,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.196'
+        self.host = '192.168.68.100'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -277,20 +277,21 @@ class AppWindow(QDialog):
                 ###### draw fireman ######
                 ###### avoid img_fireman out of bounds ######
                 if(fireman.position_x > fireman.fireman_bound_right):
-                    x_offset = fireman.fireman_bound_right - 50
+                    x_offset = fireman.fireman_bound_right
                 elif(fireman.position_x < fireman.fireman_bound_left):
                     x_offset = fireman.fireman_bound_left
                 else:
-                    x_offset = fireman.position_x - 25
+                    x_offset = fireman.position_x 
                 if(fireman.position_y > fireman.fireman_bound_bottom):
-                    y_offset = fireman.fireman_bound_bottom - 50
+                    y_offset = fireman.fireman_bound_bottom 
                 elif(fireman.position_y < fireman.fireman_bound_top):
                     y_offset = fireman.fireman_bound_top
                 else:
-                    y_offset = fireman.position_y - 25
+                    y_offset = fireman.position_y 
                 
                 x2 = self.img_fireman.shape[1] + x_offset
                 y2 = self.img_fireman.shape[0] + y_offset
+                print("client",fireman.number,y_offset,y2,x_offset,x2)
                 for c in range(3):
                     image[y_offset:y2 , x_offset:x2, c] = (self.alpha_s * self.img_fireman[:,:,c] + self.alpha_l * image[y_offset:y2 , x_offset:x2, c])
             
@@ -402,6 +403,7 @@ class AppWindow(QDialog):
             pass
 
     def keyPressEvent(self,event):
+        print(event.key())
         if(event.key() == Qt.Key_1 and time.time() - self.time_press > 1):
             self.time_press = time.time()
             self.info_flag = 0
@@ -415,19 +417,21 @@ class AppWindow(QDialog):
             self.time_press = time.time()
             self.info_flag = 3
         else:  
-            if(event.key() == Qt.Key_Up):
+            if(event.key() == Qt.Key_W):
+                print("Up")
                 for i in self.client_list:
                     i.position_y-=100
                 self.draw_layer(0)
-            elif(event.key() == Qt.Key_Down):
+            elif(event.key() == Qt.Key_S):
+                print("Down")
                 for i in self.client_list:
                     i.position_y+=100
                 self.draw_layer(0)
-            elif(event.key() == Qt.Key_Left):
+            elif(event.key() == Qt.Key_A):
                 for i in self.client_list:
                     i.position_x-=100
                 self.draw_layer(0)
-            elif(event.key() == Qt.Key_Right):
+            elif(event.key() == Qt.Key_D):
                 for i in self.client_list:
                     i.position_x+=100
                 self.draw_layer(0)

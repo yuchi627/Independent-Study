@@ -100,11 +100,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-<<<<<<< HEAD
-        self.host = '192.168.209.70'
-=======
-        self.host = '192.168.209.29'
->>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
+        self.host = '192.168.68.100'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -245,7 +241,7 @@ class AppWindow(QDialog):
             self.end_point = (0,0)
 
     def on_click_btn_reset(self):
-        if(self.info_flag == 0):
+        if(self.info_flag == 1):
             self.client_list[self.info_flag].time_in = time.time() - self.time_to_come_out + 5
         else:
             self.client_list[self.info_flag].time_in = time.time()
@@ -301,11 +297,6 @@ class AppWindow(QDialog):
         press_x = int(event.pos().x()*self.offset_x)
         press_y = int(event.pos().y()*self.offset_y)
         fireman = -1
-<<<<<<< HEAD
-        print("x: ",press_x)
-        print("y: ",press_y)
-=======
->>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
         if(event.button() == Qt.LeftButton):
             if(self.image_map_flag):
                 if(press_x < self.middle_x and press_y < self.middle_y):
@@ -573,10 +564,6 @@ class AppWindow(QDialog):
                             for i in self.client_list:
                                 if(i.ip_addr == data.addr):           
                                     i.direction = int(recv_data_msg[3:len(recv_data_msg)])
-<<<<<<< HEAD
-                             #       print("DIR: ",i.direction)
-=======
->>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
                         elif("IR" in recv_data_msg):
                             self.client_list[client_host].set_package(int(recv_data_msg[2:len(recv_data_msg)]),1)
                         elif("TH70" in recv_data_msg):
@@ -604,15 +591,7 @@ class AppWindow(QDialog):
                                             i.position_y = int(pos.split(' ')[1]) + (i.id_num >= 2)*self.middle_y
                                             i.set_start = True
                                             i.dist_save = 0
-<<<<<<< HEAD
-                                            #print("POSX: ",i.position_x)
-                              #              print("POSY: ",i.position_y)
-                                        elif("DRAW" in recv_data_msg):
-                                #            print("recv: ",repr(recv_data_msg))
-                               #             print("recv_cut: ",repr(recv_data_msg[4:len(recv_data_msg)]))                    
-=======
                                         elif("DRAW" in recv_data_msg):                   
->>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
                                             self.drawNewSpot(recv_data_msg[4:len(recv_data_msg)],i.id_num)     
                                             if(self.client_list[client_host].sos_flag):    
                                                 self.set_namespace_color(client_host,(255,255,255),(0, 0, 0))
@@ -710,10 +689,6 @@ class AppWindow(QDialog):
         else:
             self.client_list[index].addNewPosition("No Turn",float(data))
         self.refresh_map = True
-<<<<<<< HEAD
-        #print("index: ",repr(index))
-=======
->>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
         self.draw_layer(index)     
         
     def helpConditionExec(self,message,index):
@@ -738,10 +713,6 @@ class AppWindow(QDialog):
         cv2.line(self.image_map,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
         
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
-<<<<<<< HEAD
-        #print("x0,x1,y0,y1: ",repr(x0),repr(x1),repr(y0),repr(y1))
-=======
->>>>>>> e5a6bb36bdbda56bc524ba41c5deeeadf86962d8
         if(y0 > y1):
             y0, y1 = y1, y0
         if(x0 > x1):
