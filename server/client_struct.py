@@ -177,9 +177,9 @@ class client:
             self.position_x = self.right_x
             self.position_y = self.bottom_y
             
-        self.fireman_bound_top = self.line_up_spot_y  
+        self.fireman_bound_top = self.line_up_spot_y + 25
         self.fireman_bound_bottom = self.line_down_spot_y - 50
-        self.fireman_bound_left = self.line_left_spot_x 
+        self.fireman_bound_left = self.line_left_spot_x + 25
         self.fireman_bound_right = self.line_right_spot_x - 50
 
 
