@@ -279,13 +279,13 @@ class AppWindow(QDialog):
                 if(fireman.position_x > fireman.fireman_bound_right):
                     x_offset = fireman.fireman_bound_right
                 elif(fireman.position_x < fireman.fireman_bound_left):
-                    x_offset = fireman.fireman_bound_left
+                    x_offset = fireman.fireman_bound_left - 25
                 else:
                     x_offset = fireman.position_x - 25
                 if(fireman.position_y > fireman.fireman_bound_bottom):
                     y_offset = fireman.fireman_bound_bottom 
                 elif(fireman.position_y < fireman.fireman_bound_top):
-                    y_offset = fireman.fireman_bound_top
+                    y_offset = fireman.fireman_bound_top - 25
                 else:
                     y_offset = fireman.position_y - 25
                 
