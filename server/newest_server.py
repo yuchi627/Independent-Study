@@ -101,7 +101,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.100'
+        self.host = '192.168.68.196'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -281,13 +281,13 @@ class AppWindow(QDialog):
                 elif(fireman.position_x < fireman.fireman_bound_left):
                     x_offset = fireman.fireman_bound_left
                 else:
-                    x_offset = fireman.position_x 
+                    x_offset = fireman.position_x - 25
                 if(fireman.position_y > fireman.fireman_bound_bottom):
                     y_offset = fireman.fireman_bound_bottom 
                 elif(fireman.position_y < fireman.fireman_bound_top):
                     y_offset = fireman.fireman_bound_top
                 else:
-                    y_offset = fireman.position_y 
+                    y_offset = fireman.position_y - 25
                 
                 x2 = self.img_fireman.shape[1] + x_offset
                 y2 = self.img_fireman.shape[0] + y_offset
