@@ -12,9 +12,10 @@ import time
 #HOST = '172.20.10.3'
 #HOST = '192.168.43.118'
 #HOST = '192.168.43.84'
-HOST = '192.168.68.196'
+#HOST = '192.168.43.9'
 #HOST = '192.168.43.9'
 #HOST= "127.0.0.1"
+HOST = '192.168.0.100'
 PORT = 8888
 # Register
 power_mgmt_1 = 0x6b
@@ -77,9 +78,9 @@ def get_bes(mutex, distance, dis_flag):
 				if (real_bes <= 0.3 and real_bes > 0):
 					distance.value += 0.0
 				elif (real_bes <= 2 and real_bes > 0.3):
-					distance.value = distance.value + 0.5
+					distance.value = distance.value + 0.3
 				else:
-					distance.value = distance.value + 1.2
+					distance.value = distance.value + 0.8
 				mutex.release()
 				bes_arr = []
 				#print(distance.value)
@@ -138,6 +139,7 @@ real_bes = 0
 real_gyro = 0
 stop_key = False
 turning_flag = False
+recv_size_flag = True
 ##############################
 ir_height = 480 #tmp1.shape[0]
 ir_weight = 640 #tmp1.shape[1]
@@ -148,12 +150,15 @@ encode_param = [int(cv2.IMWRITE_JPEG_QUALITY),90]
 data = b''
 matrix = np.loadtxt('matrix6.txt',delimiter = ',')
 M = cv2.getRotationMatrix2D((ir_weight/2,ir_height/2), 180, 1)
+size = 0
 ###############################################
 #main
 bus = smbus.SMBus(1) 
 address = 0x68       # via i2cdetect
 bus.write_byte_data(address, power_mgmt_1, 0)
-
+find_size = -1
+package_size = 0
+remain_size = 0
 mutex = mp.Lock()
 
 distance = mp.Value("d", 0)
@@ -229,25 +234,102 @@ try:
 					####### recv the combine image from server #############
 					ready = select.select([s],[],[],0.01)
 					if(ready[0]):
-						data = s.recv(16)
-						size_data = data[0:16]
-						if(len(data) == len(size_data)):
+						if(recv_size_flag):
+							data += s.recv(16)
+							find_size = data.find(b'SIZE')
+							'''
+							if(flag_of_debug & (first > 0)):
+								debug.write("size:"+str(data))
+								debug.write("\n")
+							'''
+							while(find_size == -1):
+								data = data[len(data)-16:]
+								data += s.recv(8000)
+								find_size = data.find(b'SIZE')
+								'''
+								if(flag_of_debug & (first>0)):
+									debug.write("size:"+str(data))
+									debug.write("\n")
+								'''
+
+								#remain_size = package_size - len(data)
+								print("recv remain size")
+							if(find_size != -1):
+								size_data = data[find_size:find_size+16]
+								
+								while(len(size_data) < 16):
+									print("recv 16 size","find_size = ",find_size,",data len=",len(data))
+									data += s.recv(16)
+										
+									find_size = data.find(b'SIZE')
+									size_data = data[find_size:find_size+16]
+								try:
+										package_size = int((size_data[4:].decode()).strip())
+										if(len(data) == len(size_data)):
+											data = b''
+										else:
+											data = data[find_size+16:]
+										remain_size = package_size - len(data)
+										recv_size_flag = False
+
+										find_size = -1
+								except Exception as e:
+									find_size = -1
+									data = data[find_size:]
+									data = b''
+									package_size = 0
+									remain_size = 0
+									recv_size_flag = True
+					if not (recv_size_flag):
+						if(package_size == 0):
 							data = b''
+							package_size = 0
+							remain_size = 0
+							recv_size_flag = True
 						else:
-							data = data[len(size_data):len(data)]
-						size = int((size_data.decode()).strip())
-						while(size > len(data)):
-							data += s.recv(size)
-						data_img = data[0:size]
-						if(len(data_img) == len(data)):
-							data = b''
-						else:
-							data = data[len(data_img):len(data)]
-						data_img = np.fromstring(data_img,dtype = 'uint8')
-						data_img = cv2.imdecode(data_img,1)
-						img_combine = np.reshape(data_img,(ir_height,ir_weight,3))
+							while(remain_size > 0):
+								data += s.recv(remain_size)
+								remain_size = package_size - len(data)
+							if(package_size <= len(data)) :
+								
+								data_img = data[0:package_size]
+								img_array = np.fromstring(data_img,dtype = 'uint8')
+								try:
+									img_decode = cv2.imdecode(img_array,1)
+
+								except Exception as e:
+									print("error in img decode=",e.args)
+								try:
+									img_combine = np.reshape(img_decode,(ir_height,ir_weight,3))
+								except Exception as e:
+									'''
+									if(first > 0):
+										flag_of_debug = True
+										debug.write("img"+str(count_send)+":"+str(package_size)+"lenOFdata"+len(data_img))
+										print("img"+str(count_send)+":"+str(package_size))
+										debug.write(str(data_img))
+										print(str(data_img))
+										debug.write("\n")
+										first -= 1
+									if(first == 0):
+										debug.close()
+									count_send += 1
+									if(count_send == 1000):
+										count_send = 0
+									'''
+									print("img_array=",img_array,"len=",len(img_array))
+									print("error in img reshape=",e.args)
+									print("img_decode=",img_decode)
+								if(len(data_img) == len(data)):
+									data = b''
+								else:
+									data = data[len(data_img):]
+								recv_size_flag = True
+								package_size = 16
+								remain_size = package_size - len(data)
 				except Exception as e:
 					#img_combine = img_processing(ir_img,flir_val)
+					recv_size_flag = True
 					data = b''
 				try:
 					#check if falling
@@ -303,7 +385,7 @@ try:
 					if help_flag == False and time.time() - turn_wait_time > 2 and time.time() - help_wait_time > 2 and distance.value != 0:
 						temp_dis = str(distance.value)
 						s.send(('DRAW'+temp_dis).ljust(16).encode())
-						print(temp_dis)
+						#print(temp_dis)
 						distance.value = 0
 						#time.sleep(0.15)
 						turn_wait_time = 0

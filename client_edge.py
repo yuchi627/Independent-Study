@@ -7,7 +7,7 @@ import math
 from pylepton import Lepton
 import select
 #HOST = '172.20.10.3'
-HOST = '192.168.43.149'
+HOST = '192.168.68.196'
 #HOST = '192.168.43.84'
 PORT = 8888
 
