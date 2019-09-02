@@ -30,9 +30,9 @@ class AppWindow(QDialog):
         self.timer3.timeout.connect(self.check_time)
         self.timer3.start(1000)
 
-        self.timer4 = QTimer(self)
-        self.timer4.timeout.connect(self.set_image_info)
-        self.timer4.start(100)
+        #self.timer4 = QTimer(self)
+        #self.timer4.timeout.connect(self.set_image_info)
+        #self.timer4.start(100)
 
         ##### Set Button
         self.ui = Ui_Form()
@@ -101,7 +101,7 @@ class AppWindow(QDialog):
         ##### Socket Connect
         self.disconnect_number = 0
         self.connect_number = 0
-        self.host = '192.168.68.196'
+        self.host = '192.168.0.100'
         self.port = 8888
         self.client_list = [client(0,self.img_queue_size),client(1,self.img_queue_size),client(2,self.img_queue_size),client(3,self.img_queue_size)]
         self.connection_num = np.zeros(4)
@@ -242,7 +242,7 @@ class AppWindow(QDialog):
             self.end_point = (0,0)
 
     def on_click_btn_reset(self):
-        if(self.info_flag == 0):
+        if(self.info_flag == 3):
             self.client_list[self.info_flag].time_in = time.time() - self.time_to_come_out + 5
         else:
             self.client_list[self.info_flag].time_in = time.time()
@@ -263,35 +263,36 @@ class AppWindow(QDialog):
                     self.back_flag = False
                     self.ui.btn_back.setEnabled(True)
             image = self.image_image.copy()
-        elif(self.image_map_flag):
+        elif(self.image_map_flag or self.image_info_flag):
             image = self.image_map.copy()
+            #print("image: ",image.shape)
             for fireman in self.client_list:
                 ###### draw the frame ######
                 if(fireman.help2_flag):
                     if(fireman.blink_for_line()):
-                        self.helpConditionExec("HELP2",fireman.id_num,image)
+                        image = self.helpConditionExec("HELP2",fireman.id_num,image)
                     else:
-                        self.helpConditionExec("HELP",fireman.id_num,image)
+                        image = self.helpConditionExec("HELP",fireman.id_num,image)
                 elif(fireman.yellow_flag):
-                    self.helpConditionExec("HELP",fireman.id_num,image)
+                    image = self.helpConditionExec("HELP",fireman.id_num,image)
                 ###### draw fireman ######
                 ###### avoid img_fireman out of bounds ######
                 if(fireman.position_x > fireman.fireman_bound_right):
                     x_offset = fireman.fireman_bound_right
                 elif(fireman.position_x < fireman.fireman_bound_left):
-                    x_offset = fireman.fireman_bound_left
+                    x_offset = fireman.fireman_bound_left - 25
                 else:
                     x_offset = fireman.position_x - 25
                 if(fireman.position_y > fireman.fireman_bound_bottom):
                     y_offset = fireman.fireman_bound_bottom 
                 elif(fireman.position_y < fireman.fireman_bound_top):
-                    y_offset = fireman.fireman_bound_top
+                    y_offset = fireman.fireman_bound_top - 25
                 else:
                     y_offset = fireman.position_y - 25
                 
                 x2 = self.img_fireman.shape[1] + x_offset
                 y2 = self.img_fireman.shape[0] + y_offset
-                print("client",fireman.number,y_offset,y2,x_offset,x2)
+                #print("client",fireman.number,y_offset,y2,x_offset,x2)
                 for c in range(3):
                     image[y_offset:y2 , x_offset:x2, c] = (self.alpha_s * self.img_fireman[:,:,c] + self.alpha_l * image[y_offset:y2 , x_offset:x2, c])
             
@@ -299,8 +300,13 @@ class AppWindow(QDialog):
             if(self.choose_flag or self.remove_flag):
                 if(self.release_mouse):
                     cv2.rectangle(image, self.start_point, self.end_point, (0, 255, 0), 2)
-        elif(self.image_info_flag):
-            image = self.image_info.copy()
+            elif(self.image_info_flag):
+                image = self.set_image_info(image)
+                #cv2.imshow("Image",image)
+            else:
+                pass 
+#        elif(self.image_info_flag):
+#            image = self.image_info.copy()
         else:
             image = self.image_map.copy()
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -742,6 +748,8 @@ class AppWindow(QDialog):
         cv2.line(img,(line_left_spot_x,line_down_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,down_thickness,6)
         cv2.line(img,(line_left_spot_x,line_up_spot_y),(line_left_spot_x,line_down_spot_y),self.client_list[index].color_set,left_thickness,6)
         cv2.line(img,(line_right_spot_x,line_up_spot_y),(line_right_spot_x,line_down_spot_y),self.client_list[index].color_set,right_thickness,6)
+
+        return img
         
     def replace_roi(self, dst, num, y0, y1, x0, x1, roi):
         if(y0 > y1):
@@ -876,15 +884,14 @@ class AppWindow(QDialog):
                 fireman.in_danger_flag = False
                 fireman.closing_danger_flag = False
 
-    def set_image_info(self):
+    def set_image_info(self,image):
         # reset image_info
-        self.image_info = self.image_map.copy()
         left_spot_x = self.client_list[self.info_flag].left_spot_x
         right_spot_x = self.client_list[self.info_flag].right_spot_x
         up_spot_y = self.client_list[self.info_flag].up_spot_y
         down_spot_y = self.client_list[self.info_flag].down_spot_y
-        self.image_info = self.image_info[up_spot_y:down_spot_y,left_spot_x:right_spot_x]
-        width = self.image_info.shape[1]       
+        image = image[up_spot_y:down_spot_y,left_spot_x:right_spot_x]
+        width = image.shape[1]       
  
         if(self.client_list[self.info_flag].disconnect_flag):
             time_s_str = self.client_list[self.info_flag].disconnect_time
@@ -911,7 +918,10 @@ class AppWindow(QDialog):
         cv2.putText(info_line_img,"Time_Pass: "+time_str+"    Real_Time: "+real_time_str,(10,80),cv2.FONT_HERSHEY_TRIPLEX,1, (0, 0, 0), 1, cv2.LINE_AA)
         
         # --draw image_info-- #
-        self.image_info = np.concatenate((info_line_img,self.image_info),axis=0)
+        image = np.concatenate((info_line_img,image),axis=0)
+        #cv2.imshow("Image",image)
+        #print(image.shape)
+        return image
 
     def check_time(self):
         i = 0
